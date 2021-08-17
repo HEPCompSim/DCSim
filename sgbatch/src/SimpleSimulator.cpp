@@ -24,9 +24,9 @@ int main(int argc, char **argv) {
   simulation.init(&argc, argv);
 
   // Parsing of the command-line arguments for this WRENCH simulation
-  if (argc != 5) {
+  if (argc != 6) {
     std::cerr << "Usage: " << argv[0];
-    std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size>";
+    std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
     std::cerr << std::endl;
     exit(1);
   }
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     std::cerr << "Number out of range: " << arg << std::endl;
   }
   // The third argument is the number of input files per job which need to be transferred
-  std::string arg = argv[2];
+  std::string arg = argv[3];
   int infiles_per_job;
   try
   {
@@ -67,13 +67,30 @@ int main(int argc, char **argv) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Number out of range: " << arg << std::endl;
   }
-  // The third argument is the average size of the inputfiles in bytes
-  std::string arg = argv[2];
+  // The fourth argument is the average size of the inputfiles in bytes
+  std::string arg = argv[4];
   double average_infile_size;
   try
   {
     std::size_t pos;
     average_infile_size = std::stod(arg, &pos);
+    if (pos < arg.size()) {
+      std::cerr << "Trailing characters after number: " << arg << std::endl;
+    }
+  } catch (const std::invalid_argument& e) {
+    std::cerr << e.what() << std::endl;
+    std::cerr << "Invalid number: " << arg << std::endl;
+  } catch (const std::out_of_range& e) {
+    std::cerr << e.what() << std::endl;
+    std::cerr << "Number out of range: " << arg << std::endl;
+  }
+  // The fifth argument is the fractional cache hitrate
+  std::string arg = argv[5];
+  double hitrate;
+  try
+  {
+    std::size_t pos;
+    hitrate = std::stod(arg, &pos);
     if (pos < arg.size()) {
       std::cerr << "Trailing characters after number: " << arg << std::endl;
     }
@@ -178,8 +195,10 @@ int main(int argc, char **argv) {
   // Instantiate a WMS
   auto wms = simulation.add(
           new SimpleWMS(
-            htcondor_compute_service, storage_services, 
-            wms_host
+            htcondor_compute_service, 
+            storage_services.merge(remote_storage_services), 
+            wms_host,
+            hitrate
           )
   );
   wms->addWorkflow(workflow);

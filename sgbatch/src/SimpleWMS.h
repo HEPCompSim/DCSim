@@ -20,9 +20,10 @@ class Simulation;
 class SimpleWMS : public wrench::WMS {
 public:
     // Constructor
-    SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>> &compute_services,
-              const std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
-              const std::string &hostname);
+    SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
+              const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
+              const std::string& hostname,
+              const double& hitrate);
 
 protected:
     void processEventStandardJobFailure(std::shared_ptr<wrench::StandardJobFailedEvent>) override;
@@ -36,6 +37,8 @@ private:
     std::shared_ptr<wrench::DataMovementManager> data_movement_manager;
     /** @brief Whether the workflow execution shoulb be aborted */
     bool abort = false;
+    /** @brief The desired fraction of input files served by the cache */
+    double hitrate = 0.;
 };
 
 #endif //MY_SIMPLEWMS_H

@@ -75,3 +75,4 @@ void SimpleHTCondorJobScheduler::scheduleTasks(const std::set<std::shared_ptr<wr
   }
   WRENCH_INFO("Done with scheduling tasks as standard jobs");
 }
+
