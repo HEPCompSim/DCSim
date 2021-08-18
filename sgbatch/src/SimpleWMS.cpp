@@ -77,11 +77,9 @@ int SimpleWMS::main() {
     std::set<std::shared_ptr<wrench::StorageService>> remote_storage_services;
     for (auto storage : storage_services) {
       std::string hostname = storage->getHostname();
+      std::for_each(hostname.begin(), hostname.end(), [](char& c){c = std::tolower(c);});
       if (
-        std::transform(
-          *hostname.begin(), *hostname.end(), *hostname.begin(),
-          [](unsigned char c){return std::tolower(c);}
-        ).find("remote") != std::string::npos
+        hostname.find("remote") != std::string::npos
       ) {
         remote_storage_services.insert(storage);
       } else {
@@ -124,9 +122,9 @@ int SimpleWMS::main() {
         file_locations.insert(std::make_pair(f, wrench::FileLocation::LOCATION(remote_storage_service)));
       }
 
-      auto job = this->getJobManager()->createStandardJob(task, file_locations);
+      auto job = this->job_manager->createStandardJob(task, file_locations);
       std::map<std::string, std::string> htcondor_service_specific_args = {};
-      this->getJobManager()->submitJob(job, htcondor_service, htcondor_job_args);
+      this->job_manager->submitJob(job, *htcondor_compute_service, htcondor_service_specific_args);
     }
     WRENCH_INFO("Done with scheduling tasks as standard jobs");
 
