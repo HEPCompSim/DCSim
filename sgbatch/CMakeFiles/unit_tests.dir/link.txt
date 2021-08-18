@@ -1,1 +1,0 @@
-/usr/bin/g++-9    -rdynamic CMakeFiles/unit_tests.dir/src/SimpleWMS.cpp.o CMakeFiles/unit_tests.dir/src/SimpleHTCondorJobScheduler.cpp.o CMakeFiles/unit_tests.dir/src/SimpleSimulator.cpp.o  -o unit_tests  /usr/local/lib/libgtest.a -lwrench -lpthread -lm 

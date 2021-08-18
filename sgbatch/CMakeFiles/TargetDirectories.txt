@@ -1,8 +1,0 @@
-/home/wrench/sim/sgbatch/CMakeFiles/install/strip.dir
-/home/wrench/sim/sgbatch/CMakeFiles/install/local.dir
-/home/wrench/sim/sgbatch/CMakeFiles/install.dir
-/home/wrench/sim/sgbatch/CMakeFiles/list_install_components.dir
-/home/wrench/sim/sgbatch/CMakeFiles/rebuild_cache.dir
-/home/wrench/sim/sgbatch/CMakeFiles/edit_cache.dir
-/home/wrench/sim/sgbatch/CMakeFiles/unit_tests.dir
-/home/wrench/sim/sgbatch/CMakeFiles/my-executable.dir
