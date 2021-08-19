@@ -39,10 +39,10 @@ double arg_to_double (const std::string& arg) {
 int main(int argc, char **argv) {
 
   // Declaration of the top-level WRENCH simulation object
-  wrench::Simulation simulation;
+  auto simulation = new wrench::Simulation();
 
   // Initialization of the simulation
-  simulation.init(&argc, argv);
+  simulation->init(&argc, argv);
 
   // Parsing of the command-line arguments for this WRENCH simulation
   if (argc != 6) {
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 
   // Reading and parsing the workflow description file to create a wrench::Workflow object
   std::cerr << "Loading workflow..." << std::endl;
-  wrench::Workflow* workflow;
+  auto workflow = new wrench::Workflow();
 
   double average_flops = 1200000;
   double average_memory = 2000000000;
@@ -142,10 +142,10 @@ int main(int argc, char **argv) {
 
   // Reading and parsing the platform description file to instantiate a simulated platform
   std::cerr << "Instantiating SimGrid platform..." << std::endl;
-  simulation.instantiatePlatform(platform_file);
+  simulation->instantiatePlatform(platform_file);
 
   // Loop over vector of all the hosts in the simulated platform
-  std::vector<std::string> hostname_list = simulation.getHostnameList();
+  std::vector<std::string> hostname_list = simulation->getHostnameList();
   // Create a list of storage services that will be used by the WMS
   std::set<std::shared_ptr<wrench::StorageService>> storage_services;
   // Split into cache storages
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     if (*hostname != wms_host) {
       std::string storage_host = *hostname;
       std::cerr << "Instantiating a SimpleStorageService on " << storage_host << "..." << std::endl;
-      auto storage_service = simulation.add(new wrench::SimpleStorageService(storage_host, {"/"}));
+      auto storage_service = simulation->add(new wrench::SimpleStorageService(storage_host, {"/"}));
       if (hostname_transformed.find("remote") != std::string::npos) {
         remote_storage_services.insert(storage_service);
       } else {
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
       (*hostname != wms_host) && 
       (hostname_transformed.find("storage") == std::string::npos)
     ) {
-      condor_compute_resources.insert(new wrench::BareMetalComputeService(
+      condor_compute_resources.insert(shared_ptr<wrench::BareMetalComputeService>(new wrench::BareMetalComputeService(
         *hostname,
         {std::make_pair(
           *hostname,
@@ -187,14 +187,15 @@ int main(int argc, char **argv) {
           )
         )},
         "/"
-      ));
+      )));
     }
   }
   // Instantiate a HTcondorComputeService and add it to the simulation
-  auto htcondor_compute_service = simulation.add(
+  std::set<shared_ptr<wrench::ComputeService>> htcondor_compute_services;
+  htcondor_compute_services.insert(shared_ptr<wrench::ComputeService>(simulation->add(
     new wrench::HTCondorComputeService(
       wms_host,
-     condor_compute_resources,
+      condor_compute_resources,
       {
         {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "1.0"},
         {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "10.0"},
@@ -204,13 +205,13 @@ int main(int argc, char **argv) {
       },
       {}
     )
-  );
+  )));
 
 
   // Instantiate a WMS
-  auto wms = simulation.add(
+  auto wms = simulation->add(
           new SimpleWMS(
-            htcondor_compute_service, 
+            htcondor_compute_services, 
             storage_services, 
             wms_host,
             hitrate
@@ -223,7 +224,7 @@ int main(int argc, char **argv) {
   std::cerr << "Instantiating a FileRegistryService on " << file_registry_service_host << "..." << std::endl;
   auto file_registry_service =
           new wrench::FileRegistryService(file_registry_service_host);
-  simulation.add(file_registry_service);
+  simulation->add(file_registry_service);
 
   // // Instantiate a network proximity service
   // std::string network_proximity_service_host = wms_host;
@@ -235,7 +236,7 @@ int main(int argc, char **argv) {
   //           {}, 
   //           {}
   //         );
-  // simulation.add(network_proximity_service);
+  // simulation->add(network_proximity_service);
 
   // Check that the right remote_storage_service is passed for initial inputfile storage
   if (remote_storage_services.size() != 1) {
@@ -248,7 +249,7 @@ int main(int argc, char **argv) {
   auto input_files = workflow->getInputFiles();
   try {
      for (auto const &f : input_files) {
-         simulation.stageFile(f, remote_storage_service);
+         simulation->stageFile(f, remote_storage_service);
      }
   } catch (std::runtime_error &e) {
     std::cerr << "Exception: " << e.what() << std::endl;
@@ -258,7 +259,7 @@ int main(int argc, char **argv) {
   // Launch the simulation
   std::cerr << "Launching the Simulation..." << std::endl;
   try {
-    simulation.launch();
+    simulation->launch();
   } catch (std::runtime_error &e) {
     std::cerr << "Exception: " << e.what() << std::endl;
     return 0;
@@ -266,7 +267,7 @@ int main(int argc, char **argv) {
   std::cerr << "Simulation done!" << std::endl;
 
   // Analyse event traces
-  auto simulation_output = simulation.getOutput();
+  auto simulation_output = simulation->getOutput();
   auto trace = simulation_output.getTrace<wrench::SimulationTimestampTaskCompletion>();
   for (auto const &item : trace) {
     std::cerr << "Task " << item->getContent()->getTask()->getID() << " completed at time " << item->getDate() << std::endl;
