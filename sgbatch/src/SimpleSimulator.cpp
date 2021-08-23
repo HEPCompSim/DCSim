@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
   double average_flops = 1200000;
   double average_memory = 2000000000;
   for (size_t j = 0; j < num_jobs; j++) {
-    auto task = workflow->addTask("task_"+j, average_flops, 1, 1, average_memory);
+    auto task = workflow->addTask("task_"+std::to_string(j), average_flops, 1, 1, average_memory);
     for (size_t f = 0; f < infiles_per_job; f++) {
       task->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_"+std::to_string(f), average_infile_size));
     }
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
       (*hostname != wms_host) && 
       (hostname_transformed.find("storage") == std::string::npos)
     ) {
-      condor_compute_resources.insert(shared_ptr<wrench::BareMetalComputeService>(new wrench::BareMetalComputeService(
+      condor_compute_resources.insert(simulation->add(new wrench::BareMetalComputeService(
         *hostname,
         {std::make_pair(
           *hostname,
@@ -208,35 +208,37 @@ int main(int argc, char **argv) {
   )));
 
 
+  // Instantiate a file registry service
+  std::string file_registry_service_host = wms_host;
+  std::cerr << "Instantiating a FileRegistryService on " << file_registry_service_host << "..." << std::endl;
+  auto file_registry_service =
+          simulation->add(new wrench::FileRegistryService(file_registry_service_host));
+
+  // Instantiate a network proximity service
+  std::string network_proximity_service_host = wms_host;
+  std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
+  auto network_proximity_service =
+          simulation->add(new wrench::NetworkProximityService(
+            network_proximity_service_host, 
+            hostname_list, 
+            {}, 
+            {}
+          ));
+
+
   // Instantiate a WMS
   auto wms = simulation->add(
           new SimpleWMS(
             htcondor_compute_services, 
-            storage_services, 
+            storage_services,
+            {},//{network_proximity_service},
+            nullptr,//file_registry_service, 
             wms_host,
             hitrate
           )
   );
   wms->addWorkflow(workflow);
 
-  // Instantiate a file registry service
-  std::string file_registry_service_host = wms_host;
-  std::cerr << "Instantiating a FileRegistryService on " << file_registry_service_host << "..." << std::endl;
-  auto file_registry_service =
-          new wrench::FileRegistryService(file_registry_service_host);
-  simulation->add(file_registry_service);
-
-  // // Instantiate a network proximity service
-  // std::string network_proximity_service_host = wms_host;
-  // std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
-  // auto network_proximity_service =
-  //         new wrench::NetworkProximityService(
-  //           network_proximity_service_host, 
-  //           hostname_list, 
-  //           {}, 
-  //           {}
-  //         );
-  // simulation->add(network_proximity_service);
 
   // Check that the right remote_storage_service is passed for initial inputfile storage
   if (remote_storage_services.size() != 1) {
