@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
 <platform version="4.1">
+  <zone id="global" routing="Full">
     <zone id="ETP" routing="Full">
         <host id="sg01" speed="1117Mf" core="24">
           <prop id="ram" value="64GiB"/>
@@ -61,9 +62,10 @@
       </host>
 
       <link id="etp_to_remote" bandwidth="10Gbps" latency="0us"/>
+    </zone>  
 
-      <zoneRoute src="ETP" dst="Remote" gw_src="etpgateway" gw_dst="RemoteStorage">
-        <link_ctn id="etp_to_remote"/>
-      </zoneRoute>
-    </zone>    
+    <zoneRoute src="ETP" dst="Remote" gw_src="etpgateway" gw_dst="RemoteStorage">
+      <link_ctn id="etp_to_remote"/>
+    </zoneRoute>
+  </zone>  
 </platform>
