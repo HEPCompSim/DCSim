@@ -22,6 +22,8 @@ public:
     // Constructor
     SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
               const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
+              const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
+              std::shared_ptr<wrench::FileRegistryService> file_registry_service,
               const std::string& hostname,
               const double& hitrate);
 

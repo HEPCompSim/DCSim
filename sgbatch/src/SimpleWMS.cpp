@@ -18,13 +18,15 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for Simple WMS");
  */
 SimpleWMS::SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
                      const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
+                     const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
+                     std::shared_ptr<wrench::FileRegistryService> file_registry_service,
                      const std::string& hostname,
                      const double& hitrate) : wrench::WMS(
          nullptr, nullptr,
          compute_services,
          storage_services,
-         {},
-         nullptr,
+         network_proximity_services,
+         file_registry_service,
          hostname,
          "condor-simple") {
            this->hitrate = hitrate;
@@ -49,9 +51,11 @@ int SimpleWMS::main() {
 
   // Create a job manager
   this->job_manager = this->createJobManager();
+  WRENCH_INFO("Created a job manager");
 
   // Create a data movement manager
   this->data_movement_manager = this->createDataMovementManager();
+  WRENCH_INFO("Created a data manager");
 
 
   while (not this->getWorkflow()->isDone()) {
@@ -68,7 +72,8 @@ int SimpleWMS::main() {
     if (htcondor_compute_services.size() != 1) {
       throw std::runtime_error("This example Simple HTCondor Scheduler requires a single compute service");
     }
-    auto htcondor_compute_service = htcondor_compute_services.begin();
+    auto htcondor_compute_service = *htcondor_compute_services.begin();
+    WRENCH_INFO("Found %ld HTCondor Service(s) on %s", htcondor_compute_services.size(), htcondor_compute_service->getHostname().c_str());
 
     // Get the available storage services
     auto storage_services = this->getAvailableStorageServices();
@@ -91,6 +96,7 @@ int SimpleWMS::main() {
       throw std::runtime_error("This example Simple Simulator requires a single remote_storage_service");
     }
     auto remote_storage_service = *remote_storage_services.begin();
+    WRENCH_INFO("Found %ld Remote Storage Service(s) on %s", remote_storage_services.size(), remote_storage_service->getHostname().c_str());
 
     
     WRENCH_INFO("There are %ld ready tasks to schedule", ready_tasks.size());
@@ -124,7 +130,7 @@ int SimpleWMS::main() {
 
       auto job = this->job_manager->createStandardJob(task, file_locations);
       std::map<std::string, std::string> htcondor_service_specific_args = {};
-      this->job_manager->submitJob(job, *htcondor_compute_service, htcondor_service_specific_args);
+      this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
     }
     WRENCH_INFO("Done with scheduling tasks as standard jobs");
 
