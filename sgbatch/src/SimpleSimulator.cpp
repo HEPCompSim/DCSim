@@ -305,10 +305,10 @@ int main(int argc, char **argv) {
   }
   // and dump JSONs containing the generated data
   std::cerr << "Dumping generated data..." << std::endl;
-  simulation_output.dumpDiskOperationsJSON("diskOps.json", true);
-  simulation_output.dumpLinkUsageJSON("linkUsage.json", true);
-  simulation_output.dumpPlatformGraphJSON("platformGraph.json", true);
-  simulation_output.dumpWorkflowExecutionJSON(workflow, "workflowExecution.json", false, true);
+  simulation_output.dumpDiskOperationsJSON("tmp/diskOps.json", true);
+  simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
+  simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
+  simulation_output.dumpWorkflowExecutionJSON(workflow, "tmp/workflowExecution.json", false, true);
 
   return 0;
 }
