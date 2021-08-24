@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
   if (argc != 6) {
     std::cerr << "Usage: " << argv[0];
     std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
+    std::cerr << " [--wrench-full-log || --log=custom_wms.threshold=info]";
     std::cerr << std::endl;
     exit(1);
   }
@@ -67,9 +68,11 @@ int main(int argc, char **argv) {
   } catch (const std::invalid_argument& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Invalid number: " << tmp_arg << std::endl;
+    exit(1);
   } catch (const std::out_of_range& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Number out of range: " << tmp_arg << std::endl;
+    exit(1);
   }
   // The third argument is the number of input files per job which need to be transferred
   tmp_arg = argv[3];
@@ -84,9 +87,11 @@ int main(int argc, char **argv) {
   } catch (const std::invalid_argument& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Invalid number: " << tmp_arg << std::endl;
+    exit(1);
   } catch (const std::out_of_range& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Number out of range: " << tmp_arg << std::endl;
+    exit(1);
   }
   // The fourth argument is the average size of the inputfiles in bytes
   tmp_arg = argv[4];
@@ -101,9 +106,11 @@ int main(int argc, char **argv) {
   } catch (const std::invalid_argument& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Invalid number: " << tmp_arg << std::endl;
+    exit(1);
   } catch (const std::out_of_range& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Number out of range: " << tmp_arg << std::endl;
+    exit(1);
   }
   // The fifth argument is the fractional cache hitrate
   tmp_arg = argv[5];
@@ -118,23 +125,45 @@ int main(int argc, char **argv) {
   } catch (const std::invalid_argument& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Invalid number: " << tmp_arg << std::endl;
+    exit(1);
   } catch (const std::out_of_range& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Number out of range: " << tmp_arg << std::endl;
+    exit(1);
   }
   
 
 
-  // Reading and parsing the workflow description file to create a wrench::Workflow object
+  // Create a workflow
   std::cerr << "Loading workflow..." << std::endl;
   auto workflow = new wrench::Workflow();
 
+  // Sample task parameters from normal distributions
+  // Set normal distribution parameters
   double average_flops = 1200000;
   double average_memory = 2000000000;
+  double sigma_flops = 0.5*average_flops;
+  double sigma_memory = 0.5*average_memory;
+  double sigma_infile_size = 0.5*average_infile_size;
+
+  // Initialize random number generators
+  std::mt19937 gen(42);
+  std::normal_distribution<> flops(average_flops, sigma_flops);
+  std::normal_distribution<> mem(average_memory, sigma_memory);
+  std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
+
   for (size_t j = 0; j < num_jobs; j++) {
-    auto task = workflow->addTask("task_"+std::to_string(j), average_flops, 1, 1, average_memory);
+    // Sample task parameter values
+    double dflops = flops(gen);
+    // and resample when negative
+    while (dflops < 0.) dflops = flops(gen);
+    double dmem = mem(gen);
+    while (dmem < 0.) dmem = mem(gen);
+    auto task = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
     for (size_t f = 0; f < infiles_per_job; f++) {
-      task->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_"+std::to_string(f), average_infile_size));
+      double dinsize = insize(gen);
+      while (dinsize < 0.) dinsize = insize(gen); 
+      task->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_"+std::to_string(f), dinsize));
     }
     task->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
   }
