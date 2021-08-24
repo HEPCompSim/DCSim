@@ -5,25 +5,37 @@
     <zone id="ETP" routing="Full">
         <host id="sg01" speed="1117Mf" core="24">
           <prop id="ram" value="64GiB"/>
-          <disk id="ssd_cache" read_bw="9.6Gbps" write_bw="9.6Gbps">
+          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
              <prop id="size" value="2TB"/>
              <prop id="mount" value="/"/>
           </disk>
-        </host>
+          <disk id="ssd_cache2" read_bw="9.6Gbps" write_bw="9.6Gbps">
+             <prop id="size" value="2TB"/>
+             <prop id="mount" value="/scratch"/>
+          </disk>
+         </host>
         <host id="sg02" speed="1117Mf" core="24">
           <prop id="ram" value="64GiB"/>
-          <disk id="ssd_cache" read_bw="9.6Gbps" write_bw="9.6Gbps">
+          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
              <prop id="size" value="2TB"/>
              <prop id="mount" value="/"/>
           </disk>
-        </host>
+          <disk id="ssd_cache2" read_bw="9.6Gbps" write_bw="9.6Gbps">
+             <prop id="size" value="2TB"/>
+             <prop id="mount" value="/scratch"/>
+          </disk>
+         </host>
         <host id="sg03" speed="1258Mf" core="12">
           <prop id="ram" value="32GiB"/>
-          <disk id="ssd_cache" read_bw="9.6Gbps" write_bw="9.6Gbps">
+          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
              <prop id="size" value="2TB"/>
              <prop id="mount" value="/"/>
           </disk>
-        </host>
+          <disk id="ssd_cache2" read_bw="9.6Gbps" write_bw="9.6Gbps">
+             <prop id="size" value="2TB"/>
+             <prop id="mount" value="/scratch"/>
+          </disk>
+         </host>
         <host id="WMSHost" speed="10Gf" core="10">
           <prop id="ram" value="16GB"/>
         </host>

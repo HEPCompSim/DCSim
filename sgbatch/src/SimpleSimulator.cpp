@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
             wrench::Simulation::getHostMemoryCapacity(*hostname)
           )
         )},
-        "/"
+        "/scratch"
       )));
     }
   }
