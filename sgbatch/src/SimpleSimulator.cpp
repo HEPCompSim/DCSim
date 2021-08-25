@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
             wrench::Simulation::getHostMemoryCapacity(*hostname)
           )
         )},
-        "/scratch"
+        ""
       )));
     }
   }
@@ -243,16 +243,16 @@ int main(int argc, char **argv) {
   auto file_registry_service =
           simulation->add(new wrench::FileRegistryService(file_registry_service_host));
 
-  // Instantiate a network proximity service
-  std::string network_proximity_service_host = wms_host;
-  std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
-  auto network_proximity_service =
-          simulation->add(new wrench::NetworkProximityService(
-            network_proximity_service_host, 
-            hostname_list, 
-            {}, 
-            {}
-          ));
+  // // Instantiate a network proximity service
+  // std::string network_proximity_service_host = wms_host;
+  // std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
+  // auto network_proximity_service =
+  //         simulation->add(new wrench::NetworkProximityService(
+  //           network_proximity_service_host, 
+  //           hostname_list, 
+  //           {}, 
+  //           {}
+  //         ));
 
 
   // Instantiate a WMS
@@ -261,7 +261,7 @@ int main(int argc, char **argv) {
             htcondor_compute_services, 
             storage_services,
             {},//{network_proximity_service},
-            nullptr,//file_registry_service, 
+            file_registry_service, 
             wms_host,
             hitrate
           )
@@ -277,11 +277,29 @@ int main(int argc, char **argv) {
 
   // It is necessary to store, or "stage", input files
   std::cerr << "Staging input files..." << std::endl;
-  auto input_files = workflow->getInputFiles();
+  std::vector<wrench::WorkflowTask*> entry_tasks = workflow->getEntryTasks();
   try {
-     for (auto const &f : input_files) {
-         simulation->stageFile(f, remote_storage_service);
-     }
+    for (auto task : entry_tasks) {
+      auto input_files = task->getInputFiles();
+      // Shuffle the input files
+      std::shuffle(input_files.begin(), input_files.end(), gen);
+      // Compute the task's incremental inputfiles size
+      double incr_inputfile_size = 0.;
+      for (auto f : input_files) {
+        incr_inputfile_size += f->getSize();
+      }
+      // Distribute the infiles on all caches untill desired hitrate is reached
+      double cached_files_size = 0.;
+      for (auto const &f : input_files) {
+        simulation->stageFile(f, remote_storage_service);
+        if (cached_files_size <= hitrate*incr_inputfile_size) {
+          for (auto cache : cache_storage_services) {
+            simulation->stageFile(f, cache);
+          }
+          cached_files_size += f->getSize();
+        }
+      }
+    }
   } catch (std::runtime_error &e) {
     std::cerr << "Exception: " << e.what() << std::endl;
     return 0;
