@@ -10,6 +10,12 @@
 #include <wrench.h>
 #include "SimpleWMS.h"
 
+/**
+ * @brief helper function wich checks if a string ends with a desired suffix
+ * 
+ * @param str: string to check
+ * @param suffix: suffix to match to
+ */
 static bool ends_with(const std::string& str, const std::string& suffix) {
   return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
 }
@@ -30,11 +36,38 @@ double arg_to_double (const std::string& arg) {
   } catch (const std::invalid_argument& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Invalid number: " << arg << std::endl;
+    exit (EXIT_FAILURE);
   } catch (const std::out_of_range& e) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Number out of range: " << arg << std::endl;
+    exit (EXIT_FAILURE);
   }
 }
+
+/**
+ * @brief helper function for converting CLI argument to size_t
+ *
+ * @param arg: a CLI argument string
+ */
+size_t arg_to_sizet (const std::string& arg) {
+  try {
+    std::size_t pos;
+    size_t value = std::stoi(arg, &pos);
+    if (pos < arg.size()) {
+      std::cerr << "Trailing characters after number: " << arg << std::endl;
+    }
+    return value;
+  } catch (const std::invalid_argument& e) {
+    std::cerr << e.what() << std::endl;
+    std::cerr << "Invalid number: " << arg << std::endl;
+    exit (EXIT_FAILURE);
+  } catch (const std::out_of_range& e) {
+    std::cerr << e.what() << std::endl;
+    std::cerr << "Number out of range: " << arg << std::endl;
+    exit (EXIT_FAILURE);
+  }
+}
+
 
 int main(int argc, char **argv) {
 
@@ -56,83 +89,13 @@ int main(int argc, char **argv) {
   // The first argument is the platform description file, written in XML following the SimGrid-defined DTD
   char *platform_file = argv[1];
   // The second argument is the number of jobs which need to be executed
-  std::string tmp_arg = argv[2];
-  int num_jobs;
-  try
-  {
-    std::size_t pos;
-    num_jobs = std::stoi(tmp_arg, &pos);
-    if (pos < tmp_arg.size()) {
-      std::cerr << "Trailing characters after number: " << tmp_arg << std::endl;
-    }
-  } catch (const std::invalid_argument& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Invalid number: " << tmp_arg << std::endl;
-    exit(1);
-  } catch (const std::out_of_range& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Number out of range: " << tmp_arg << std::endl;
-    exit(1);
-  }
+  size_t num_jobs = arg_to_sizet(argv[2]);
   // The third argument is the number of input files per job which need to be transferred
-  tmp_arg = argv[3];
-  int infiles_per_job;
-  try
-  {
-    std::size_t pos;
-    infiles_per_job = std::stoi(tmp_arg, &pos);
-    if (pos < tmp_arg.size()) {
-      std::cerr << "Trailing characters after number: " << tmp_arg << std::endl;
-    }
-  } catch (const std::invalid_argument& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Invalid number: " << tmp_arg << std::endl;
-    exit(1);
-  } catch (const std::out_of_range& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Number out of range: " << tmp_arg << std::endl;
-    exit(1);
-  }
+  size_t infiles_per_job = arg_to_sizet(argv[3]);
   // The fourth argument is the average size of the inputfiles in bytes
-  tmp_arg = argv[4];
-  double average_infile_size;
-  try
-  {
-    std::size_t pos;
-    average_infile_size = std::stod(tmp_arg, &pos);
-    if (pos < tmp_arg.size()) {
-      std::cerr << "Trailing characters after number: " << tmp_arg << std::endl;
-    }
-  } catch (const std::invalid_argument& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Invalid number: " << tmp_arg << std::endl;
-    exit(1);
-  } catch (const std::out_of_range& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Number out of range: " << tmp_arg << std::endl;
-    exit(1);
-  }
+  double average_infile_size = arg_to_double(argv[4]);
   // The fifth argument is the fractional cache hitrate
-  tmp_arg = argv[5];
-  double hitrate;
-  try
-  {
-    std::size_t pos;
-    hitrate = std::stod(tmp_arg, &pos);
-    if (pos < tmp_arg.size()) {
-      std::cerr << "Trailing characters after number: " << tmp_arg << std::endl;
-    }
-  } catch (const std::invalid_argument& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Invalid number: " << tmp_arg << std::endl;
-    exit(1);
-  } catch (const std::out_of_range& e) {
-    std::cerr << e.what() << std::endl;
-    std::cerr << "Number out of range: " << tmp_arg << std::endl;
-    exit(1);
-  }
-  
-
+  double hitrate = arg_to_double(argv[5]);
 
   // Create a workflow
   std::cerr << "Loading workflow..." << std::endl;
