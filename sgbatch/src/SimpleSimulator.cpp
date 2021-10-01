@@ -147,8 +147,7 @@ int main(int argc, char **argv) {
   // Create a list of compute services that will be used by the HTCondorService
   std::set<std::shared_ptr<wrench::ComputeService>> condor_compute_resources;
   std::string wms_host = "WMSHost";
-  for (std::vector<std::string>::iterator hostname = hostname_list.begin(); hostname != hostname_list.end(); ++hostname)
-  {
+  for (std::vector<std::string>::iterator hostname = hostname_list.begin(); hostname != hostname_list.end(); ++hostname) {
     std::string hostname_transformed = *hostname;
     std::for_each(hostname_transformed.begin(), hostname_transformed.end(), [](char& c){c = std::tolower(c);});
     // Instantiate storage services
@@ -169,17 +168,21 @@ int main(int argc, char **argv) {
       (*hostname != wms_host) && 
       (hostname_transformed.find("storage") == std::string::npos)
     ) {
-      condor_compute_resources.insert(simulation->add(new wrench::BareMetalComputeService(
-        *hostname,
-        {std::make_pair(
-          *hostname,
-          std::make_tuple(
-            wrench::Simulation::getHostNumCores(*hostname),
-            wrench::Simulation::getHostMemoryCapacity(*hostname)
+      condor_compute_resources.insert(
+        simulation->add(
+          new wrench::BareMetalComputeService(
+            *hostname,
+            {std::make_pair(
+              *hostname,
+              std::make_tuple(
+                wrench::Simulation::getHostNumCores(*hostname),
+                wrench::Simulation::getHostMemoryCapacity(*hostname)
+              )
+            )},
+            ""
           )
-        )},
-        "/"
-      )));
+        )
+      );
     }
   }
   // Instantiate a HTcondorComputeService and add it to the simulation
@@ -207,15 +210,15 @@ int main(int argc, char **argv) {
           simulation->add(new wrench::FileRegistryService(file_registry_service_host));
 
   // Instantiate a network proximity service
-  std::string network_proximity_service_host = wms_host;
-  std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
-  auto network_proximity_service =
-          simulation->add(new wrench::NetworkProximityService(
-            network_proximity_service_host, 
-            hostname_list, 
-            {}, 
-            {}
-          ));
+  // std::string network_proximity_service_host = wms_host;
+  // std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
+  // auto network_proximity_service =
+  //         simulation->add(new wrench::NetworkProximityService(
+  //           network_proximity_service_host, 
+  //           hostname_list, 
+  //           {}, 
+  //           {}
+  //         ));
 
 
   // Instantiate a WMS
@@ -233,6 +236,7 @@ int main(int argc, char **argv) {
 
 
   // Check that the right remote_storage_service is passed for initial inputfile storage
+  // TODO: generalize to arbitrary numbers of remote storages
   if (remote_storage_services.size() != 1) {
     throw std::runtime_error("This example Simple Simulator requires a single remote_storage_service");
   }

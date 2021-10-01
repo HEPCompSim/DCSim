@@ -63,8 +63,8 @@ int SimpleWMS::main() {
     std::vector<wrench::WorkflowTask *> ready_tasks = this->getWorkflow()->getReadyTasks();
 
     // Get the available compute services
+    // TODO: generalize to arbitrary numbers of HTCondorComputeServices
     auto htcondor_compute_services = this->getAvailableComputeServices<wrench::HTCondorComputeService>();
-
     if (htcondor_compute_services.empty()) {
       WRENCH_INFO("Aborting - No compute services available!");
       break;
@@ -92,6 +92,7 @@ int SimpleWMS::main() {
       }
     }
     // Check that the right remote_storage_service is passed for outputfile storage
+    // TODO: generalize to arbitrary numbers of remote storages
     if (remote_storage_services.size() != 1) {
       throw std::runtime_error("This example Simple Simulator requires a single remote_storage_service");
     }
@@ -114,22 +115,31 @@ int SimpleWMS::main() {
         }
       }
       
+      // Locate inputfiles on all caches until hitrate threshold is reached
+      // and locate them also at remote storages as fallback
       int counter = 0;
       for (auto f : task->getInputFiles()) {
-        // Distribute the inputfiles on all caches untill hitrate threshold is reached
+        for (auto remote_storage : remote_storage_services) {
+          file_locations.insert(std::make_pair(f, wrench::FileLocation::LOCATION(remote_storage)));
+        }
+        //TODO: figure out how to prefetch the inputfiles on caches
+        if ((incr_inputfile_sizes.at(counter)/incr_inputfile_sizes.back()) >= this->hitrate) continue;
         for (auto cache : worker_storage_services) {
           file_locations.insert(std::make_pair(f, wrench::FileLocation::LOCATION(cache)));
         }
-        if ((incr_inputfile_sizes.at(counter)/incr_inputfile_sizes.back()) >= this->hitrate) break;
       }
+      //TODO: distribute inputfiles accordingly on the corresponding storage services
+      //TODO: ensure that inutfiles are read preferably from cache
 
-      // Write outputfiles back to remote storage
+      // Set locations for outputfiles to remote storage
       for (auto f : task->getOutputFiles()) {
+        //TODO: generalize to arbitrary numbers of remote storages
         file_locations.insert(std::make_pair(f, wrench::FileLocation::LOCATION(remote_storage_service)));
       }
 
       auto job = this->job_manager->createStandardJob(task, file_locations);
       std::map<std::string, std::string> htcondor_service_specific_args = {};
+      //TODO: generalize to arbitrary numbers of htcondor services
       this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
     }
     WRENCH_INFO("Done with scheduling tasks as standard jobs");
