@@ -59,9 +59,6 @@ int SimpleWMS::main() {
 
 
   while (not this->getWorkflow()->isDone()) {
-    // Get the ready tasks
-    std::vector<wrench::WorkflowTask *> ready_tasks = this->getWorkflow()->getReadyTasks();
-
     // Get the available compute services
     // TODO: generalize to arbitrary numbers of HTCondorComputeServices
     auto htcondor_compute_services = this->getAvailableComputeServices<wrench::HTCondorComputeService>();
@@ -99,6 +96,9 @@ int SimpleWMS::main() {
     auto remote_storage_service = *remote_storage_services.begin();
     WRENCH_INFO("Found %ld Remote Storage Service(s) on %s", remote_storage_services.size(), remote_storage_service->getHostname().c_str());
 
+    
+    // Get the ready tasks
+    std::vector<wrench::WorkflowTask *> ready_tasks = this->getWorkflow()->getReadyTasks();
     
     WRENCH_INFO("There are %ld ready tasks to schedule", ready_tasks.size());
     for (auto task : ready_tasks) {
