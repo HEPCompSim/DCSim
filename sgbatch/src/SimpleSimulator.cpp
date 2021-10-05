@@ -122,6 +122,7 @@ int main(int argc, char **argv) {
     while (dflops < 0.) dflops = flops(gen);
     double dmem = mem(gen);
     while (dmem < 0.) dmem = mem(gen);
+    //TODO: implement input file streaming using dummy tasks ans subtask chains as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf
     auto task = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
     for (size_t f = 0; f < infiles_per_job; f++) {
       double dinsize = insize(gen);
