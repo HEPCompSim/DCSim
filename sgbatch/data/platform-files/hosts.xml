@@ -2,7 +2,7 @@
 <!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
 <platform version="4.1">
   <zone id="global" routing="Full">
-    <zone id="ETP" routing="Full">
+    <zone id="ETP" routing="Floyd">
         <host id="sg01" speed="1117Mf" core="24">
           <prop id="ram" value="64GiB"/>
           <disk id="ssd_cache" read_bw="9.6Gbps" write_bw="9.6Gbps">
@@ -33,6 +33,9 @@
         <link id="loopback" bandwidth="5000GBps" latency="0us"/>
         <link id="etp_link" bandwidth="6Gbps" latency="0us"/>
 
+        <route src="etpgateway" dst="WMSHost">
+            <link_ctn id="etp_link"/>
+        </route>
         <route src="etpgateway" dst="sg01">
             <link_ctn id="etp_link"/>
         </route>
@@ -42,7 +45,7 @@
         <route src="etpgateway" dst="sg03">
             <link_ctn id="etp_link"/>
         </route>
-        <route src="sg01" dst="sg01">
+        <!-- <route src="sg01" dst="sg01">
             <link_ctn id="loopback"/>
         </route>
         <route src="sg02" dst="sg02">
@@ -50,7 +53,7 @@
         </route>
         <route src="sg03" dst="sg03">
             <link_ctn id="loopback"/>
-        </route>
+        </route> -->
     </zone>
 
     <zone id="Remote" routing="Full">
