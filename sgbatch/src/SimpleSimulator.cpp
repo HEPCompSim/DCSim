@@ -77,7 +77,8 @@ int main(int argc, char **argv) {
   // Initialization of the simulation
   simulation->init(&argc, argv);
 
-  // Parsing of the command-line arguments for this WRENCH simulation
+
+  /* Parsing of the command-line arguments for this WRENCH simulation */
   if (argc != 6) {
     std::cerr << "Usage: " << argv[0];
     std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
@@ -97,46 +98,79 @@ int main(int argc, char **argv) {
   // The fifth argument is the fractional cache hitrate
   double hitrate = arg_to_double(argv[5]);
 
-  // Create a workflow
+
+  /* Create a workflow */
   std::cerr << "Loading workflow..." << std::endl;
   auto workflow = new wrench::Workflow();
 
   // Sample task parameters from normal distributions
   // Set normal distribution parameters
-  double average_flops = 1200000;
-  double average_memory = 2000000000;
+  double average_flops = 1.2*1000*1000;
+  double average_memory = 2*1000*1000*1000;
   double sigma_flops = 0.5*average_flops;
   double sigma_memory = 0.5*average_memory;
   double sigma_infile_size = 0.5*average_infile_size;
-
   // Initialize random number generators
   std::mt19937 gen(42);
   std::normal_distribution<> flops(average_flops, sigma_flops);
   std::normal_distribution<> mem(average_memory, sigma_memory);
   std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
 
+  // Block size in bytes for XRootD-ish streaming and processing of input data
+  double xrd_block_size = 1*1000*1000;
+
   for (size_t j = 0; j < num_jobs; j++) {
-    // Sample task parameter values
+    // Sample strictly positive task flops
     double dflops = flops(gen);
-    // and resample when negative
     while (dflops < 0.) dflops = flops(gen);
+    // Sample strictly positive task memory requirements
     double dmem = mem(gen);
     while (dmem < 0.) dmem = mem(gen);
-    //TODO: implement input file streaming using dummy tasks ans subtask chains as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf
-    auto task = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
+    wrench::WorkflowTask* endtask = nullptr;
     for (size_t f = 0; f < infiles_per_job; f++) {
+      // Sample inputfile sizes
       double dinsize = insize(gen);
       while (dinsize < 0.) dinsize = insize(gen); 
-      task->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_"+std::to_string(f), dinsize));
+      // Chunk inputfiles into blocks and create blockwise tasks and dummy tasks
+      // chain them as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf to enable task streaming
+      size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
+      wrench::WorkflowTask* dummytask_parent = nullptr;
+      wrench::WorkflowTask* task_parent = nullptr;
+      for (size_t b = 0; b <= nblocks; b++) {
+        // Dummytask with inputblock and previous dummytask dependence
+        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), 1, 1, 1, 1);
+        double blocksize;
+        b == nblocks ? blocksize = (dinsize - nblocks*xrd_block_size): blocksize = xrd_block_size;
+        dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
+        if (b!=0) {
+          workflow->addControlDependency(dummytask_parent, dummytask);
+        }
+        dummytask_parent = dummytask;
+        // Task with dummytask and previous task dependence
+        double blockflops = dflops * blocksize/dinsize;
+        auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blockflops, 1, 1, dmem);
+        workflow->addControlDependency(dummytask, task);
+        if (b!=0) {
+          workflow->addControlDependency(task_parent, task);
+        }
+        task_parent = task;
+        // Last blocktask is endtask
+        if (b == nblocks) {
+          endtask = task;
+        }
+      }
     }
-    task->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
+    endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
   }
   std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks " << std::endl;
 
-  // Reading and parsing the platform description file to instantiate a simulated platform
+
+  /* Read and parse the platform description file to instantiate a simulation platform */
   std::cerr << "Instantiating SimGrid platform..." << std::endl;
   simulation->instantiatePlatform(platform_file);
 
+
+  /* Create storage and compute services and add them to the simulation */ 
   // Loop over vector of all the hosts in the simulated platform
   std::vector<std::string> hostname_list = simulation->getHostnameList();
   // Create a list of storage services that will be used by the WMS
@@ -204,13 +238,14 @@ int main(int argc, char **argv) {
   )));
 
 
-  // Instantiate a file registry service
+  /* Instantiate a file registry service */
   std::string file_registry_service_host = wms_host;
   std::cerr << "Instantiating a FileRegistryService on " << file_registry_service_host << "..." << std::endl;
   auto file_registry_service =
           simulation->add(new wrench::FileRegistryService(file_registry_service_host));
 
-  //// Instantiate a network proximity service
+
+  // /* Instantiate a network proximity service */
   // std::string network_proximity_service_host = wms_host;
   // std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
   // auto network_proximity_service =
@@ -222,7 +257,7 @@ int main(int argc, char **argv) {
   //         ));
 
 
-  // Instantiate a WMS
+  /* Instantiate a WMS */
   auto wms = simulation->add(
           new SimpleWMS(
             htcondor_compute_services, 
@@ -236,6 +271,7 @@ int main(int argc, char **argv) {
   wms->addWorkflow(workflow);
 
 
+  /* Instatiate inputfiles */
   // Check that the right remote_storage_service is passed for initial inputfile storage
   // TODO: generalize to arbitrary numbers of remote storages
   if (remote_storage_services.size() != 1) {
@@ -273,7 +309,8 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  // Launch the simulation
+
+  /* Launch the simulation */
   std::cerr << "Launching the Simulation..." << std::endl;
   try {
     simulation->launch();
@@ -283,7 +320,8 @@ int main(int argc, char **argv) {
   }
   std::cerr << "Simulation done!" << std::endl;
 
-  // Analyse event traces
+
+  /* Analyse event traces */
   auto simulation_output = simulation->getOutput();
   auto trace = simulation_output.getTrace<wrench::SimulationTimestampTaskCompletion>();
   for (auto const &item : trace) {
@@ -295,6 +333,7 @@ int main(int argc, char **argv) {
   simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
   simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
   simulation_output.dumpWorkflowExecutionJSON(workflow, "tmp/workflowExecution.json", false, true);
+
 
   return 0;
 }
