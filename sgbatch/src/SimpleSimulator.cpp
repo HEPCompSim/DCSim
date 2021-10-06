@@ -10,6 +10,9 @@
 #include <wrench.h>
 #include "SimpleWMS.h"
 
+
+std::mt19937 gen(42);
+
 /**
  * @brief helper function wich checks if a string ends with a desired suffix
  * 
@@ -24,6 +27,8 @@ static bool ends_with(const std::string& str, const std::string& suffix) {
  * @brief helper function for converting a CLI argument string to double
  * 
  * @param arg: a CLI argument string
+ * 
+ * @return the converted argument
  */
 double arg_to_double (const std::string& arg) {
   try {
@@ -48,6 +53,8 @@ double arg_to_double (const std::string& arg) {
  * @brief helper function for converting CLI argument to size_t
  *
  * @param arg: a CLI argument string
+ * 
+ * @return the converted argument
  */
 size_t arg_to_sizet (const std::string& arg) {
   try {
@@ -65,6 +72,82 @@ size_t arg_to_sizet (const std::string& arg) {
     std::cerr << e.what() << std::endl;
     std::cerr << "Number out of range: " << arg << std::endl;
     exit (EXIT_FAILURE);
+  }
+}
+
+
+/**
+ * @brief fill a Workflow with tasks, which stream input data and perform computations in blocks
+ * 
+ * 
+ * @param workflow: Workflow to fill with tasks
+ * @param num_jobs: number of tasks
+ * @param infiles_per_task: number of input-files each job processes
+ * @param average_flops: expectation value of the flops distribution
+ * @param sigma_flops: std. deviation of the flops distribution
+ * @param average_memory: expectation value of the memory distribution
+ * @param sigma_memory: std. deviation of the memory distribution
+ * @param average_infile_size: expectation value of the input-file size distribution
+ * @param sigma_infile_size: std. deviation of the input-file size distribution
+ */
+void fill_streaming_workflow (
+  wrench::Workflow* workflow,
+  size_t num_jobs,
+  size_t infiles_per_task,
+  double average_flops, double sigma_flops,
+  double average_memory, double sigma_memory,
+  double average_infile_size, double sigma_infile_size
+) {
+  // Initialize random number generators
+  std::normal_distribution<> flops(average_flops, sigma_flops);
+  std::normal_distribution<> mem(average_memory, sigma_memory);
+  std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
+
+  // Block size in bytes for XRootD-ish streaming and processing of input data
+  double xrd_block_size = 1*1000*1000;
+
+  for (size_t j = 0; j < num_jobs; j++) {
+    // Sample strictly positive task flops
+    double dflops = flops(gen);
+    while (dflops < 0.) dflops = flops(gen);
+    // Sample strictly positive task memory requirements
+    double dmem = mem(gen);
+    while (dmem < 0.) dmem = mem(gen);
+    wrench::WorkflowTask* endtask = nullptr;
+    for (size_t f = 0; f < infiles_per_task; f++) {
+      // Sample inputfile sizes
+      double dinsize = insize(gen);
+      while (dinsize < 0.) dinsize = insize(gen); 
+      // Chunk inputfiles into blocks and create blockwise tasks and dummy tasks
+      // chain them as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf to enable task streaming
+      size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
+      wrench::WorkflowTask* dummytask_parent = nullptr;
+      wrench::WorkflowTask* task_parent = nullptr;
+      for (size_t b = 0; b <= nblocks; b++) {
+        // Dummytask with inputblock and previous dummytask dependence
+        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), 1, 1, 1, 1);
+        double blocksize;
+        b == nblocks ? blocksize = (dinsize - nblocks*xrd_block_size): blocksize = xrd_block_size;
+        dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
+        if (b!=0) {
+          workflow->addControlDependency(dummytask_parent, dummytask);
+        }
+        dummytask_parent = dummytask;
+        // Task with dummytask and previous task dependence
+        double blockflops = dflops * blocksize/dinsize;
+        auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blockflops, 1, 1, dmem);
+        workflow->addControlDependency(dummytask, task);
+        if (b!=0) {
+          workflow->addControlDependency(task_parent, task);
+        }
+        task_parent = task;
+        // Last blocktask is endtask
+        if (b == nblocks) {
+          endtask = task;
+        }
+      }
+    }
+    endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
   }
 }
 
@@ -110,58 +193,15 @@ int main(int argc, char **argv) {
   double sigma_flops = 0.5*average_flops;
   double sigma_memory = 0.5*average_memory;
   double sigma_infile_size = 0.5*average_infile_size;
-  // Initialize random number generators
-  std::mt19937 gen(42);
-  std::normal_distribution<> flops(average_flops, sigma_flops);
-  std::normal_distribution<> mem(average_memory, sigma_memory);
-  std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
+  
+  fill_streaming_workflow(
+    workflow, 
+    num_jobs, infiles_per_job,
+    average_flops, sigma_flops,
+    average_memory,sigma_memory,
+    average_infile_size, sigma_infile_size
+  );
 
-  // Block size in bytes for XRootD-ish streaming and processing of input data
-  double xrd_block_size = 1*1000*1000;
-
-  for (size_t j = 0; j < num_jobs; j++) {
-    // Sample strictly positive task flops
-    double dflops = flops(gen);
-    while (dflops < 0.) dflops = flops(gen);
-    // Sample strictly positive task memory requirements
-    double dmem = mem(gen);
-    while (dmem < 0.) dmem = mem(gen);
-    wrench::WorkflowTask* endtask = nullptr;
-    for (size_t f = 0; f < infiles_per_job; f++) {
-      // Sample inputfile sizes
-      double dinsize = insize(gen);
-      while (dinsize < 0.) dinsize = insize(gen); 
-      // Chunk inputfiles into blocks and create blockwise tasks and dummy tasks
-      // chain them as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf to enable task streaming
-      size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
-      wrench::WorkflowTask* dummytask_parent = nullptr;
-      wrench::WorkflowTask* task_parent = nullptr;
-      for (size_t b = 0; b <= nblocks; b++) {
-        // Dummytask with inputblock and previous dummytask dependence
-        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), 1, 1, 1, 1);
-        double blocksize;
-        b == nblocks ? blocksize = (dinsize - nblocks*xrd_block_size): blocksize = xrd_block_size;
-        dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
-        if (b!=0) {
-          workflow->addControlDependency(dummytask_parent, dummytask);
-        }
-        dummytask_parent = dummytask;
-        // Task with dummytask and previous task dependence
-        double blockflops = dflops * blocksize/dinsize;
-        auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blockflops, 1, 1, dmem);
-        workflow->addControlDependency(dummytask, task);
-        if (b!=0) {
-          workflow->addControlDependency(task_parent, task);
-        }
-        task_parent = task;
-        // Last blocktask is endtask
-        if (b == nblocks) {
-          endtask = task;
-        }
-      }
-    }
-    endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
-  }
   std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks " << std::endl;
 
 
