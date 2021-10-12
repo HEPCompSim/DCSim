@@ -321,11 +321,11 @@ int main(int argc, char **argv) {
   }
   auto remote_storage_service = *remote_storage_services.begin();
 
-  // It is necessary to store, or "stage", input files
+  // It is necessary to store, or "stage", input files (blocks)
   std::cerr << "Staging input files..." << std::endl;
-  std::vector<wrench::WorkflowTask*> entry_tasks = workflow->getEntryTasks();
+  std::vector<wrench::WorkflowTask*> tasks = workflow->getTasks();
   try {
-    for (auto task : entry_tasks) {
+    for (auto task : tasks) {
       auto input_files = task->getInputFiles();
       // Shuffle the input files
       std::shuffle(input_files.begin(), input_files.end(), gen);
