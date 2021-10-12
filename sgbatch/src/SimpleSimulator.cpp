@@ -81,6 +81,8 @@ size_t arg_to_sizet (const std::string& arg) {
  * 
  * 
  * @param workflow: Workflow to fill with tasks
+ * @param xrd_block_size: maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
+ * @param dummy_flops: numer of lops each dummy task is executing
  * @param num_jobs: number of tasks
  * @param infiles_per_task: number of input-files each job processes
  * @param average_flops: expectation value of the flops distribution
@@ -96,15 +98,14 @@ void fill_streaming_workflow (
   size_t infiles_per_task,
   double average_flops, double sigma_flops,
   double average_memory, double sigma_memory,
-  double average_infile_size, double sigma_infile_size
+  double average_infile_size, double sigma_infile_size,
+  const double xrd_block_size = 1*1000*1000,
+  const double dummy_flops = std::numeric_limits<double>::min()
 ) {
   // Initialize random number generators
   std::normal_distribution<> flops(average_flops, sigma_flops);
   std::normal_distribution<> mem(average_memory, sigma_memory);
   std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
-
-  // Block size in bytes for XRootD-ish streaming and processing of input data
-  double xrd_block_size = 1*1000*1000;
 
   for (size_t j = 0; j < num_jobs; j++) {
     // Sample strictly positive task flops
@@ -125,7 +126,8 @@ void fill_streaming_workflow (
       wrench::WorkflowTask* task_parent = nullptr;
       for (size_t b = 0; b <= nblocks; b++) {
         // Dummytask with inputblock and previous dummytask dependence
-        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), 1, 1, 1, 1);
+        // with minimal number of memory and flops 
+        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), dummy_flops, 1, 1, dummy_flops);
         double blocksize;
         b == nblocks ? blocksize = (dinsize - nblocks*xrd_block_size): blocksize = xrd_block_size;
         dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
