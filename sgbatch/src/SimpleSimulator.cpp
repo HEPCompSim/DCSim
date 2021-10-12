@@ -81,6 +81,7 @@ size_t arg_to_sizet (const std::string& arg) {
  * 
  * 
  * @param workflow: Workflow to fill with tasks
+ * @param blockstreaming: switch to turn on blockwise streaming of input data
  * @param xrd_block_size: maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
  * @param dummy_flops: numer of lops each dummy task is executing
  * @param num_jobs: number of tasks
@@ -99,7 +100,8 @@ void fill_streaming_workflow (
   double average_flops, double sigma_flops,
   double average_memory, double sigma_memory,
   double average_infile_size, double sigma_infile_size,
-  const double xrd_block_size = 1*1000*1000,
+  const bool use_blockstreaming = true,
+  double xrd_block_size = 1*1000*1000,
   const double dummy_flops = std::numeric_limits<double>::min()
 ) {
   // Initialize random number generators
@@ -119,6 +121,10 @@ void fill_streaming_workflow (
       // Sample inputfile sizes
       double dinsize = insize(gen);
       while (dinsize < 0.) dinsize = insize(gen); 
+      // when blockstreaming is turned off
+      if (!use_blockstreaming) {
+        xrd_block_size = dinsize;
+      }  
       // Chunk inputfiles into blocks and create blockwise tasks and dummy tasks
       // chain them as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf to enable task streaming
       size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
@@ -198,6 +204,10 @@ int main(int argc, char **argv) {
   // The fifth argument is the fractional cache hitrate
   double hitrate = arg_to_double(argv[5]);
 
+  // Turn on/off blockwise streaming of input-files
+  //TODO: add CLI features for the blockwise streaming flag
+  bool use_blockstreaming = false;
+
 
   /* Create a workflow */
   std::cerr << "Loading workflow..." << std::endl;
@@ -216,7 +226,8 @@ int main(int argc, char **argv) {
     num_jobs, infiles_per_job,
     average_flops, sigma_flops,
     average_memory,sigma_memory,
-    average_infile_size, sigma_infile_size
+    average_infile_size, sigma_infile_size,
+    use_blockstreaming
   );
 
   std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks " << std::endl;
