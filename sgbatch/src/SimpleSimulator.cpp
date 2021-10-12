@@ -124,12 +124,11 @@ void fill_streaming_workflow (
       size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
       wrench::WorkflowTask* dummytask_parent = nullptr;
       wrench::WorkflowTask* task_parent = nullptr;
-      for (size_t b = 0; b <= nblocks; b++) {
+      for (size_t b = 0; b < nblocks; b++) {
         // Dummytask with inputblock and previous dummytask dependence
         // with minimal number of memory and flops 
         auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), dummy_flops, 1, 1, dummy_flops);
-        double blocksize;
-        b == nblocks ? blocksize = (dinsize - nblocks*xrd_block_size): blocksize = xrd_block_size;
+        double blocksize = xrd_block_size;
         dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
         if (b!=0) {
           workflow->addControlDependency(dummytask_parent, dummytask);
@@ -144,9 +143,25 @@ void fill_streaming_workflow (
         }
         task_parent = task;
         // Last blocktask is endtask
-        if (b == nblocks) {
+        if (b == nblocks-1) {
           endtask = task;
         }
+      }
+      // when the input-file size is not an integer multiple of the XRootD blocksize create a last block task which takes care of the modulo
+      // when blockwise streaming is turned off this evaluates to false
+      if (double blocksize = (dinsize - nblocks*xrd_block_size)) {
+        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), dummy_flops, 1, 1, dummy_flops);
+        dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), blocksize));
+        if (dummytask_parent) {
+          workflow->addControlDependency(dummytask_parent, dummytask);
+        }
+        double blockflops = dflops * blocksize/dinsize;
+        auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), blockflops, 1, 1, dmem);
+        workflow->addControlDependency(dummytask, task);
+        if (task_parent) {
+          workflow->addControlDependency(task_parent, task);
+        }
+        endtask = task;
       }
     }
     endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
