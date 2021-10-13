@@ -116,7 +116,10 @@ void fill_streaming_workflow (
     // Sample strictly positive task memory requirements
     double dmem = mem(gen);
     while (dmem < 0.) dmem = mem(gen);
+
+    // Connect the chains spanning all input-files of a job
     wrench::WorkflowTask* endtask = nullptr;
+    wrench::WorkflowTask* enddummytask = nullptr;
     for (size_t f = 0; f < infiles_per_task; f++) {
       // Sample inputfile sizes
       double dinsize = insize(gen);
@@ -130,13 +133,18 @@ void fill_streaming_workflow (
       size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
       wrench::WorkflowTask* dummytask_parent = nullptr;
       wrench::WorkflowTask* task_parent = nullptr;
+      if (enddummytask && endtask) {
+        // Connect the chain to the previous input-file's
+        dummytask_parent = enddummytask;
+        task_parent = endtask;
+      }
       for (size_t b = 0; b < nblocks; b++) {
         // Dummytask with inputblock and previous dummytask dependence
         // with minimal number of memory and flops 
         auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), dummy_flops, 1, 1, dummy_flops);
         double blocksize = xrd_block_size;
         dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
-        if (b!=0) {
+        if (dummytask_parent) {
           workflow->addControlDependency(dummytask_parent, dummytask);
         }
         dummytask_parent = dummytask;
@@ -144,12 +152,13 @@ void fill_streaming_workflow (
         double blockflops = dflops * blocksize/dinsize;
         auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blockflops, 1, 1, dmem);
         workflow->addControlDependency(dummytask, task);
-        if (b!=0) {
+        if (task_parent) {
           workflow->addControlDependency(task_parent, task);
         }
         task_parent = task;
         // Last blocktask is endtask
         if (b == nblocks-1) {
+          enddummytask = dummytask;
           endtask = task;
         }
       }
@@ -167,6 +176,7 @@ void fill_streaming_workflow (
         if (task_parent) {
           workflow->addControlDependency(task_parent, task);
         }
+        enddummytask = dummytask;
         endtask = task;
       }
     }
@@ -206,7 +216,7 @@ int main(int argc, char **argv) {
 
   // Turn on/off blockwise streaming of input-files
   //TODO: add CLI features for the blockwise streaming flag
-  bool use_blockstreaming = false;
+  bool use_blockstreaming = false; // ! turned off for test purposes
 
 
   /* Create a workflow */
