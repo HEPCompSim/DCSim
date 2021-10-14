@@ -1,0 +1,19 @@
+
+std::map<std::string, std::vector<std::shared_ptr<StorageService>>> storage_service_hierarchy;
+
+storage_service_selector["Host1"] = {ss_1, ss_global};
+storage_service_selector["Host2"] = {ss_2, ss_global};
+
+
+submitJob(...., storage_service_hierarchy);
+
+
+Option #1:
+    - Augment submitJob with storage service hierarchy argument
+        - Workunit executor deals with and DOES the caching
+
+Option #2:
+    - Do a fork of WRENCH with a few horrible lines of code in HTCondorNegotiator
+
+Option #3:
+    - Implement a beautiful simulation of XrootD and the Proxy service for caching
