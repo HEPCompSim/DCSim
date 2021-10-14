@@ -81,6 +81,9 @@ size_t arg_to_sizet (const std::string& arg) {
  * 
  * 
  * @param workflow: Workflow to fill with tasks
+ * @param blockstreaming: switch to turn on blockwise streaming of input data
+ * @param xrd_block_size: maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
+ * @param dummy_flops: numer of lops each dummy task is executing
  * @param num_jobs: number of tasks
  * @param infiles_per_task: number of input-files each job processes
  * @param average_flops: expectation value of the flops distribution
@@ -96,15 +99,15 @@ void fill_streaming_workflow (
   size_t infiles_per_task,
   double average_flops, double sigma_flops,
   double average_memory, double sigma_memory,
-  double average_infile_size, double sigma_infile_size
+  double average_infile_size, double sigma_infile_size,
+  const bool use_blockstreaming = true,
+  double xrd_block_size = 1*1000*1000,
+  const double dummy_flops = std::numeric_limits<double>::min()
 ) {
   // Initialize random number generators
   std::normal_distribution<> flops(average_flops, sigma_flops);
   std::normal_distribution<> mem(average_memory, sigma_memory);
   std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
-
-  // Block size in bytes for XRootD-ish streaming and processing of input data
-  double xrd_block_size = 1*1000*1000;
 
   for (size_t j = 0; j < num_jobs; j++) {
     // Sample strictly positive task flops
@@ -113,23 +116,35 @@ void fill_streaming_workflow (
     // Sample strictly positive task memory requirements
     double dmem = mem(gen);
     while (dmem < 0.) dmem = mem(gen);
+
+    // Connect the chains spanning all input-files of a job
     wrench::WorkflowTask* endtask = nullptr;
+    wrench::WorkflowTask* enddummytask = nullptr;
     for (size_t f = 0; f < infiles_per_task; f++) {
       // Sample inputfile sizes
       double dinsize = insize(gen);
       while (dinsize < 0.) dinsize = insize(gen); 
+      // when blockstreaming is turned off
+      if (!use_blockstreaming) {
+        xrd_block_size = dinsize;
+      }  
       // Chunk inputfiles into blocks and create blockwise tasks and dummy tasks
       // chain them as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf to enable task streaming
       size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
       wrench::WorkflowTask* dummytask_parent = nullptr;
       wrench::WorkflowTask* task_parent = nullptr;
-      for (size_t b = 0; b <= nblocks; b++) {
+      if (enddummytask && endtask) {
+        // Connect the chain to the previous input-file's
+        dummytask_parent = enddummytask;
+        task_parent = endtask;
+      }
+      for (size_t b = 0; b < nblocks; b++) {
         // Dummytask with inputblock and previous dummytask dependence
-        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), 1, 1, 1, 1);
-        double blocksize;
-        b == nblocks ? blocksize = (dinsize - nblocks*xrd_block_size): blocksize = xrd_block_size;
+        // with minimal number of memory and flops 
+        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), dummy_flops, 1, 1, dummy_flops);
+        double blocksize = xrd_block_size;
         dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
-        if (b!=0) {
+        if (dummytask_parent) {
           workflow->addControlDependency(dummytask_parent, dummytask);
         }
         dummytask_parent = dummytask;
@@ -137,14 +152,32 @@ void fill_streaming_workflow (
         double blockflops = dflops * blocksize/dinsize;
         auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blockflops, 1, 1, dmem);
         workflow->addControlDependency(dummytask, task);
-        if (b!=0) {
+        if (task_parent) {
           workflow->addControlDependency(task_parent, task);
         }
         task_parent = task;
         // Last blocktask is endtask
-        if (b == nblocks) {
+        if (b == nblocks-1) {
+          enddummytask = dummytask;
           endtask = task;
         }
+      }
+      // when the input-file size is not an integer multiple of the XRootD blocksize create a last block task which takes care of the modulo
+      // when blockwise streaming is turned off this evaluates to false
+      if (double blocksize = (dinsize - nblocks*xrd_block_size)) {
+        auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), dummy_flops, 1, 1, dummy_flops);
+        dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), blocksize));
+        if (dummytask_parent) {
+          workflow->addControlDependency(dummytask_parent, dummytask);
+        }
+        double blockflops = dflops * blocksize/dinsize;
+        auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), blockflops, 1, 1, dmem);
+        workflow->addControlDependency(dummytask, task);
+        if (task_parent) {
+          workflow->addControlDependency(task_parent, task);
+        }
+        enddummytask = dummytask;
+        endtask = task;
       }
     }
     endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
@@ -181,6 +214,10 @@ int main(int argc, char **argv) {
   // The fifth argument is the fractional cache hitrate
   double hitrate = arg_to_double(argv[5]);
 
+  // Turn on/off blockwise streaming of input-files
+  //TODO: add CLI features for the blockwise streaming flag
+  bool use_blockstreaming = false; // ! turned off for test purposes
+
 
   /* Create a workflow */
   std::cerr << "Loading workflow..." << std::endl;
@@ -199,7 +236,8 @@ int main(int argc, char **argv) {
     num_jobs, infiles_per_job,
     average_flops, sigma_flops,
     average_memory,sigma_memory,
-    average_infile_size, sigma_infile_size
+    average_infile_size, sigma_infile_size,
+    use_blockstreaming
   );
 
   std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks " << std::endl;
@@ -319,11 +357,11 @@ int main(int argc, char **argv) {
   }
   auto remote_storage_service = *remote_storage_services.begin();
 
-  // It is necessary to store, or "stage", input files
+  // It is necessary to store, or "stage", input files (blocks)
   std::cerr << "Staging input files..." << std::endl;
-  std::vector<wrench::WorkflowTask*> entry_tasks = workflow->getEntryTasks();
+  std::vector<wrench::WorkflowTask*> tasks = workflow->getTasks();
   try {
-    for (auto task : entry_tasks) {
+    for (auto task : tasks) {
       auto input_files = task->getInputFiles();
       // Shuffle the input files
       std::shuffle(input_files.begin(), input_files.end(), gen);
