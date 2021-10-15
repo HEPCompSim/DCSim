@@ -14,6 +14,41 @@
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for Simple WMS");
 
 /**
+ * @brief Helper function to get all descendants of a WorkflowTask recursively. 
+ * At the end duplicates have to be removed.
+ * 
+ * @param task: a WorkflowTask
+ * 
+ * @return vector of WorkflowTask pointer
+ * 
+ * @throw std::invalid_argument
+ */
+std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* task) {
+  if (task == nullptr) {
+    throw std::invalid_argument("getDescendants(): Invalid arguments");
+  }
+  // Recursively get all children and children's children
+  std::vector<wrench::WorkflowTask*> descendants;
+  auto children = task->getChildren();
+  if (!children.empty()) {
+    descendants.insert(descendants.end(), children.begin(), children.end());
+  }
+  for (auto child : children) {
+    auto tmp_descendants = getDescendants(child);
+    if (!tmp_descendants.empty()) {
+      descendants.insert(descendants.end(), tmp_descendants.begin(), tmp_descendants.end());
+    }
+  }
+  // Remove duplicates
+  std::sort(descendants.begin(), descendants.end());
+  auto last = std::unique(descendants.begin(), descendants.end());
+  descendants.erase(last, descendants.end());
+
+  return descendants;
+}
+
+
+/**
  * @brief Create a Simple WMS with a workflow instance, a list of storage services and a list of compute services
  */
 SimpleWMS::SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
@@ -47,7 +82,9 @@ int SimpleWMS::main() {
     checkDeferredStart();
 
     WRENCH_INFO("Starting on host %s", wrench::Simulation::getHostName().c_str());
-    WRENCH_INFO("About to execute a workflow with %lu tasks", this->getWorkflow()->getNumberOfTasks());
+    WRENCH_INFO("About to execute a workflow with %lu tasks", 
+                this->getWorkflow()->getNumberOfTasks());
+
 
     // Create a job manager
     this->job_manager = this->createJobManager();
@@ -56,6 +93,7 @@ int SimpleWMS::main() {
     // Create a data movement manager
     this->data_movement_manager = this->createDataMovementManager();
     WRENCH_INFO("Created a data manager");
+
 
     // Get the available compute services
     // TODO: generalize to arbitrary numbers of HTCondorComputeServices
@@ -68,7 +106,10 @@ int SimpleWMS::main() {
     }
 
     auto htcondor_compute_service = *htcondor_compute_services.begin();
-    WRENCH_INFO("Found %ld HTCondor Service(s) on %s", htcondor_compute_services.size(), htcondor_compute_service->getHostname().c_str());
+    WRENCH_INFO("Found %ld HTCondor Service(s) on %s", 
+                htcondor_compute_services.size(), 
+                htcondor_compute_service->getHostname().c_str());
+
 
     // Get the available storage services
     auto storage_services = this->getAvailableStorageServices();
@@ -92,67 +133,78 @@ int SimpleWMS::main() {
     auto remote_storage_service = *remote_storage_services.begin();
     WRENCH_INFO("Found %ld Remote Storage Service(s) on %s", remote_storage_services.size(), remote_storage_service->getHostname().c_str());
 
+
+    // Get the entry tasks
+    std::vector<wrench::WorkflowTask*> entry_tasks = this->getWorkflow()->getEntryTasks();
+    WRENCH_INFO("There are %ld task-chains to schedule", entry_tasks.size());
+    //TODO: check if #entry-taks=#jobs=#chains
+    
+    // Group task chunks belonging to the same task-chain into single job
+    int counter = 0;
+    for (auto entry_task : entry_tasks) {
+      std::vector<wrench::WorkflowTask*> task_chunks;
+      // if (!task_chunks.empty()) task_chunks.clear();
+      counter += 1;
+      // Group all tasks of the same chain
+      // starting with the entry task
+      task_chunks.push_back(entry_task);
+      // and add all children and children's children
+      auto descendants = getDescendants(entry_task);      
+      task_chunks.insert(task_chunks.end(), descendants.begin(), descendants.end());
+
+      // Identify file-locations on storage services
+      std::map<wrench::WorkflowFile *, std::vector<std::shared_ptr<wrench::FileLocation>>> file_locations;     
+      for (auto task : task_chunks) {
+        // Identify input-file locations
+        for (auto f : task->getInputFiles()) {
+          // Fill vector of input-file locations in order of read-priority
+          std::vector<std::shared_ptr<wrench::FileLocation>> locations;
+          // Caches have highest priority
+          //TODO: sort cache file-locations in order of proximity of the cache to the executing machine
+          for (auto cache : worker_storage_services) {
+            locations.insert(locations.end(), wrench::FileLocation::LOCATION(cache));
+          }
+          // Remote storages are fallback
+          for (auto remote_storage : remote_storage_services) {
+            locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
+          }
+          file_locations[f] = locations;
+        }
+        // Identify output-file locations
+        for (auto f : task->getOutputFiles()) {
+          // Fill vector of output-file locations in order of write-priority
+          std::vector<std::shared_ptr<wrench::FileLocation>> locations;
+          // Write to first remote storage
+          //TODO: chose the output file location according to a logic? 
+          for (auto remote_storage : remote_storage_services) {
+            locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
+          }
+          file_locations[f] = locations;
+        }
+      }
+
+      // Create and submit a job for each chain
+      auto job = this->job_manager->createStandardJob(task_chunks, file_locations);
+      std::map<std::string, std::string> htcondor_service_specific_args = {};
+      //TODO: generalize to arbitrary numbers of htcondor services
+      this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
+    }
+    WRENCH_INFO("Done with scheduling tasks as standard jobs");
+
+
     while (not this->getWorkflow()->isDone()) {
+      // Wait for a workflow execution event, and process it
+      try {
+          this->waitForAndProcessNextEvent();
+      } catch (wrench::WorkflowExecutionException &e) {
+          WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again",
+                      (e.getCause()->toString().c_str()));
+          continue;
+      }
 
-        // Get the ready tasks
-        std::vector<wrench::WorkflowTask *> ready_tasks = this->getWorkflow()->getReadyTasks();
-
-        WRENCH_INFO("There are %ld ready tasks to schedule", ready_tasks.size());
-        for (auto task : ready_tasks) {
-            // Distribute input files to storage services according to hitrate value
-            std::map<wrench::WorkflowFile *, std::shared_ptr<wrench::FileLocation>> file_locations;
-
-            // Compute the task's incremental inputfile sizes
-            std::vector<double> incr_inputfile_sizes;
-            for (auto f : task->getInputFiles()) {
-                if (incr_inputfile_sizes.empty()){
-                    incr_inputfile_sizes.push_back(f->getSize());
-                } else {
-                    incr_inputfile_sizes.push_back(f->getSize()+incr_inputfile_sizes.back());
-                }
-            }
-
-            // Locate inputfiles on all caches until hitrate threshold is reached
-            // and locate them also at remote storages as fallback
-            int counter = 0;
-            for (auto f : task->getInputFiles()) {
-                for (auto remote_storage : remote_storage_services) {
-                    file_locations.insert(std::make_pair(f, wrench::FileLocation::LOCATION(remote_storage)));
-                }
-                //TODO: figure out how to prefetch the inputfiles on caches
-                if ((incr_inputfile_sizes.at(counter)/incr_inputfile_sizes.back()) >= this->hitrate) continue;
-                for (auto cache : worker_storage_services) {
-                    file_locations.insert(std::make_pair(f, wrench::FileLocation::LOCATION(cache)));
-                }
-            }
-            //TODO: distribute inputfiles accordingly on the corresponding storage services
-            //TODO: ensure that inutfiles are read preferably from cache
-
-            // Set locations for outputfiles to remote storage
-            for (auto f : task->getOutputFiles()) {
-                //TODO: generalize to arbitrary numbers of remote storages
-                file_locations.insert(std::make_pair(f, wrench::FileLocation::LOCATION(remote_storage_service)));
-            }
-
-            auto job = this->job_manager->createStandardJob(task, file_locations);
-            std::map<std::string, std::string> htcondor_service_specific_args = {};
-            //TODO: generalize to arbitrary numbers of htcondor services
-            this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
-        }
-        WRENCH_INFO("Done with scheduling tasks as standard jobs");
-
-        // Wait for a workflow execution event, and process it
-        try {
-            this->waitForAndProcessNextEvent();
-        } catch (wrench::WorkflowExecutionException &e) {
-            WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again",
-                        (e.getCause()->toString().c_str()));
-            continue;
-        }
-
-        if (this->abort || this->getWorkflow()->isDone()) {
-            break;
-        }
+      if (this->abort || this->getWorkflow()->isDone()) {
+          break;
+      }
     }
 
     wrench::Simulation::sleep(10);
@@ -164,7 +216,8 @@ int SimpleWMS::main() {
         WRENCH_INFO("Workflow execution is incomplete!")
     }
 
-    WRENCH_INFO("Simple WMS daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());
+    WRENCH_INFO("Simple WMS daemon started on host %s terminating", 
+                wrench::Simulation::getHostName().c_str());
 
     this->job_manager.reset();
 
