@@ -14,6 +14,8 @@ Option #1:
 
 Option #2:
     - Do a fork of WRENCH with a few horrible lines of code in HTCondorNegotiator
+        - Filter and resort the file_location map
+        - Copy the input file synchronously to the according storage_service
 
 Option #3:
     - Implement a beautiful simulation of XrootD and the Proxy service for caching
