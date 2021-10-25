@@ -33,7 +33,7 @@ static bool ends_with(const std::string& str, const std::string& suffix) {
 double arg_to_double (const std::string& arg) {
   try {
     std::size_t pos;
-    double value = std::stoi(arg, &pos);
+    double value = std::stod(arg, &pos);
     if (pos < arg.size()) {
       std::cerr << "Trailing characters after number: " << arg << std::endl;
     }
@@ -135,6 +135,7 @@ void fill_streaming_workflow (
       wrench::WorkflowTask* task_parent = nullptr;
       if (enddummytask && endtask) {
         // Connect the chain to the previous input-file's
+        //TODO: test if both exist simultaneously
         dummytask_parent = enddummytask;
         task_parent = endtask;
       }
@@ -181,6 +182,7 @@ void fill_streaming_workflow (
       }
     }
     endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
+    //TODO: test if the complete chain has the right amount of tasks and dummytasks
   }
 }
 
@@ -216,7 +218,7 @@ int main(int argc, char **argv) {
 
   // Turn on/off blockwise streaming of input-files
   //TODO: add CLI features for the blockwise streaming flag
-  bool use_blockstreaming = false; // ! turned off for test purposes
+  bool use_blockstreaming = true; // ! turned off for test purposes
 
 
   /* Create a workflow */
@@ -240,7 +242,7 @@ int main(int argc, char **argv) {
     use_blockstreaming
   );
 
-  std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks " << std::endl;
+  std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks in " << std::to_string(num_jobs) << " chains" << std::endl;
 
 
   /* Read and parse the platform description file to instantiate a simulation platform */
@@ -411,6 +413,8 @@ int main(int argc, char **argv) {
   simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
   simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
   simulation_output.dumpWorkflowExecutionJSON(workflow, "tmp/workflowExecution.json", false, true);
+  // and the workflow graph
+  simulation_output.dumpWorkflowGraphJSON(workflow, "tmp/workflowGraph.json", true);
 
 
   return 0;
