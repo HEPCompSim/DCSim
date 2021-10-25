@@ -14,16 +14,16 @@
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for Simple WMS");
 
 /**
- * @brief Helper function to get all descendants of a WorkflowTask recursively. 
- * At the end duplicates have to be removed.
+ * @brief Helper function to recursively retrieve all descendants of a WorkflowTask recursively. 
+ * The returned vector is unfiltered and contains duplicates, which have to be removed.
  * 
  * @param task: a WorkflowTask
  * 
- * @return vector of WorkflowTask pointer
+ * @return vector of WorkflowTask pointers to duplicated descendant tasks
  * 
  * @throw std::invalid_argument
  */
-std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* task) {
+std::vector<wrench::WorkflowTask*> getUnfilteredDescendants(const wrench::WorkflowTask* task) {
   if (task == nullptr) {
     throw std::invalid_argument("getDescendants(): Invalid arguments");
   }
@@ -34,15 +34,31 @@ std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* ta
     descendants.insert(descendants.end(), children.begin(), children.end());
   }
   for (auto child : children) {
-    auto tmp_descendants = getDescendants(child);
+    auto tmp_descendants = getUnfilteredDescendants(child);
     if (!tmp_descendants.empty()) {
       descendants.insert(descendants.end(), tmp_descendants.begin(), tmp_descendants.end());
     }
   }
-  // Remove duplicates
+
+  return descendants;
+}
+
+/**
+ * @brief Helper function to retrieve a vector of unique descendant WorkflowTasks of a common ancestor
+ * 
+ * @param patriarch: common ancestor WorkflowTask of the chain
+ * 
+ * @return filtered vector of WorkflowTask pointers to descendant tasks
+ * 
+ * @throw std::invalid_argument
+ */
+std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* patriarch) {
+  // get unfiltered vector of descendants
+  auto descendants = getUnfilteredDescendants(patriarch);
+  // Filter duplicates
   std::sort(descendants.begin(), descendants.end());
   auto last = std::unique(descendants.begin(), descendants.end());
-  descendants.erase(last, descendants.end());
+  descendants.erase(last, descendants.end()); 
 
   return descendants;
 }
@@ -138,6 +154,7 @@ int SimpleWMS::main() {
     std::vector<wrench::WorkflowTask*> entry_tasks = this->getWorkflow()->getEntryTasks();
     WRENCH_INFO("There are %ld task-chains to schedule", entry_tasks.size());
     //TODO: check if #entry-taks=#jobs=#chains
+    // std::cerr << "There are " << std::to_string(entry_tasks.size()) << " task-chains to schedule" << std::endl;
     
     // Group task chunks belonging to the same task-chain into single job
     int counter = 0;
@@ -145,16 +162,19 @@ int SimpleWMS::main() {
       std::vector<wrench::WorkflowTask*> task_chunks;
       // if (!task_chunks.empty()) task_chunks.clear();
       counter += 1;
+      // std::cerr << "Chain number " << std::to_string(counter) << " contains these tasks:" << std::endl;
       // Group all tasks of the same chain
       // starting with the entry task
       task_chunks.push_back(entry_task);
       // and add all children and children's children
-      auto descendants = getDescendants(entry_task);      
+      auto descendants = getDescendants(entry_task);  
       task_chunks.insert(task_chunks.end(), descendants.begin(), descendants.end());
+      // std::cerr << "(In the chain are " << std::to_string(task_chunks.size()) << " tasks in total)" << std::endl;
 
       // Identify file-locations on storage services
       std::map<wrench::WorkflowFile *, std::vector<std::shared_ptr<wrench::FileLocation>>> file_locations;     
       for (auto task : task_chunks) {
+        // std::cerr << "\t" << task->getID().c_str() << std::endl;
         // Identify input-file locations
         for (auto f : task->getInputFiles()) {
           // Fill vector of input-file locations in order of read-priority
