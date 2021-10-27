@@ -385,10 +385,13 @@ int main(int argc, char **argv) {
       }
     }
   } catch (std::runtime_error &e) {
-    std::cerr << "Exception: " << e.what() << std::endl;
-    return 0;
+      std::cerr << "Exception: " << e.what() << std::endl;
+      return 0;
   }
 
+  simulation->getOutput().enableDiskTimestamps(true);
+  simulation->getOutput().enableFileReadWriteCopyTimestamps(true);
+  simulation->getOutput().enableWorkflowTaskTimestamps(true);
 
   /* Launch the simulation */
   std::cerr << "Launching the Simulation..." << std::endl;
@@ -409,12 +412,21 @@ int main(int argc, char **argv) {
   }
   // and dump JSONs containing the generated data
   std::cerr << "Dumping generated data..." << std::endl;
-  simulation_output.dumpDiskOperationsJSON("tmp/diskOps.json", true);
-  simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
-  simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
-  simulation_output.dumpWorkflowExecutionJSON(workflow, "tmp/workflowExecution.json", false, true);
+
+    bool include_platform = false;
+    bool include_workflow_exec = true;
+    bool include_workflow_graph = false;
+    bool include_energy = false;
+    bool generate_host_utilization_layout = false;
+    bool include_disk = true;
+    bool include_bandwidth = false;
+  simulation_output.dumpUnifiedJSON(workflow, "/tmp/unified.json", include_platform, include_workflow_exec, include_workflow_graph, include_energy, generate_host_utilization_layout, include_disk, include_bandwidth);
+//  simulation_output.dumpDiskOperationsJSON("tmp/diskOps.json", true);
+//  simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
+//  simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
+//  simulation_output.dumpWorkflowExecutionJSON(workflow, "tmp/workflowExecution.json", false, true);
   // and the workflow graph
-  simulation_output.dumpWorkflowGraphJSON(workflow, "tmp/workflowGraph.json", true);
+//  simulation_output.dumpWorkflowGraphJSON(workflow, "tmp/workflowGraph.json", true);
 
 
   return 0;
