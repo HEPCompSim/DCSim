@@ -414,9 +414,9 @@ int main(int argc, char **argv) {
   /* Analyse event traces */
   auto simulation_output = simulation->getOutput();
   auto trace = simulation_output.getTrace<wrench::SimulationTimestampTaskCompletion>();
-  for (auto const &item : trace) {
-    std::cerr << "Task " << item->getContent()->getTask()->getID() << " completed at time " << item->getDate() << std::endl;
-  }
+  // for (auto const &item : trace) {
+  //   std::cerr << "Task " << item->getContent()->getTask()->getID() << " completed at time " << item->getDate() << std::endl;
+  // }
   // and dump JSONs containing the generated data
   std::cerr << "Dumping generated data..." << std::endl;
 
@@ -427,7 +427,7 @@ int main(int argc, char **argv) {
     bool generate_host_utilization_layout = false;
     bool include_disk = true;
     bool include_bandwidth = false;
-  simulation_output.dumpUnifiedJSON(workflow, "/tmp/unified.json", include_platform, include_workflow_exec, include_workflow_graph, include_energy, generate_host_utilization_layout, include_disk, include_bandwidth);
+  simulation_output.dumpUnifiedJSON(workflow, "tmp/unified.json", include_platform, include_workflow_exec, include_workflow_graph, include_energy, generate_host_utilization_layout, include_disk, include_bandwidth);
 //  simulation_output.dumpDiskOperationsJSON("tmp/diskOps.json", true);
 //  simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
 //  simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
