@@ -179,11 +179,11 @@ int SimpleWMS::main() {
         for (auto f : task->getInputFiles()) {
           // Fill vector of input-file locations in order of read-priority
           std::vector<std::shared_ptr<wrench::FileLocation>> locations;
-          // Caches have highest priority
-          //TODO: sort cache file-locations in order of proximity of the cache to the executing machine
-          for (auto cache : worker_storage_services) {
-            locations.insert(locations.end(), wrench::FileLocation::LOCATION(cache));
-          }
+          //! Caches have highest priority -> Caches are added in HTCondorNegotiator
+          //! only give remote file locations, local caches will be filled by caching functionality
+          // for (auto cache : worker_storage_services) {
+          //   locations.insert(locations.end(), wrench::FileLocation::LOCATION(cache));
+          // }
           // Remote storages are fallback
           for (auto remote_storage : remote_storage_services) {
             locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
