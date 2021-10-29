@@ -92,6 +92,8 @@ size_t arg_to_sizet (const std::string& arg) {
  * @param sigma_memory: std. deviation of the memory distribution
  * @param average_infile_size: expectation value of the input-file size distribution
  * @param sigma_infile_size: std. deviation of the input-file size distribution
+ * 
+ * @throw std::runtime_error
  */
 void fill_streaming_workflow (
   wrench::Workflow* workflow,
@@ -135,9 +137,14 @@ void fill_streaming_workflow (
       wrench::WorkflowTask* task_parent = nullptr;
       if (enddummytask && endtask) {
         // Connect the chain to the previous input-file's
-        //TODO: test if both exist simultaneously
         dummytask_parent = enddummytask;
         task_parent = endtask;
+      }
+      else if (endtask) {
+        throw std::runtime_error("There is no matching enddummytask for endtask "+endtask->getID());
+      }
+      else if (enddummytask) {
+        throw std::runtime_error("There is no matching endtask for enddummytask "+enddummytask->getID());
       }
       for (size_t b = 0; b < nblocks; b++) {
         // Dummytask with inputblock and previous dummytask dependence
