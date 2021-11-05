@@ -131,7 +131,7 @@ void fill_streaming_workflow (
     wrench::WorkflowTask* enddummytask = nullptr;
     // when blockstreaming is turned off create only one task with all inputfiles
     if (!use_blockstreaming) {
-      wrench::WorkflowTask* endtask = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
+      endtask = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
     }
     for (size_t f = 0; f < infiles_per_task; f++) {
       // Sample inputfile sizes
