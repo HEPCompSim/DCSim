@@ -94,6 +94,8 @@ size_t arg_to_sizet (const std::string& arg) {
  * @param sigma_memory: std. deviation of the memory (truncated gaussian) distribution
  * @param average_infile_size: expectation value of the input-file size (truncated gaussian) distribution
  * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
+ * @param average_outfile_size: expectation value of the output-file size (truncated gaussian) distribution
+ * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
  * 
  * @throw std::runtime_error
  */
@@ -104,6 +106,7 @@ void fill_streaming_workflow (
   double average_flops, double sigma_flops,
   double average_memory, double sigma_memory,
   double average_infile_size, double sigma_infile_size,
+  double average_outfile_size, double sigma_outfile_size,
   const bool use_blockstreaming = false,
   const bool use_simplified_blockstreaming = true,
   double xrd_block_size = 1*1000*1000*1000,
@@ -113,6 +116,7 @@ void fill_streaming_workflow (
   std::normal_distribution<> flops(average_flops, sigma_flops);
   std::normal_distribution<> mem(average_memory, sigma_memory);
   std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
+  std::normal_distribution<> outsize(average_outfile_size,sigma_outfile_size);
 
   for (size_t j = 0; j < num_jobs; j++) {
     // Sample strictly positive task flops
@@ -202,7 +206,10 @@ void fill_streaming_workflow (
         endtask = task;
       }
     }
-    endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), 0.0));
+    // Sample outfile sizes
+    double doutsize = outsize(gen);
+    while ((average_outfile_size+sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize(gen); 
+    endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), doutsize));
     //TODO: test if the complete chain has the right amount of tasks and dummytasks
   }
 }
@@ -237,22 +244,24 @@ int main(int argc, char **argv) {
   // The fifth argument is the fractional cache hitrate
   double hitrate = arg_to_double(argv[5]);
 
-  // Turn on/off blockwise streaming of input-files
-  //TODO: add CLI features for the blockwise streaming flag
-  bool use_simplified_blockstreaming = false; // ! turned off for test purposes
-
-
-  /* Create a workflow */
-  std::cerr << "Loading workflow..." << std::endl;
-  auto workflow = new wrench::Workflow();
-
-  // Sample task parameters from normal distributions
-  // Set normal distribution parameters
+  // Set remaining task parameters for truncated normal distributions
   double average_flops = 1.2*1000*1000;
   double average_memory = 2*1000*1000*1000;
   double sigma_flops = 0.5*average_flops;
   double sigma_memory = 0.5*average_memory;
   double sigma_infile_size = 0.5*average_infile_size;
+  double average_outfile_size = 0.05*average_infile_size;
+  double sigma_outfile_size = 0.5*average_outfile_size;
+
+  // Turn on/off blockwise streaming of input-files
+  //TODO: add CLI features for the blockwise streaming flag
+  bool use_blockstreaming = false;
+  bool use_simplified_blockstreaming = true;
+
+
+  /* Create a workflow */
+  std::cerr << "Loading workflow..." << std::endl;
+  auto workflow = new wrench::Workflow();
   
   fill_streaming_workflow(
     workflow, 
@@ -260,6 +269,8 @@ int main(int argc, char **argv) {
     average_flops, sigma_flops,
     average_memory,sigma_memory,
     average_infile_size, sigma_infile_size,
+    average_outfile_size, sigma_outfile_size,
+    use_blockstreaming,
     use_simplified_blockstreaming
   );
 
