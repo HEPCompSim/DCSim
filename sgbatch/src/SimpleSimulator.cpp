@@ -77,21 +77,23 @@ size_t arg_to_sizet (const std::string& arg) {
 
 
 /**
- * @brief fill a Workflow with tasks, which stream input data and perform computations in blocks
- * 
- * 
+ * @brief fill a Workflow with tasks, which include the inputfile and outputfile dependencies of a job.
+ * Optionally a task chain which takes care of streaming input data and perform computations in blocks 
+ * per job can be created in a simplified and fully XRootD-ish manner.
+ *  
  * @param workflow: Workflow to fill with tasks
- * @param blockstreaming: switch to turn on blockwise streaming of input data
+ * @param use_blockstreaming: switch to turn on blockwise streaming, else wait for inputfile copy
+ * @param use_simplified_blockstreaming: switch to turn on simplified blockwise streaming (1 block) of input data, when blockwise streaming true
  * @param xrd_block_size: maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
- * @param dummy_flops: numer of lops each dummy task is executing
+ * @param dummy_flops: numer of flops each dummy task is executing
  * @param num_jobs: number of tasks
  * @param infiles_per_task: number of input-files each job processes
- * @param average_flops: expectation value of the flops distribution
- * @param sigma_flops: std. deviation of the flops distribution
- * @param average_memory: expectation value of the memory distribution
- * @param sigma_memory: std. deviation of the memory distribution
- * @param average_infile_size: expectation value of the input-file size distribution
- * @param sigma_infile_size: std. deviation of the input-file size distribution
+ * @param average_flops: expectation value of the flops (truncated gaussian) distribution
+ * @param sigma_flops: std. deviation of the flops (truncated gaussian) distribution
+ * @param average_memory: expectation value of the memory (truncated gaussian) distribution
+ * @param sigma_memory: std. deviation of the memory (truncated gaussian) distribution
+ * @param average_infile_size: expectation value of the input-file size (truncated gaussian) distribution
+ * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
  * 
  * @throw std::runtime_error
  */
@@ -102,8 +104,9 @@ void fill_streaming_workflow (
   double average_flops, double sigma_flops,
   double average_memory, double sigma_memory,
   double average_infile_size, double sigma_infile_size,
-  const bool use_blockstreaming = true,
-  double xrd_block_size = 1*1000*1000,
+  const bool use_blockstreaming = false,
+  const bool use_simplified_blockstreaming = true,
+  double xrd_block_size = 1*1000*1000*1000,
   const double dummy_flops = std::numeric_limits<double>::min()
 ) {
   // Initialize random number generators
@@ -114,20 +117,31 @@ void fill_streaming_workflow (
   for (size_t j = 0; j < num_jobs; j++) {
     // Sample strictly positive task flops
     double dflops = flops(gen);
-    while (dflops < 0.) dflops = flops(gen);
+    while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops(gen);
     // Sample strictly positive task memory requirements
     double dmem = mem(gen);
-    while (dmem < 0.) dmem = mem(gen);
+    while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem(gen);
 
     // Connect the chains spanning all input-files of a job
     wrench::WorkflowTask* endtask = nullptr;
     wrench::WorkflowTask* enddummytask = nullptr;
+    // when blockstreaming is turned off create only one task with all inputfiles
+    if (!use_blockstreaming) {
+      wrench::WorkflowTask* endtask = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
+    }
     for (size_t f = 0; f < infiles_per_task; f++) {
       // Sample inputfile sizes
       double dinsize = insize(gen);
-      while (dinsize < 0.) dinsize = insize(gen); 
-      // when blockstreaming is turned off
+      while ((average_infile_size+sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize(gen); 
+      
+      // when blockstreaming is turned off create only one task with all inputfiles
       if (!use_blockstreaming) {
+        endtask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f), dinsize));
+        continue;
+      }
+
+      // when simplified blockstreaming is turned on create only one dummytask and task per infile
+      if (use_simplified_blockstreaming) {
         xrd_block_size = dinsize;
       }  
       // Chunk inputfiles into blocks and create blockwise tasks and dummy tasks
@@ -225,7 +239,7 @@ int main(int argc, char **argv) {
 
   // Turn on/off blockwise streaming of input-files
   //TODO: add CLI features for the blockwise streaming flag
-  bool use_blockstreaming = true; // ! turned off for test purposes
+  bool use_simplified_blockstreaming = false; // ! turned off for test purposes
 
 
   /* Create a workflow */
@@ -246,7 +260,7 @@ int main(int argc, char **argv) {
     average_flops, sigma_flops,
     average_memory,sigma_memory,
     average_infile_size, sigma_infile_size,
-    use_blockstreaming
+    use_simplified_blockstreaming
   );
 
   std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks in " << std::to_string(num_jobs) << " chains" << std::endl;
@@ -348,6 +362,7 @@ int main(int argc, char **argv) {
   auto wms = simulation->add(
           new SimpleWMS(
             htcondor_compute_services, 
+            //TODO: at this point only remote storage services should sufficient
             storage_services,
             {},//{network_proximity_service},
             file_registry_service, 
