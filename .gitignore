@@ -21,8 +21,11 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
-# executable
+# executables
 sgbatch/my-executable
 
 # outputs
 tmp
+
+# venv
+.venv/*
