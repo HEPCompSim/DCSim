@@ -1,0 +1,9 @@
+Write a process monitoring with:
+    - psutils: script to track a process with PID XXX
+    - valgrant
+    - ps -aux
+        Command: NJOBS=200; 
+        ./my-executable data/platform-files/hosts.xml ${NJOBS} 10 3600000000 0 & TEST_PID=$! ; 
+        echo $TEST_PID; 
+        (while [[ True ]]; do ps -aux | grep " ${TEST_PID} " | grep "my" >> tmp/monitor/test_nodump_${NJOBS}jobs.txt; sleep 10; done;)& MONITOR_PID=$! ; 
+        echo $TEST_PID $MONITOR_PID; wait $TEST_PID; kill -9 ${MONITOR_PID}
