@@ -449,14 +449,24 @@ int main(int argc, char **argv) {
   // and dump JSONs containing the generated data
   std::cerr << "Dumping generated data..." << std::endl;
 
-    bool include_platform = false;
-    bool include_workflow_exec = true;
-    bool include_workflow_graph = false;
-    bool include_energy = false;
-    bool generate_host_utilization_layout = false;
-    bool include_disk = true;
-    bool include_bandwidth = false;
-  simulation_output.dumpUnifiedJSON(workflow, "tmp/unified.json", include_platform, include_workflow_exec, include_workflow_graph, include_energy, generate_host_utilization_layout, include_disk, include_bandwidth);
+  bool include_platform = false;
+  bool include_workflow_exec = true;
+  bool include_workflow_graph = false;
+  bool include_energy = false;
+  bool generate_host_utilization_layout = false;
+  bool include_disk = true;
+  bool include_bandwidth = false;
+  simulation_output.dumpUnifiedJSON(
+    workflow, 
+    "tmp/outputs/unified_h"+std::to_string(hitrate)+"_"+std::to_string(num_jobs)+"jobs"+".json", 
+    include_platform, 
+    include_workflow_exec, 
+    include_workflow_graph, 
+    include_energy, 
+    generate_host_utilization_layout, 
+    include_disk, 
+    include_bandwidth
+  );
 //  simulation_output.dumpDiskOperationsJSON("tmp/diskOps.json", true);
 //  simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
 //  simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
