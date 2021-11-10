@@ -409,12 +409,15 @@ int main(int argc, char **argv) {
       double cached_files_size = 0.;
       for (auto const &f : input_files) {
         simulation->stageFile(f, remote_storage_service);
-        if (cached_files_size <= hitrate*incr_inputfile_size) {
+        if (cached_files_size < hitrate*incr_inputfile_size) {
           for (auto cache : cache_storage_services) {
             simulation->stageFile(f, cache);
           }
           cached_files_size += f->getSize();
         }
+      }
+      if (cached_files_size/incr_inputfile_size < hitrate) {
+        throw std::runtime_error("Desired hitrate was not reached!");
       }
     }
   } catch (std::runtime_error &e) {
