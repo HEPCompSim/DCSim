@@ -5,12 +5,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os.path
 import glob
-import datetime
 
 plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
-scenario = 'nodump'
+scenario = 'withdump'
 
 scenario_plotlabel_dict = {
     'withdump': "with JSON dump",
@@ -36,7 +35,8 @@ if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
                     "COMMAND", "Platform file", "NJobs", "NFilesPerJob", "FileSize", "Hitrate"
                     ],
                 )
-        for f in monitorfiles],
+            for f in monitorfiles
+        ],
         ignore_index=True
         )
     print("Simulation monitoring information: \n", df)
@@ -48,8 +48,9 @@ else:
 # postprocess data frame
 df['TIME'] = df['TIME'].str.split(":",expand=True).pipe(converttime, 0, 1)
 df['RSS'] = df['RSS']/(1024*1024)
-runtimes = df.loc[df.groupby("NJobs")["TIME"].idxmax()]
-print("Filtered data:\n", runtimes)
+runtimesdf = df.loc[df.groupby("NJobs")["TIME"].idxmax()]
+memorydf = df.loc[df.groupby("NJobs")["RSS"].idxmax()]
+print("Filtered data:\n", runtimesdf)
 
 
 # Visualize the monitoring information
@@ -58,19 +59,20 @@ ax.set_title("Simulation scaling " + scenario_plotlabel_dict[scenario])
 
 # ax.set_xscale('log')
 ax.set_xlabel('$N_{jobs}$', loc='right')
-ax.set_ylabel('time / s')
-# ax.set_xlim([0,2500])
-# ax.set_ylim([0,400])
+ax.set_ylabel('time / s', color='black')
+ax.set_xlim([0,2100])
+ax.set_ylim([0,400])
 
-ax.plot(runtimes['NJobs'], runtimes['TIME'], linestyle='dotted', color='black')
-ax.scatter(runtimes['NJobs'], runtimes['TIME'], color='black', marker='x', label='runtime')
+ax.plot(runtimesdf['NJobs'], runtimesdf['TIME'], linestyle='dotted', color='black')
+ax.scatter(runtimesdf['NJobs'], runtimesdf['TIME'], color='black', marker='x', label='runtime')
 ax.grid(axis="y", linestyle = 'dotted', which='major')
 
 secax = ax.twinx()
-secax.plot(runtimes['NJobs'], runtimes['RSS'],linestyle='dotted', color='orange')
-secax.scatter(runtimes['NJobs'], runtimes['RSS'], color='orange', marker='^', label='memory')
+secax.plot(memorydf['NJobs'], memorydf['RSS'],linestyle='dotted', color='orange')
+secax.scatter(memorydf['NJobs'], memorydf['RSS'], color='orange', marker='^', label='memory')
 # secax.xaxis.set_minor_locator(AutoMinorLocator())
-secax.set_ylabel('memory / GiB')
+secax.set_ylabel('memory / GiB', color='orange')
+secax.set_ylim([0,12])
 
 h1, l1 = ax.get_legend_handles_labels()
 h2, l2 = secax.get_legend_handles_labels()
