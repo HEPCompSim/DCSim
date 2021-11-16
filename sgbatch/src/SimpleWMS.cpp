@@ -155,10 +155,15 @@ int SimpleWMS::main() {
     WRENCH_INFO("There are %ld task-chains to schedule", entry_tasks.size());
     //TODO: check if #entry-taks=#jobs=#chains
     // std::cerr << "There are " << std::to_string(entry_tasks.size()) << " task-chains to schedule" << std::endl;
-    
+
+
     // Group task chunks belonging to the same task-chain into single job
+    std::pair<wrench::WorkflowTask *, wrench::WorkflowTask *> first_last_tasks;
+
     int counter = 0;
     for (auto entry_task : entry_tasks) {
+        // TODO: first_last_tasks.first = ???
+        // TODO: first_last_tasks.second = ???
       std::vector<wrench::WorkflowTask*> task_chunks;
       // if (!task_chunks.empty()) task_chunks.clear();
       counter += 1;
@@ -205,6 +210,7 @@ int SimpleWMS::main() {
 
       // Create and submit a job for each chain
       auto job = this->job_manager->createStandardJob(task_chunks, file_locations);
+      this->job_first_last_tasks[job] = first_last_tasks;
       std::map<std::string, std::string> htcondor_service_specific_args = {};
       //TODO: generalize to arbitrary numbers of htcondor services
       this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
@@ -256,4 +262,29 @@ void SimpleWMS::processEventStandardJobFailure(std::shared_ptr<wrench::StandardJ
     WRENCH_INFO("CauseType: %s", event->failure_cause->toString().c_str());
     WRENCH_INFO("As a SimpleWMS, I abort as soon as there is a failure");
     this->abort = true;
+}
+
+/**
+* @brief Process a WorkflowExecutionEvent::STANDARD_JOB_COMPLETION
+*
+* @param event: a workflow execution event
+*/
+void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent> event) {
+
+    /* Retrieve the job that this event is for */
+    auto job = event->standard_job;
+
+    /* Identify first/last tasks */
+    auto first_task = std::get<0>(this->job_first_last_tasks[job]);
+    auto last_task = std::get<1>(this->job_first_last_tasks[job]);
+
+    // TODO: Extract/save relevant information
+
+    /* Remove all tasks */
+    for (auto const &task: job->getTasks()) {
+        this->getWorkflow()->removeTask(task);
+    }
+
+    this->job_first_last_tasks.erase(job);
+
 }

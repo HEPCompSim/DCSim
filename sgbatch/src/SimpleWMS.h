@@ -29,6 +29,7 @@ public:
 
 protected:
     void processEventStandardJobFailure(std::shared_ptr<wrench::StandardJobFailedEvent>) override;
+    void processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent>) override;
 
 private:
     int main() override;
@@ -41,6 +42,11 @@ private:
     bool abort = false;
     /** @brief The desired fraction of input files served by the cache */
     double hitrate = 0.;
+
+
+    std::map<std::shared_ptr<wrench::StandardJob>, std::pair<wrench::WorkflowTask*, wrench::WorkflowTask*>> job_first_last_tasks;
+
+
 };
 
 #endif //MY_SIMPLEWMS_H
