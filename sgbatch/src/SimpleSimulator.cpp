@@ -425,9 +425,9 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-  simulation->getOutput().enableDiskTimestamps(true);
-  simulation->getOutput().enableFileReadWriteCopyTimestamps(true);
-  simulation->getOutput().enableWorkflowTaskTimestamps(true);
+  simulation->getOutput().enableDiskTimestamps(false);
+  simulation->getOutput().enableFileReadWriteCopyTimestamps(false);
+  simulation->getOutput().enableWorkflowTaskTimestamps(false);
 
   /* Launch the simulation */
   std::cerr << "Launching the Simulation..." << std::endl;
@@ -439,7 +439,7 @@ int main(int argc, char **argv) {
   }
   std::cerr << "Simulation done!" << std::endl;
 
-
+#if 0
   /* Analyse event traces */
   auto simulation_output = simulation->getOutput();
   auto trace = simulation_output.getTrace<wrench::SimulationTimestampTaskCompletion>();
@@ -474,6 +474,7 @@ int main(int argc, char **argv) {
   // and the workflow graph
 //  simulation_output.dumpWorkflowGraphJSON(workflow, "tmp/workflowGraph.json", true);
 
+#endif
 
   return 0;
 }
