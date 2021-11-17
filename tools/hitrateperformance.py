@@ -53,11 +53,11 @@ fig, ax1 = plt.subplots()
 ax1.set_title("Input-files copied")
 
 ax1.set_xlabel('hitrate', loc='right')
-ax1.set_ylabel('jobtime / s', color='black')
+ax1.set_ylabel('jobtime / min', color='black')
 ax1.set_xlim([-0.05,1.05])
 # ax1.set_ylim([0,400])
 
-ax1.scatter(df['hitrate'], (df['whole_task.end']-df['whole_task.start']), color='black', marker='x', label='job')
+ax1.scatter(df['hitrate'], (df['whole_task.end']-df['whole_task.start'])/60., color='black', marker='x')
 # ax1.grid(axis="y", linestyle = 'dotted', which='major')
 
 h1, l1 = ax1.get_legend_handles_labels()
