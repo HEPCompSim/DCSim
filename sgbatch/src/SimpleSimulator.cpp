@@ -245,8 +245,8 @@ int main(int argc, char **argv) {
   double hitrate = arg_to_double(argv[5]);
 
   // Set remaining task parameters for truncated normal distributions
-  double average_flops = 1.2*1000*1000;
-  double average_memory = 2*1000*1000*1000;
+  double average_flops = 773.*1000*1000*1000;
+  double average_memory = 2.*1000*1000*1000;
   double sigma_flops = 0.5*average_flops;
   double sigma_memory = 0.5*average_memory;
   double sigma_infile_size = 0.5*average_infile_size;
