@@ -26,6 +26,7 @@ sgbatch/my-executable
 
 # outputs
 tmp
+*.pdf
 
 # venv
 .venv/*
