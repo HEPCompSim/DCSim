@@ -64,3 +64,18 @@ h1, l1 = ax1.get_legend_handles_labels()
 ax1.legend(h1, l1, loc=2)
 
 fig.savefig(f"hitratescaling_{njobs}jobs.pdf")
+
+
+fig2, ax2 = plt.subplots()
+ax2.set_title("Input-files copied")
+
+ax2.set_xlabel('hitrate', loc='right')
+ax2.set_ylabel('transfer time / min', color='black')
+ax2.set_xlim([-0.05,1.05])
+
+ax2.scatter(df['hitrate'], ((df['whole_task.end']-df['whole_task.start'])-(df['compute.end']-df['compute.start']))/60., color='black', marker='x')
+
+h2, l2 = ax2.get_legend_handles_labels()
+ax1.legend(h1, l1, loc=2)
+
+fig2.savefig(f"hitratetransfer_{njobs}jobs.pdf")
