@@ -245,18 +245,18 @@ int main(int argc, char **argv) {
   double hitrate = arg_to_double(argv[5]);
 
   // Set remaining task parameters for truncated normal distributions
-  double average_flops = 773.*1000*1000*1000;
+  double average_flops = 2164.428*1000*1000*1000;
   double average_memory = 2.*1000*1000*1000;
-  double sigma_flops = 0.5*average_flops;
-  double sigma_memory = 0.5*average_memory;
-  double sigma_infile_size = 0.5*average_infile_size;
-  double average_outfile_size = 0.05*average_infile_size;
-  double sigma_outfile_size = 0.5*average_outfile_size;
+  double sigma_flops = 0.1*average_flops;
+  double sigma_memory = 0.1*average_memory;
+  double sigma_infile_size = 0.1*average_infile_size;
+  double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
+  double sigma_outfile_size = 0.1*average_outfile_size;
 
   // Turn on/off blockwise streaming of input-files
   //TODO: add CLI features for the blockwise streaming flag
-  bool use_blockstreaming = false;
-  bool use_simplified_blockstreaming = true;
+  bool use_blockstreaming = true;
+  bool use_simplified_blockstreaming = false;
 
 
   /* Create a workflow */
@@ -425,9 +425,9 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-  simulation->getOutput().enableDiskTimestamps(true);
-  simulation->getOutput().enableFileReadWriteCopyTimestamps(true);
-  simulation->getOutput().enableWorkflowTaskTimestamps(true);
+  simulation->getOutput().enableDiskTimestamps(false);
+  simulation->getOutput().enableFileReadWriteCopyTimestamps(false);
+  simulation->getOutput().enableWorkflowTaskTimestamps(false);
 
   /* Launch the simulation */
   std::cerr << "Launching the Simulation..." << std::endl;
@@ -439,7 +439,7 @@ int main(int argc, char **argv) {
   }
   std::cerr << "Simulation done!" << std::endl;
 
-#if 1
+#if 0
   /* Analyse event traces */
   auto simulation_output = simulation->getOutput();
   auto trace = simulation_output.getTrace<wrench::SimulationTimestampTaskCompletion>();
@@ -458,7 +458,7 @@ int main(int argc, char **argv) {
   bool include_bandwidth = false;
   simulation_output.dumpUnifiedJSON(
     workflow, 
-    "tmp/outputs/unified_h"+std::to_string(hitrate)+"_"+std::to_string(num_jobs)+"jobs"+".json", 
+    "tmp/outputs/unified_simplestream_h"+std::to_string(hitrate)+"_"+std::to_string(num_jobs)+"jobs"+".json", 
     include_platform, 
     include_workflow_exec, 
     include_workflow_graph, 

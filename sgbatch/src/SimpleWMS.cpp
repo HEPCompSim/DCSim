@@ -158,23 +158,20 @@ int SimpleWMS::main() {
 
 
     // Group task chunks belonging to the same task-chain into single job
-    std::pair<wrench::WorkflowTask *, wrench::WorkflowTask *> first_last_tasks;
-
-    int counter = 0;
     for (auto entry_task : entry_tasks) {
-        // TODO: first_last_tasks.first = ???
-        // TODO: first_last_tasks.second = ???
-      std::vector<wrench::WorkflowTask*> task_chunks;
-      // if (!task_chunks.empty()) task_chunks.clear();
-      counter += 1;
-      // std::cerr << "Chain number " << std::to_string(counter) << " contains these tasks:" << std::endl;
+
       // Group all tasks of the same chain
+      std::vector<wrench::WorkflowTask*> task_chunks;
       // starting with the entry task
       task_chunks.push_back(entry_task);
       // and add all children and children's children
       auto descendants = getDescendants(entry_task);  
       task_chunks.insert(task_chunks.end(), descendants.begin(), descendants.end());
-      // std::cerr << "(In the chain are " << std::to_string(task_chunks.size()) << " tasks in total)" << std::endl;
+
+      // Identify first and last task of the job for output
+      std::pair<wrench::WorkflowTask *, wrench::WorkflowTask *> first_last_tasks;
+      first_last_tasks.first = entry_task;
+      first_last_tasks.second = task_chunks.back();
 
       // Identify file-locations on storage services
       std::map<wrench::WorkflowFile *, std::vector<std::shared_ptr<wrench::FileLocation>>> file_locations;     
@@ -269,22 +266,23 @@ void SimpleWMS::processEventStandardJobFailure(std::shared_ptr<wrench::StandardJ
 *
 * @param event: a workflow execution event
 */
-// void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent> event) {
+void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent> event) {
 
-//     /* Retrieve the job that this event is for */
-//     auto job = event->standard_job;
+    /* Retrieve the job that this event is for */
+    auto job = event->standard_job;
+    WRENCH_INFO("Notified that a %ld-task job has completed", job->getNumTasks());
 
-//     /* Identify first/last tasks */
-//     auto first_task = std::get<0>(this->job_first_last_tasks[job]);
-//     auto last_task = std::get<1>(this->job_first_last_tasks[job]);
+    /* Identify first/last tasks */
+    auto first_task = std::get<0>(this->job_first_last_tasks[job]);
+    auto last_task = std::get<1>(this->job_first_last_tasks[job]);
 
-//     // TODO: Extract/save relevant information
+    // TODO: Extract/save relevant information
 
-//     /* Remove all tasks */
-//     for (auto const &task: job->getTasks()) {
-//         this->getWorkflow()->removeTask(task);
-//     }
+    /* Remove all tasks */
+    for (auto const &task: job->getTasks()) {
+        this->getWorkflow()->removeTask(task);
+    }
 
-//     this->job_first_last_tasks.erase(job);
+    this->job_first_last_tasks.erase(job);
 
-// }
+}
