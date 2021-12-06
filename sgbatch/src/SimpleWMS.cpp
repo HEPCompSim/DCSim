@@ -269,22 +269,22 @@ void SimpleWMS::processEventStandardJobFailure(std::shared_ptr<wrench::StandardJ
 *
 * @param event: a workflow execution event
 */
-void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent> event) {
+// void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent> event) {
 
-    /* Retrieve the job that this event is for */
-    auto job = event->standard_job;
+//     /* Retrieve the job that this event is for */
+//     auto job = event->standard_job;
 
-    /* Identify first/last tasks */
-    auto first_task = std::get<0>(this->job_first_last_tasks[job]);
-    auto last_task = std::get<1>(this->job_first_last_tasks[job]);
+//     /* Identify first/last tasks */
+//     auto first_task = std::get<0>(this->job_first_last_tasks[job]);
+//     auto last_task = std::get<1>(this->job_first_last_tasks[job]);
 
-    // TODO: Extract/save relevant information
+//     // TODO: Extract/save relevant information
 
-    /* Remove all tasks */
-    for (auto const &task: job->getTasks()) {
-        this->getWorkflow()->removeTask(task);
-    }
+//     /* Remove all tasks */
+//     for (auto const &task: job->getTasks()) {
+//         this->getWorkflow()->removeTask(task);
+//     }
 
-    this->job_first_last_tasks.erase(job);
+//     this->job_first_last_tasks.erase(job);
 
-}
+// }

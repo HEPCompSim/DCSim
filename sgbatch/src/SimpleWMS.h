@@ -29,7 +29,7 @@ public:
 
 protected:
     void processEventStandardJobFailure(std::shared_ptr<wrench::StandardJobFailedEvent>) override;
-    void processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent>) override;
+    // void processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent>) override;
 
 private:
     int main() override;
