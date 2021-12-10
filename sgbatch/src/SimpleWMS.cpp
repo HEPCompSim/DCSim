@@ -66,21 +66,29 @@ std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* pa
 
 /**
  * @brief Create a Simple WMS with a workflow instance, a list of storage services and a list of compute services
+ * 
+ * @param compute_services: set of HTCondor compute services
+ * @param storage_services: set of storage services holding input files //! currently only remote storages needed
+ * @param hostname: host where the WMS runs
+ * //@param hitrate: fraction of files present at caches
+ * @param outputdump_name: name of the file to dump simulation information
  */
 SimpleWMS::SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
                      const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
-                     const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
-                     std::shared_ptr<wrench::FileRegistryService> file_registry_service,
+                     //const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
+                     //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
                      const std::string& hostname,
-                     const double& hitrate) : wrench::WMS(
+                     //const double& hitrate,
+                     const std::string& outputdump_name) : wrench::WMS(
         nullptr, nullptr,
         compute_services,
         storage_services,
-        network_proximity_services,
-        file_registry_service,
+        {},//network_proximity_services,
+        {},//file_registry_service,
         hostname,
         "condor-simple") {
-    this->hitrate = hitrate;
+    //this->hitrate = hitrate;
+    this->filename = outputdump_name;
 }
 
 /**

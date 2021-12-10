@@ -10,6 +10,9 @@
 #include <wrench.h>
 #include "SimpleWMS.h"
 
+#include <iostream>
+#include <fstream>
+
 
 std::mt19937 gen(42);
 
@@ -235,6 +238,10 @@ int main(int argc, char **argv) {
 
   // The first argument is the platform description file, written in XML following the SimGrid-defined DTD
   char *platform_file = argv[1];
+
+  // output-file name
+  std::string filename = "default.csv";
+
   // The second argument is the number of jobs which need to be executed
   size_t num_jobs = arg_to_sizet(argv[2]);
   // The third argument is the number of input files per job which need to be transferred
@@ -357,28 +364,15 @@ int main(int argc, char **argv) {
           simulation->add(new wrench::FileRegistryService(file_registry_service_host));
 
 
-  // /* Instantiate a network proximity service */
-  // std::string network_proximity_service_host = wms_host;
-  // std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
-  // auto network_proximity_service =
-  //         simulation->add(new wrench::NetworkProximityService(
-  //           network_proximity_service_host, 
-  //           hostname_list, 
-  //           {}, 
-  //           {}
-  //         ));
-
-
   /* Instantiate a WMS */
   auto wms = simulation->add(
           new SimpleWMS(
             htcondor_compute_services, 
-            //TODO: at this point only remote storage services should sufficient
+            //TODO: at this point only remote storage services should be sufficient
             storage_services,
-            {},//{network_proximity_service},
-            file_registry_service, 
             wms_host,
-            hitrate
+            //hitrate,
+            filename
           )
   );
   wms->addWorkflow(workflow);

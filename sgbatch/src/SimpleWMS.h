@@ -11,6 +11,8 @@
 #define MY_SIMPLEWMS_H
 
 #include <wrench-dev.h>
+#include <iostream>
+#include <fstream>
 
 class Simulation;
 
@@ -22,10 +24,11 @@ public:
     // Constructor
     SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
               const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
-              const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
-              std::shared_ptr<wrench::FileRegistryService> file_registry_service,
+              //const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
+              //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
               const std::string& hostname,
-              const double& hitrate);
+              //const double& hitrate,
+              const std::string& outputdump_name);
 
 protected:
     void processEventStandardJobFailure(std::shared_ptr<wrench::StandardJobFailedEvent>) override;
@@ -43,8 +46,12 @@ private:
     /** @brief The desired fraction of input files served by the cache */
     double hitrate = 0.;
 
-
+    /** @brief Map holding information about the first and last task of jobs for output dump */
     std::map<std::shared_ptr<wrench::StandardJob>, std::pair<wrench::WorkflowTask*, wrench::WorkflowTask*>> job_first_last_tasks;
+    /** @brief Filename for the output-dump file */
+    std::string filename;
+    /** @brief Output filestream object to write out dump */
+    std::ofstream filedump;
 
 
 };
