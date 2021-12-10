@@ -105,6 +105,19 @@ int SimpleWMS::main() {
     // Check whether the WMS has a deferred start time
     checkDeferredStart();
 
+    // initialize output-dump file
+    this->filedump.open(this->filename, ios::out | ios::trunc);
+    if (this->filedump.is_open()) {
+      this->filedump << "job.tag\t" << "job.ncpu\t" << "job.memory\t" << "job.disk\t";
+      this->filedump << "job.start\t" << "job.end\t" << "job.computetime\t";
+      this->filedump << "infiles.transfertime\t" << "infiles.size\t" << "outfiles.transfertime\t" << "outfiles.size" << std::endl;
+      WRENCH_INFO("Wrote header of the output dump into file %s", this->filename);
+      this->filedump.close();
+    }
+    else {
+      throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
+    }
+    
     WRENCH_INFO("Starting on host %s", wrench::Simulation::getHostName().c_str());
     WRENCH_INFO("About to execute a workflow with %lu tasks", 
                 this->getWorkflow()->getNumberOfTasks());
@@ -284,13 +297,34 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     auto first_task = std::get<0>(this->job_first_last_tasks[job]);
     auto last_task = std::get<1>(this->job_first_last_tasks[job]);
 
-    // TODO: Extract/save relevant information
-
-    /* Remove all tasks */
+    /* Remove all tasks and compute incremental output values in one loop */
+    double incr_compute_time = 0.;
+    double incr_infile_transfertime = 0.;
+    double incr_infile_size = 0.;
+    double incr_outfile_transfertime = 0.;
+    double incr_outfile_size = 0.;
     for (auto const &task: job->getTasks()) {
-        this->getWorkflow()->removeTask(task);
+      //TODO: compute incremental values
+      this->getWorkflow()->removeTask(task);
     }
 
+    /* Dump relevant information to file */
+    this->filedump.open(this->filename, ios::out | ios::app);
+    if (this->filedump.is_open()) {
+
+      this->filedump << job->getTasks().at(0)->getID() + "\t" << std::to_string(job->getMinimumRequiredNumCores()) + "\t" << std::to_string(job->getMinimumRequiredMemory()) + "\t" << /*TODO: find a way to get disk usage on scratch space */ + "\t" ;
+      this->filedump << std::to_string(first_task->getReadInputStartDate()) + "\t" << std::to_string(last_task->getWriteOutputEndDate()) + "\t" << std::to_string(incr_compute_time) + "\t" << std::to_string(incr_infile_transfertime) + "\t" ;
+      this->filedump << std::to_string(incr_infile_size) + "\t" << std::to_string(incr_outfile_transfertime) + "\t" << std::to_string(incr_outfile_size) << std::endl;
+
+      WRENCH_INFO("Information for job starting with task %s has been dumped", job->getTasks().at(0)->getID().c_str());
+
+      this->filedump.close();
+    }
+    else {
+      throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
+    }
+
+    /* get rid of last job records */
     this->job_first_last_tasks.erase(job);
 
 }
