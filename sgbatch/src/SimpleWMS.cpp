@@ -105,12 +105,12 @@ int SimpleWMS::main() {
     // Check whether the WMS has a deferred start time
     checkDeferredStart();
 
-    // initialize output-dump file
+    /* initialize output-dump file */
     this->filedump.open(this->filename, ios::out | ios::trunc);
     if (this->filedump.is_open()) {
-      this->filedump << "job.tag,\t"; // << "job.ncpu,\t" << "job.memory,\t" << "job.disk,\t";
-      this->filedump << "job.start,\t" << "job.end,\t" << "job.computetime,\t";
-      this->filedump << "infiles.transfertime,\t" << "infiles.size,\t" << "outfiles.transfertime,\t" << "outfiles.size," << std::endl;
+      this->filedump << "job.tag" << ",\t"; // << "job.ncpu" << ",\t" << "job.memory" << ",\t" << "job.disk" << ",\t";
+      this->filedump << "job.start" << ",\t" << "job.end" << ",\t" << "job.computetime" << ",\t";
+      this->filedump << "infiles.transfertime" << ",\t" << "infiles.size" << ",\t" << "outfiles.transfertime" << ",\t" << "outfiles.size" << std::endl;
       this->filedump.close();
 
       WRENCH_INFO("Wrote header of the output dump into file %s", this->filename.c_str());
@@ -292,7 +292,7 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
 
     /* Retrieve the job that this event is for */
     auto job = event->standard_job;
-    WRENCH_INFO("Notified that a %ld-task job has completed", job->getNumTasks());
+    WRENCH_INFO("Notified that job %s with %ld tasks has completed", job->getName().c_str(), job->getNumTasks());
 
     /* Identify first/last tasks */
     auto first_task = std::get<0>(this->job_first_last_tasks[job]);
@@ -330,13 +330,13 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     this->filedump.open(this->filename, ios::out | ios::app);
     if (this->filedump.is_open()) {
 
-      this->filedump << job->getTasks().at(0)->getID() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
+      this->filedump << job->getName() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
       this->filedump << std::to_string(first_task->getReadInputStartDate()) << ",\t" << std::to_string(last_task->getWriteOutputEndDate()) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
-      this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << "," << std::endl;
-
-      WRENCH_INFO("Information for job starting with task %s has been dumped", job->getTasks().at(0)->getID().c_str());
+      this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
 
       this->filedump.close();
+
+      WRENCH_INFO("Information for job %s has been dumped into file %s", job->getName().c_str(), this->filename.c_str());
     }
     else {
       throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
