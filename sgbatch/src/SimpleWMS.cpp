@@ -300,11 +300,28 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     /* Remove all tasks and compute incremental output values in one loop */
     double incr_compute_time = 0.;
     double incr_infile_transfertime = 0.;
-    double incr_infile_size = 0.;
+    unsigned long incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
-    double incr_outfile_size = 0.;
+    unsigned long incr_outfile_size = 0.;
     for (auto const &task: job->getTasks()) {
-      //TODO: compute incremental values
+      // Compute job's time data
+      if (
+        (task->getComputationEndDate() != -1.0) && (task->getComputationStartDate() != -1.0)
+        && (task->getReadInputEndDate() != -1.0) && (task->getReadInputStartDate() != -1.0)
+        && (task->getWriteOutputEndDate() != -1.0) && (task->getWriteOutputStartDate() != -1.0)
+      ) {
+        incr_compute_time += (task->getComputationEndDate() - task->getComputationStartDate());
+        incr_infile_transfertime += (task->getReadInputEndDate() - task->getReadInputStartDate());
+        incr_outfile_transfertime += (task->getWriteOutputEndDate() - task->getWriteOutputStartDate());
+      }
+      else {
+        throw std::runtime_error("One of the task " + task->getID() + "'s date getters returned unmeaningful default value -1.0!");
+      }
+      // Compute job's I/O sizes
+      incr_infile_size += task->getBytesRead();
+      incr_outfile_size += task->getBytesWritten();
+
+      // free some memory
       this->getWorkflow()->removeTask(task);
     }
 
