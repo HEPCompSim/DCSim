@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
   if (argc != 6) {
     std::cerr << "Usage: " << argv[0];
     std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
-    std::cerr << " [--wrench-full-log || --log=custom_wms.threshold=info]";
+    std::cerr << " [--wrench-full-log || --log=simple_wms.threshold=info]";
     std::cerr << std::endl;
     exit(1);
   }
@@ -240,6 +240,7 @@ int main(int argc, char **argv) {
   char *platform_file = argv[1];
 
   // output-file name
+  //TODO: make this steerable for the user
   std::string filename = "default.csv";
 
   // The second argument is the number of jobs which need to be executed
