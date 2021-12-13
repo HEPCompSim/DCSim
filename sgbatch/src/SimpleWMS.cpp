@@ -109,6 +109,7 @@ int SimpleWMS::main() {
     this->filedump.open(this->filename, ios::out | ios::trunc);
     if (this->filedump.is_open()) {
       this->filedump << "job.tag" << ",\t"; // << "job.ncpu" << ",\t" << "job.memory" << ",\t" << "job.disk" << ",\t";
+      this->filedump << "machine.name" << ",\t";
       this->filedump << "job.start" << ",\t" << "job.end" << ",\t" << "job.computetime" << ",\t";
       this->filedump << "infiles.transfertime" << ",\t" << "infiles.size" << ",\t" << "outfiles.transfertime" << ",\t" << "outfiles.size" << std::endl;
       this->filedump.close();
@@ -269,6 +270,7 @@ int SimpleWMS::main() {
     return 0;
 }
 
+
 /**
  * @brief Process a WorkflowExecutionEvent::STANDARD_JOB_FAILURE
  * 
@@ -282,6 +284,7 @@ void SimpleWMS::processEventStandardJobFailure(std::shared_ptr<wrench::StandardJ
     WRENCH_INFO("As a SimpleWMS, I abort as soon as there is a failure");
     this->abort = true;
 }
+
 
 /**
 * @brief Process a WorkflowExecutionEvent::STANDARD_JOB_COMPLETION
@@ -304,6 +307,8 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     double incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
     double incr_outfile_size = 0.;
+    std::string execution_host = "";
+
     for (auto const &task: job->getTasks()) {
       // Compute job's time data
       if (
@@ -330,6 +335,10 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
         }
       }
 
+      if (execution_host == "") {
+        execution_host = task->getExecutionHost();
+      }
+
       // free some memory
       this->getWorkflow()->removeTask(task);
     }
@@ -339,6 +348,7 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     if (this->filedump.is_open()) {
 
       this->filedump << job->getName() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
+      this->filedump << execution_host << ",\t";
       this->filedump << std::to_string(first_task->getReadInputStartDate()) << ",\t" << std::to_string(last_task->getWriteOutputEndDate()) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
       this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
 
