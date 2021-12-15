@@ -287,7 +287,8 @@ void SimpleWMS::processEventStandardJobFailure(std::shared_ptr<wrench::StandardJ
 
 
 /**
-* @brief Process a WorkflowExecutionEvent::STANDARD_JOB_COMPLETION
+* @brief Process a WorkflowExecutionEvent::STANDARD_JOB_COMPLETION.
+* This also writes out a dump of job information returned by the simulation.
 *
 * @param event: a workflow execution event
 */
