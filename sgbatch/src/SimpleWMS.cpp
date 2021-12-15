@@ -297,9 +297,14 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     auto job = event->standard_job;
     WRENCH_INFO("Notified that job %s with %ld tasks has completed", job->getName().c_str(), job->getNumTasks());
 
-    /* Identify first/last tasks */
+    /* Identify first/last tasks and harvest information*/
     auto first_task = std::get<0>(this->job_first_last_tasks[job]);
     auto last_task = std::get<1>(this->job_first_last_tasks[job]);
+    // get start and end date of job
+    double start_date = first_task->getReadInputStartDate();
+    double end_date = last_task->getWriteOutputEndDate();
+    // clear first/last tasks job records 
+    this->job_first_last_tasks.erase(job);
 
     /* Remove all tasks and compute incremental output values in one loop */
     double incr_compute_time = 0.;
@@ -336,7 +341,7 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
       }
 
       if (execution_host == "") {
-        execution_host = task->getExecutionHost();
+        execution_host = task->getPhysicalExecutionHost();
       }
 
       // free some memory
@@ -349,7 +354,7 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
 
       this->filedump << job->getName() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
       this->filedump << execution_host << ",\t";
-      this->filedump << std::to_string(first_task->getReadInputStartDate()) << ",\t" << std::to_string(last_task->getWriteOutputEndDate()) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
+      this->filedump << std::to_string(start_date) << ",\t" << std::to_string(end_date) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
       this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
 
       this->filedump.close();
@@ -359,8 +364,5 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     else {
       throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
     }
-
-    /* get rid of last job records */
-    this->job_first_last_tasks.erase(job);
 
 }
