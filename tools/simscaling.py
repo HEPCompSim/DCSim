@@ -9,11 +9,12 @@ import glob
 plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
-scenario = 'withdump'
+scenario = 'private'
 
 scenario_plotlabel_dict = {
     'withdump': "with JSON dump",
-    'nodump': "without JSON dump"
+    'nodump': "without JSON dump",
+    'private': "private improvements"
 }
 
 
