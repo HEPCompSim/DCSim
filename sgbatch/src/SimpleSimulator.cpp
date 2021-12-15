@@ -16,15 +16,6 @@
 
 std::mt19937 gen(42);
 
-/**
- * @brief helper function wich checks if a string ends with a desired suffix
- * 
- * @param str: string to check
- * @param suffix: suffix to match to
- */
-static bool ends_with(const std::string& str, const std::string& suffix) {
-  return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
-}
 
 /**
  * @brief helper function for converting a CLI argument string to double
@@ -420,9 +411,6 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-  simulation->getOutput().enableDiskTimestamps(false);
-  simulation->getOutput().enableFileReadWriteCopyTimestamps(false);
-  simulation->getOutput().enableWorkflowTaskTimestamps(false);
 
   /* Launch the simulation */
   std::cerr << "Launching the Simulation..." << std::endl;
@@ -433,43 +421,7 @@ int main(int argc, char **argv) {
     return 0;
   }
   std::cerr << "Simulation done!" << std::endl;
-
-#if 0
-  /* Analyse event traces */
-  auto simulation_output = simulation->getOutput();
-  auto trace = simulation_output.getTrace<wrench::SimulationTimestampTaskCompletion>();
-  // for (auto const &item : trace) {
-  //   std::cerr << "Task " << item->getContent()->getTask()->getID() << " completed at time " << item->getDate() << std::endl;
-  // }
-  // and dump JSONs containing the generated data
-  std::cerr << "Dumping generated data..." << std::endl;
-
-  bool include_platform = false;
-  bool include_workflow_exec = true;
-  bool include_workflow_graph = false;
-  bool include_energy = false;
-  bool generate_host_utilization_layout = false;
-  bool include_disk = true;
-  bool include_bandwidth = false;
-  simulation_output.dumpUnifiedJSON(
-    workflow, 
-    "tmp/outputs/unified_simplestream_h"+std::to_string(hitrate)+"_"+std::to_string(num_jobs)+"jobs"+".json", 
-    include_platform, 
-    include_workflow_exec, 
-    include_workflow_graph, 
-    include_energy, 
-    generate_host_utilization_layout, 
-    include_disk, 
-    include_bandwidth
-  );
-//  simulation_output.dumpDiskOperationsJSON("tmp/diskOps.json", true);
-//  simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
-//  simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
-//  simulation_output.dumpWorkflowExecutionJSON(workflow, "tmp/workflowExecution.json", false, true);
-  // and the workflow graph
-//  simulation_output.dumpWorkflowGraphJSON(workflow, "tmp/workflowGraph.json", true);
-
-#endif
+  
 
   return 0;
 }
