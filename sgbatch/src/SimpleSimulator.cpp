@@ -13,8 +13,97 @@
 #include <iostream>
 #include <fstream>
 
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+
 
 std::mt19937 gen(42);
+
+
+/**
+ * @brief helper function to process simulation options and parameters
+ * 
+ * @param argc
+ * @param argv 
+ * 
+ */
+po::variables_map process_program_options(const int argc, const char **const argv) {
+
+    // default values
+    double average_flops = 2164.428*1000*1000*1000;
+    double sigma_flops = 0.1*average_flops;
+    double average_memory = 2.*1000*1000*1000;
+    double sigma_memory = 0.1*average_memory;
+    size_t infiles_per_job = 10;
+    double average_infile_size = 3600000000.;
+    double sigma_infile_size = 0.1*average_infile_size;
+    double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
+    double sigma_outfile_size = 0.1*average_outfile_size;
+
+    bool use_blockstreaming = true;
+    bool use_simplified_blockstreaming = false;
+
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help,h", "show brief usage message")
+
+        ("platform,p", po::value<std::string>(), "platform description file, written in XML following the SimGrid-defined DTD")
+        ("hitrate,H", po::value<double>(), "initial fraction of staged input-files on caches at simulation start")
+
+        ("njobs,n", po::value<size_t>(), "number of jobs to simulate")
+        ("flops", po::value<double>(&average_flops), "amount of floating point operations jobs need to process")
+        ("sigma-flops", po::value<double>(&sigma_flops), "jobs' distribution spread in FLOPS")
+        ("mem,m", po::value<double>(&average_memory), "average size of memory needed for jobs to run")
+        ("sigma-mem", po::value<double>(&sigma_memory), "jobs' sistribution spread in memory-needs")
+        ("ninfiles", po::value<size_t>(&infiles_per_job), "number of input-files each job has to process")
+        ("insize", po::value<double>(&average_infile_size), "average size of input-files jobs read")
+        ("sigma-insize", po::value<double>(&sigma_infile_size), "jobs' distribution spread in input-file size")
+        ("outsize", po::value<double>(&average_outfile_size), "average size of output-files jobs write")
+        ("sigma-outfile", po::value<double>(&sigma_outfile_size), "jobs' distribution spread in output-file size")
+
+        ("blockstreaming", po::value<bool>(&use_blockstreaming), "flag to turn on/off block-wise streaming of input-files")
+        ("simplified-blockstreaming", po::value<bool>(&use_simplified_blockstreaming), "flag to turn on/off simplified input-file streaming")
+
+        ("output-file,o", po::value<std::string>(), "path for the CSV file containing output information about the jobs in the simulation")
+    ;
+
+    po::variables_map vm;
+    try {
+        po::store(
+            po::parse_command_line(argc, argv, desc),
+            vm
+        );
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+
+    po::positional_options_description pos;
+    pos.add("output-file", -1);
+
+    po::store(
+        po::command_line_parser(argc, argv).options(desc).positional(p).run(),
+        vm
+    );
+    po::notify(vm);
+    
+
+    if (vm.count("help")) {
+        std::cerr << desc << std::endl;
+        return 0;
+    }
+    if (vm.count("platform")) {
+        std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
+    }
+    else {
+        std::cerr << "Platform was not set"
+    }
+
+    po::notify(vm);
+    return vm;
+}
 
 
 /**
@@ -220,6 +309,8 @@ int main(int argc, char **argv) {
 
 
     /* Parsing of the command-line arguments for this WRENCH simulation */
+    process_program_options(argc, argv);
+
     if (argc != 6) {
         std::cerr << "Usage: " << argv[0];
         std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
