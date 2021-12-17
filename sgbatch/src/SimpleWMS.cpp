@@ -253,7 +253,8 @@ int SimpleWMS::main() {
         try {
             this->waitForAndProcessNextEvent();
         } catch (wrench::WorkflowExecutionException &e) {
-            WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again", (e.getCause()->toString().c_str()));
+            WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again",
+                                    (e.getCause()->toString().c_str()));
             continue;
         }
 
@@ -348,6 +349,7 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
                 incr_outfile_size += outfile->getSize();
             }
         }
+
         if (execution_host == "") {
             execution_host = task->getPhysicalExecutionHost();
         }

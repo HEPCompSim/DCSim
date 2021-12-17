@@ -332,7 +332,6 @@ int main(int argc, char **argv) {
             );
         }
     }
-  
     // Instantiate a HTcondorComputeService and add it to the simulation
     std::set<shared_ptr<wrench::ComputeService>> htcondor_compute_services;
     htcondor_compute_services.insert(shared_ptr<wrench::ComputeService>(simulation->add(
