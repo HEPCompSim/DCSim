@@ -24,23 +24,23 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for Simple WMS");
  * @throw std::invalid_argument
  */
 std::vector<wrench::WorkflowTask*> getUnfilteredDescendants(const wrench::WorkflowTask* task) {
-  if (task == nullptr) {
-    throw std::invalid_argument("getDescendants(): Invalid arguments");
-  }
-  // Recursively get all children and children's children
-  std::vector<wrench::WorkflowTask*> descendants;
-  auto children = task->getChildren();
-  if (!children.empty()) {
-    descendants.insert(descendants.end(), children.begin(), children.end());
-  }
-  for (auto child : children) {
-    auto tmp_descendants = getUnfilteredDescendants(child);
-    if (!tmp_descendants.empty()) {
-      descendants.insert(descendants.end(), tmp_descendants.begin(), tmp_descendants.end());
+    if (task == nullptr) {
+        throw std::invalid_argument("getDescendants(): Invalid arguments");
     }
-  }
+    // Recursively get all children and children's children
+    std::vector<wrench::WorkflowTask*> descendants;
+    auto children = task->getChildren();
+    if (!children.empty()) {
+        descendants.insert(descendants.end(), children.begin(), children.end());
+    }
+    for (auto child : children) {
+        auto tmp_descendants = getUnfilteredDescendants(child);
+        if (!tmp_descendants.empty()) {
+            descendants.insert(descendants.end(), tmp_descendants.begin(), tmp_descendants.end());
+        }
+    }
 
-  return descendants;
+    return descendants;
 }
 
 /**
@@ -53,14 +53,14 @@ std::vector<wrench::WorkflowTask*> getUnfilteredDescendants(const wrench::Workfl
  * @throw std::invalid_argument
  */
 std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* patriarch) {
-  // get unfiltered vector of descendants
-  auto descendants = getUnfilteredDescendants(patriarch);
-  // Filter duplicates
-  std::sort(descendants.begin(), descendants.end());
-  auto last = std::unique(descendants.begin(), descendants.end());
-  descendants.erase(last, descendants.end()); 
+    // get unfiltered vector of descendants
+    auto descendants = getUnfilteredDescendants(patriarch);
+    // Filter duplicates
+    std::sort(descendants.begin(), descendants.end());
+    auto last = std::unique(descendants.begin(), descendants.end());
+    descendants.erase(last, descendants.end()); 
 
-  return descendants;
+    return descendants;
 }
 
 
@@ -74,19 +74,19 @@ std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* pa
  * @param outputdump_name: name of the file to dump simulation information
  */
 SimpleWMS::SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
-                     const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
-                     //const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
-                     //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
-                     const std::string& hostname,
-                     //const double& hitrate,
-                     const std::string& outputdump_name) : wrench::WMS(
-        nullptr, nullptr,
-        compute_services,
-        storage_services,
-        {},//network_proximity_services,
-        {},//file_registry_service,
-        hostname,
-        "condor-simple") {
+                                         const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
+                                         //const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
+                                         //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
+                                         const std::string& hostname,
+                                         //const double& hitrate,
+                                         const std::string& outputdump_name) : wrench::WMS(
+                nullptr, nullptr,
+                compute_services,
+                storage_services,
+                {},//network_proximity_services,
+                {},//file_registry_service,
+                hostname,
+                "condor-simple") {
     //this->hitrate = hitrate;
     this->filename = outputdump_name;
 }
@@ -108,21 +108,20 @@ int SimpleWMS::main() {
     /* initialize output-dump file */
     this->filedump.open(this->filename, ios::out | ios::trunc);
     if (this->filedump.is_open()) {
-      this->filedump << "job.tag" << ",\t"; // << "job.ncpu" << ",\t" << "job.memory" << ",\t" << "job.disk" << ",\t";
-      this->filedump << "machine.name" << ",\t";
-      this->filedump << "job.start" << ",\t" << "job.end" << ",\t" << "job.computetime" << ",\t";
-      this->filedump << "infiles.transfertime" << ",\t" << "infiles.size" << ",\t" << "outfiles.transfertime" << ",\t" << "outfiles.size" << std::endl;
-      this->filedump.close();
+        this->filedump << "job.tag" << ",\t"; // << "job.ncpu" << ",\t" << "job.memory" << ",\t" << "job.disk" << ",\t";
+        this->filedump << "machine.name" << ",\t";
+        this->filedump << "job.start" << ",\t" << "job.end" << ",\t" << "job.computetime" << ",\t";
+        this->filedump << "infiles.transfertime" << ",\t" << "infiles.size" << ",\t" << "outfiles.transfertime" << ",\t" << "outfiles.size" << std::endl;
+        this->filedump.close();
 
-      WRENCH_INFO("Wrote header of the output dump into file %s", this->filename.c_str());
+        WRENCH_INFO("Wrote header of the output dump into file %s", this->filename.c_str());
     }
     else {
-      throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
+        throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
     }
     
     WRENCH_INFO("Starting on host %s", wrench::Simulation::getHostName().c_str());
-    WRENCH_INFO("About to execute a workflow with %lu tasks", 
-                this->getWorkflow()->getNumberOfTasks());
+    WRENCH_INFO("About to execute a workflow with %lu tasks", this->getWorkflow()->getNumberOfTasks());
 
 
     // Create a job manager
@@ -145,9 +144,7 @@ int SimpleWMS::main() {
     }
 
     auto htcondor_compute_service = *htcondor_compute_services.begin();
-    WRENCH_INFO("Found %ld HTCondor Service(s) on %s", 
-                htcondor_compute_services.size(), 
-                htcondor_compute_service->getHostname().c_str());
+    WRENCH_INFO("Found %ld HTCondor Service(s) on %s", htcondor_compute_services.size(), htcondor_compute_service->getHostname().c_str());
 
 
     // Get the available storage services
@@ -183,83 +180,83 @@ int SimpleWMS::main() {
     // Group task chunks belonging to the same task-chain into single job
     for (auto entry_task : entry_tasks) {
 
-      // Group all tasks of the same chain
-      std::vector<wrench::WorkflowTask*> task_chunks;
-      // starting with the entry task
-      task_chunks.push_back(entry_task);
-      // and add all children and children's children
-      auto descendants = getDescendants(entry_task);  
-      task_chunks.insert(task_chunks.end(), descendants.begin(), descendants.end());
+        // Group all tasks of the same chain
+        std::vector<wrench::WorkflowTask*> task_chunks;
+        // starting with the entry task
+        task_chunks.push_back(entry_task);
+        // and add all children and children's children
+        auto descendants = getDescendants(entry_task);    
+        task_chunks.insert(task_chunks.end(), descendants.begin(), descendants.end());
 
-      // Identify first and last task of the job for output
-      std::pair<wrench::WorkflowTask *, wrench::WorkflowTask *> first_last_tasks;
-      first_last_tasks.first = entry_task;
-      bool found_last_task = false;
-      for (auto task : descendants) {
-        if (found_last_task) {
-          throw std::runtime_error("Found more than one last-task in the task chain starting with task " + entry_task->getID() + "!");
+        // Identify first and last task of the job for output
+        std::pair<wrench::WorkflowTask *, wrench::WorkflowTask *> first_last_tasks;
+        first_last_tasks.first = entry_task;
+        bool found_last_task = false;
+        for (auto task : descendants) {
+            if (found_last_task) {
+                throw std::runtime_error("Found more than one last-task in the task chain starting with task " + entry_task->getID() + "!");
+            }
+            if (task->getNumberOfChildren() == 0) {
+                first_last_tasks.second = task;
+                found_last_task = true;
+            }
         }
-        if (task->getNumberOfChildren() == 0) {
-          first_last_tasks.second = task;
-          found_last_task = true;
-        }
-      }
 
-      // Identify file-locations on storage services
-      std::map<wrench::WorkflowFile *, std::vector<std::shared_ptr<wrench::FileLocation>>> file_locations;     
-      for (auto task : task_chunks) {
-        // std::cerr << "\t" << task->getID().c_str() << std::endl;
-        // Identify input-file locations
-        for (auto f : task->getInputFiles()) {
-          // Fill vector of input-file locations in order of read-priority
-          std::vector<std::shared_ptr<wrench::FileLocation>> locations;
-          //! Caches have highest priority -> Caches are added in HTCondorNegotiator
-          //! only give remote file locations, local caches will be filled by caching functionality
-          // for (auto cache : worker_storage_services) {
-          //   locations.insert(locations.end(), wrench::FileLocation::LOCATION(cache));
-          // }
-          // Remote storages are fallback
-          for (auto remote_storage : remote_storage_services) {
-            locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
-          }
-          file_locations[f] = locations;
+        // Identify file-locations on storage services
+        std::map<wrench::WorkflowFile *, std::vector<std::shared_ptr<wrench::FileLocation>>> file_locations;         
+        for (auto task : task_chunks) {
+            // std::cerr << "\t" << task->getID().c_str() << std::endl;
+            // Identify input-file locations
+            for (auto f : task->getInputFiles()) {
+                // Fill vector of input-file locations in order of read-priority
+                std::vector<std::shared_ptr<wrench::FileLocation>> locations;
+                //! Caches have highest priority -> Caches are added in HTCondorNegotiator
+                //! only give remote file locations, local caches will be filled by caching functionality
+                // for (auto cache : worker_storage_services) {
+                //     locations.insert(locations.end(), wrench::FileLocation::LOCATION(cache));
+                // }
+                // Remote storages are fallback
+                for (auto remote_storage : remote_storage_services) {
+                    locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
+                }
+                file_locations[f] = locations;
+            }
+            // Identify output-file locations
+            for (auto f : task->getOutputFiles()) {
+                // Fill vector of output-file locations in order of write-priority
+                std::vector<std::shared_ptr<wrench::FileLocation>> locations;
+                // Write to first remote storage
+                //TODO: chose the output file location according to a logic? 
+                for (auto remote_storage : remote_storage_services) {
+                    locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
+                }
+                file_locations[f] = locations;
+            }
         }
-        // Identify output-file locations
-        for (auto f : task->getOutputFiles()) {
-          // Fill vector of output-file locations in order of write-priority
-          std::vector<std::shared_ptr<wrench::FileLocation>> locations;
-          // Write to first remote storage
-          //TODO: chose the output file location according to a logic? 
-          for (auto remote_storage : remote_storage_services) {
-            locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
-          }
-          file_locations[f] = locations;
-        }
-      }
 
-      // Create and submit a job for each chain
-      auto job = this->job_manager->createStandardJob(task_chunks, file_locations);
-      this->job_first_last_tasks[job] = first_last_tasks;
-      std::map<std::string, std::string> htcondor_service_specific_args = {};
-      //TODO: generalize to arbitrary numbers of htcondor services
-      this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
+        // Create and submit a job for each chain
+        auto job = this->job_manager->createStandardJob(task_chunks, file_locations);
+        this->job_first_last_tasks[job] = first_last_tasks;
+        std::map<std::string, std::string> htcondor_service_specific_args = {};
+        //TODO: generalize to arbitrary numbers of htcondor services
+        this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
     }
     WRENCH_INFO("Done with scheduling tasks as standard jobs");
 
 
     while (not this->getWorkflow()->isDone()) {
-      // Wait for a workflow execution event, and process it
-      try {
-          this->waitForAndProcessNextEvent();
-      } catch (wrench::WorkflowExecutionException &e) {
-          WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again",
-                      (e.getCause()->toString().c_str()));
-          continue;
-      }
+        // Wait for a workflow execution event, and process it
+        try {
+            this->waitForAndProcessNextEvent();
+        } catch (wrench::WorkflowExecutionException &e) {
+            WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again",
+                                    (e.getCause()->toString().c_str()));
+            continue;
+        }
 
-      if (this->abort || this->getWorkflow()->isDone()) {
-          break;
-      }
+        if (this->abort || this->getWorkflow()->isDone()) {
+            break;
+        }
     }
 
     wrench::Simulation::sleep(10);
@@ -271,8 +268,7 @@ int SimpleWMS::main() {
         WRENCH_INFO("Workflow execution is incomplete!")
     }
 
-    WRENCH_INFO("Simple WMS daemon started on host %s terminating", 
-                wrench::Simulation::getHostName().c_str());
+    WRENCH_INFO("Simple WMS daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());
 
     this->job_manager.reset();
 
@@ -325,54 +321,54 @@ void SimpleWMS::processEventStandardJobCompletion(std::shared_ptr<wrench::Standa
     std::string execution_host = "";
 
     for (auto const &task: job->getTasks()) {
-      // Compute job's time data
-      if (
-        (task->getComputationEndDate() != -1.0) && (task->getComputationStartDate() != -1.0)
-        && (task->getReadInputEndDate() != -1.0) && (task->getReadInputStartDate() != -1.0)
-        && (task->getWriteOutputEndDate() != -1.0) && (task->getWriteOutputStartDate() != -1.0)
-      ) {
-        incr_compute_time += (task->getComputationEndDate() - task->getComputationStartDate());
-        incr_infile_transfertime += (task->getReadInputEndDate() - task->getReadInputStartDate());
-        incr_outfile_transfertime += (task->getWriteOutputEndDate() - task->getWriteOutputStartDate());
-      }
-      else {
-        throw std::runtime_error("One of the task " + task->getID() + "'s date getters returned unmeaningful default value -1.0!");
-      }
-      // Compute job's I/O sizes
-      if (task->getInputFiles().size() > 0) {
-        for (auto infile : task->getInputFiles()) {
-          incr_infile_size += infile->getSize();
+        // Compute job's time data
+        if (
+            (task->getComputationEndDate() != -1.0) && (task->getComputationStartDate() != -1.0)
+            && (task->getReadInputEndDate() != -1.0) && (task->getReadInputStartDate() != -1.0)
+            && (task->getWriteOutputEndDate() != -1.0) && (task->getWriteOutputStartDate() != -1.0)
+        ) {
+            incr_compute_time += (task->getComputationEndDate() - task->getComputationStartDate());
+            incr_infile_transfertime += (task->getReadInputEndDate() - task->getReadInputStartDate());
+            incr_outfile_transfertime += (task->getWriteOutputEndDate() - task->getWriteOutputStartDate());
         }
-      }
-      if (task->getOutputFiles().size() > 0) {
-        for (auto outfile : task->getOutputFiles()) {
-          incr_outfile_size += outfile->getSize();
+        else {
+            throw std::runtime_error("One of the task " + task->getID() + "'s date getters returned unmeaningful default value -1.0!");
         }
-      }
+        // Compute job's I/O sizes
+        if (task->getInputFiles().size() > 0) {
+            for (auto infile : task->getInputFiles()) {
+                incr_infile_size += infile->getSize();
+            }
+        }
+        if (task->getOutputFiles().size() > 0) {
+            for (auto outfile : task->getOutputFiles()) {
+                incr_outfile_size += outfile->getSize();
+            }
+        }
 
-      if (execution_host == "") {
-        execution_host = task->getPhysicalExecutionHost();
-      }
+        if (execution_host == "") {
+            execution_host = task->getPhysicalExecutionHost();
+        }
 
-      // free some memory
-      this->getWorkflow()->removeTask(task);
+        // free some memory
+        this->getWorkflow()->removeTask(task);
     }
 
     /* Dump relevant information to file */
     this->filedump.open(this->filename, ios::out | ios::app);
     if (this->filedump.is_open()) {
 
-      this->filedump << job->getName() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
-      this->filedump << execution_host << ",\t";
-      this->filedump << std::to_string(start_date) << ",\t" << std::to_string(end_date) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
-      this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
+        this->filedump << job->getName() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
+        this->filedump << execution_host << ",\t";
+        this->filedump << std::to_string(start_date) << ",\t" << std::to_string(end_date) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
+        this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
 
-      this->filedump.close();
+        this->filedump.close();
 
-      WRENCH_INFO("Information for job %s has been dumped into file %s", job->getName().c_str(), this->filename.c_str());
+        WRENCH_INFO("Information for job %s has been dumped into file %s", job->getName().c_str(), this->filename.c_str());
     }
     else {
-      throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
+        throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
     }
 
 }
