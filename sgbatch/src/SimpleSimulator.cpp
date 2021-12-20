@@ -200,6 +200,7 @@ void fill_streaming_workflow (
                 endtask = task;
             }
         }
+
         // Sample outfile sizes
         double doutsize = outsize(gen);
         while ((average_outfile_size+sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize(gen); 
@@ -331,6 +332,7 @@ int main(int argc, char **argv) {
             );
         }
     }
+  
     // Instantiate a HTcondorComputeService and add it to the simulation
     std::set<shared_ptr<wrench::ComputeService>> htcondor_compute_services;
     htcondor_compute_services.insert(shared_ptr<wrench::ComputeService>(simulation->add(

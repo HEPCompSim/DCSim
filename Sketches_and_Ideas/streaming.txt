@@ -1,0 +1,12 @@
+lamba:  (#flops, #bytes_to_read, #flop_chunk_size, #bytes_chunk_size, #cores_for_computing, location of input file) {
+
+    read a chunk of data
+    while (more chunks) {
+       asynchronous computation (multi-threaded?)
+       read a chunk of data
+       wait for the computation to be done
+    }
+    compute the last chunk
+
+}
+
