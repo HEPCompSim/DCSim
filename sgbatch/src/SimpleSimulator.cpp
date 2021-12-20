@@ -10,18 +10,12 @@
 #include <wrench.h>
 #include "SimpleWMS.h"
 
+#include <iostream>
+#include <fstream>
+
 
 std::mt19937 gen(42);
 
-/**
- * @brief helper function wich checks if a string ends with a desired suffix
- * 
- * @param str: string to check
- * @param suffix: suffix to match to
- */
-static bool ends_with(const std::string& str, const std::string& suffix) {
-    return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
-}
 
 /**
  * @brief helper function for converting a CLI argument string to double
@@ -206,6 +200,7 @@ void fill_streaming_workflow (
                 endtask = task;
             }
         }
+
         // Sample outfile sizes
         double doutsize = outsize(gen);
         while ((average_outfile_size+sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize(gen); 
@@ -228,13 +223,18 @@ int main(int argc, char **argv) {
     if (argc != 6) {
         std::cerr << "Usage: " << argv[0];
         std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
-        std::cerr << " [--wrench-full-log || --log=custom_wms.threshold=info]";
+        std::cerr << " [--wrench-full-log || --log=simple_wms.threshold=info]";
         std::cerr << std::endl;
         exit(1);
     }
 
     // The first argument is the platform description file, written in XML following the SimGrid-defined DTD
     char *platform_file = argv[1];
+
+    // output-file name
+    //TODO: make this steerable for the user
+    std::string filename = "default.csv";
+
     // The second argument is the number of jobs which need to be executed
     size_t num_jobs = arg_to_sizet(argv[2]);
     // The third argument is the number of input files per job which need to be transferred
@@ -245,18 +245,18 @@ int main(int argc, char **argv) {
     double hitrate = arg_to_double(argv[5]);
 
     // Set remaining task parameters for truncated normal distributions
-    double average_flops = 773.*1000*1000*1000;
+    double average_flops = 2164.428*1000*1000*1000;
     double average_memory = 2.*1000*1000*1000;
-    double sigma_flops = 0.5*average_flops;
-    double sigma_memory = 0.5*average_memory;
-    double sigma_infile_size = 0.5*average_infile_size;
-    double average_outfile_size = 0.05*average_infile_size;
-    double sigma_outfile_size = 0.5*average_outfile_size;
+    double sigma_flops = 0.1*average_flops;
+    double sigma_memory = 0.1*average_memory;
+    double sigma_infile_size = 0.1*average_infile_size;
+    double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
+    double sigma_outfile_size = 0.1*average_outfile_size;
 
     // Turn on/off blockwise streaming of input-files
     //TODO: add CLI features for the blockwise streaming flag
-    bool use_blockstreaming = false;
-    bool use_simplified_blockstreaming = true;
+    bool use_blockstreaming = true;
+    bool use_simplified_blockstreaming = false;
 
 
     /* Create a workflow */
@@ -332,6 +332,7 @@ int main(int argc, char **argv) {
             );
         }
     }
+  
     // Instantiate a HTcondorComputeService and add it to the simulation
     std::set<shared_ptr<wrench::ComputeService>> htcondor_compute_services;
     htcondor_compute_services.insert(shared_ptr<wrench::ComputeService>(simulation->add(
@@ -357,28 +358,15 @@ int main(int argc, char **argv) {
                     simulation->add(new wrench::FileRegistryService(file_registry_service_host));
 
 
-    // /* Instantiate a network proximity service */
-    // std::string network_proximity_service_host = wms_host;
-    // std::cerr << "Instantiating a NetworkProximityService on " << network_proximity_service_host << "..." << std::endl;
-    // auto network_proximity_service =
-    //                 simulation->add(new wrench::NetworkProximityService(
-    //                     network_proximity_service_host, 
-    //                     hostname_list, 
-    //                     {}, 
-    //                     {}
-    //                 ));
-
-
     /* Instantiate a WMS */
     auto wms = simulation->add(
                     new SimpleWMS(
                         htcondor_compute_services, 
-                        //TODO: at this point only remote storage services should sufficient
+                        //TODO: at this point only remote storage services should be sufficient
                         storage_services,
-                        {},//{network_proximity_service},
-                        file_registry_service, 
                         wms_host,
-                        hitrate
+                        //hitrate,
+                        filename
                     )
     );
     wms->addWorkflow(workflow);
@@ -425,9 +413,6 @@ int main(int argc, char **argv) {
             return 0;
     }
 
-    simulation->getOutput().enableDiskTimestamps(true);
-    simulation->getOutput().enableFileReadWriteCopyTimestamps(true);
-    simulation->getOutput().enableWorkflowTaskTimestamps(true);
 
     /* Launch the simulation */
     std::cerr << "Launching the Simulation..." << std::endl;
@@ -438,43 +423,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     std::cerr << "Simulation done!" << std::endl;
-
-#if 1
-    /* Analyse event traces */
-    auto simulation_output = simulation->getOutput();
-    auto trace = simulation_output.getTrace<wrench::SimulationTimestampTaskCompletion>();
-    // for (auto const &item : trace) {
-    //     std::cerr << "Task " << item->getContent()->getTask()->getID() << " completed at time " << item->getDate() << std::endl;
-    // }
-    // and dump JSONs containing the generated data
-    std::cerr << "Dumping generated data..." << std::endl;
-
-    bool include_platform = false;
-    bool include_workflow_exec = true;
-    bool include_workflow_graph = false;
-    bool include_energy = false;
-    bool generate_host_utilization_layout = false;
-    bool include_disk = true;
-    bool include_bandwidth = false;
-    simulation_output.dumpUnifiedJSON(
-        workflow, 
-        "tmp/outputs/unified_h"+std::to_string(hitrate)+"_"+std::to_string(num_jobs)+"jobs"+".json", 
-        include_platform, 
-        include_workflow_exec, 
-        include_workflow_graph, 
-        include_energy, 
-        generate_host_utilization_layout, 
-        include_disk, 
-        include_bandwidth
-    );
-//    simulation_output.dumpDiskOperationsJSON("tmp/diskOps.json", true);
-//    simulation_output.dumpLinkUsageJSON("tmp/linkUsage.json", true);
-//    simulation_output.dumpPlatformGraphJSON("tmp/platformGraph.json", true);
-//    simulation_output.dumpWorkflowExecutionJSON(workflow, "tmp/workflowExecution.json", false, true);
-    // and the workflow graph
-//    simulation_output.dumpWorkflowGraphJSON(workflow, "tmp/workflowGraph.json", true);
-
-#endif
+    
 
     return 0;
 }
