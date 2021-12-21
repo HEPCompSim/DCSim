@@ -180,7 +180,13 @@ int SimpleExecutionController::main() {
         auto job = job_manager->createCompoundJob(job_name);
 
         // Read-Input file actions
-        auto streamed_computation = std::shared_ptr<StreamedComputation>(new StreamedComputation(this->storage_services, job_spec->infiles, job_spec->flops, job_spec->mem));
+        auto streamed_computation = std::shared_ptr<StreamedComputation>(new StreamedComputation(this->storage_services,
+                                                                                                 job_spec->infiles,
+                                                                                                 job_spec->simplified_streaming,
+                                                                                                 job_spec->streaming_enabled,
+                                                                                                 job_spec->block_size,
+                                                                                                 job_spec->flops,
+                                                                                                 job_spec->mem));
         auto streaming_action = job->addCustomAction("streaming_" + std::to_string(j),
                                               *streamed_computation,
                                               [](std::shared_ptr<wrench::ActionExecutor> action_executor) {

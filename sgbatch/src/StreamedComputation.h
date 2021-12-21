@@ -10,11 +10,17 @@ class StreamedComputation {
 public:
     StreamedComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
                     std::vector<std::shared_ptr<wrench::DataFile>> &files,
+                    bool streaming_enabled,
+                    bool simplified_streaming,
+                    double block_size,
                     double flops,
                     double mem) {
         this->storage_services = storage_services;
         this->files = files;
         this->flops = flops;
+        this->streaming_enabled = streaming_enabled;
+        this->simplified_streaming = simplified_streaming;
+        this->block_size = block_size;
         this->mem = mem;
     }
 
@@ -64,7 +70,7 @@ public:
             auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
             // Evict files while to create space
-            // TODO: Don't evict files at random but using some good scheme (which will require a more sophisticated data structure)
+            // TODO: Don't evict files at random (with a BAD RNG) but using some good scheme (which will require a more sophisticated data structure)
             double free_space = destination_ss->getFreeSpace().begin()->second;
             while (free_space < f->getSize()) {
                 auto to_evict_it = SimpleExecutionController::global_file_map[destination_ss].begin();
@@ -86,6 +92,8 @@ public:
         // At this point, we know where all files should be read from, we just need to implement the streaming
         // TODO: IMPLEMENT THE STREAMING
         // TODO: QUESTION: What is the chunk size for each file (the same?) and for the computation?
+        // TODO: HENRI HAS IMPORTED HERE the streaming_enabled, simplified_streaming, and block_size values to be used here
+
 
 
     }
@@ -93,6 +101,9 @@ public:
 private:
     std::set<std::shared_ptr<wrench::StorageService>> storage_services;
     std::vector<std::shared_ptr<wrench::DataFile>> files;
+    double block_size;
+    bool streaming_enabled;
+    bool simplified_streaming;
     double flops;
     double mem;
 

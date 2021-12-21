@@ -134,24 +134,23 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
 //        wrench::WorkflowTask* endtask = nullptr;
 //        wrench::WorkflowTask* enddummytask = nullptr;
         // when blockstreaming is turned off create only one task with all inputfiles
-        if (!use_blockstreaming) {
-            job_specification.streaming_enabled = false;
-//            endtask = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
-        }
+        job_specification.streaming_enabled = use_blockstreaming;
+        job_specification.simplified_streaming = use_simplified_blockstreaming;
+        job_specification.block_size = xrd_block_size;
+
         for (size_t f = 0; f < infiles_per_task; f++) {
             // Sample inputfile sizes
             double dinsize = insize(gen);
             while ((average_infile_size+sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize(gen);
-
-            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + std::to_string(j) + "_" + std::to_string(f), dinsize));
-
 //            // when blockstreaming is turned off create only one task with all inputfiles
 //            if (!use_blockstreaming) {
 //                endtask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f), dinsize));
 //                continue;
 //            }
 
-            job_specification.simplified_streaming = use_simplified_blockstreaming;
+
+            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + std::to_string(j) + "_" + std::to_string(f), dinsize));
+
 
 //            // when simplified blockstreaming is turned on create only one dummytask and task per infile
 //            if (use_simplified_blockstreaming) {
