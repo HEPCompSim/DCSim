@@ -17,14 +17,15 @@ include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/
 
 # source files
 set(SOURCE_FILES
-       src/SimpleWMS.h
-       src/SimpleWMS.cpp
-       src/SimpleSimulator.cpp
-       )
+        src/SimpleExecutionController.h
+        src/SimpleExecutionController.cpp
+        src/SimpleSimulator.cpp
+        src/JobSpecification.h
+        )
 
 # test files
 set(TEST_FILES
-       )
+        src/JobSpecification.h)
 
 # wrench library and dependencies
 find_library(WRENCH_LIBRARY NAMES wrench)
@@ -36,28 +37,28 @@ find_library(GTEST_LIBRARY NAMES gtest)
 add_executable(my-executable ${SOURCE_FILES})
 
 if (ENABLE_BATSCHED)
-target_link_libraries(my-executable
-                       ${WRENCH_LIBRARY}
-                       ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
-                       ${SimGrid_LIBRARY}
-                       ${PUGIXML_LIBRARY}
-                      -lzmq )
+    target_link_libraries(my-executable
+            ${WRENCH_LIBRARY}
+            ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
+            ${SimGrid_LIBRARY}
+            ${PUGIXML_LIBRARY}
+            -lzmq )
 else()
-target_link_libraries(my-executable
-                       ${WRENCH_LIBRARY}
-                       ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
-                       ${SimGrid_LIBRARY}
-                       ${PUGIXML_LIBRARY}
-                      )
+    target_link_libraries(my-executable
+            ${WRENCH_LIBRARY}
+            ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
+            ${SimGrid_LIBRARY}
+            ${PUGIXML_LIBRARY}
+            )
 endif()
 
 install(TARGETS my-executable DESTINATION bin)
 
 # generating unit tests
 add_executable(unit_tests EXCLUDE_FROM_ALL
-                   ${SOURCE_FILES}
-                   ${TEST_FILES}
-               )
+        ${SOURCE_FILES}
+        ${TEST_FILES}
+        )
 target_link_libraries(unit_tests
-                       ${GTEST_LIBRARY} wrench -lpthread -lm
-                      )
+        ${GTEST_LIBRARY} wrench -lpthread -lm
+        )

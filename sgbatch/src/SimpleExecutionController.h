@@ -7,22 +7,26 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
-#ifndef MY_SIMPLEWMS_H
-#define MY_SIMPLEWMS_H
+#ifndef MY_SIMPLE_EXECUTION_CONTROLLER_H
+#define MY_SIMPLE_EXECUTION_CONTROLLER_H
 
 #include <wrench-dev.h>
 #include <iostream>
 #include <fstream>
 
+#include "JobSpecification.h"
+
 class Simulation;
 
 /**
- *  @brief A simple WMS implementation
+ *  @brief A simple ExecutionController implementation
  */
-class SimpleWMS : public wrench::WMS {
+class SimpleExecutionController : public wrench::ExecutionController {
 public:
     // Constructor
-    SimpleWMS(const std::set<std::shared_ptr<wrench::ComputeService>>& compute_services,
+    SimpleExecutionController(
+              const std::map<std::string, JobSpecification> &workload_spec,
+              const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
               const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
               //const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
               //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
@@ -31,10 +35,16 @@ public:
               const std::string& outputdump_name);
 
 protected:
-    void processEventStandardJobFailure(std::shared_ptr<wrench::StandardJobFailedEvent>) override;
-    void processEventStandardJobCompletion(std::shared_ptr<wrench::StandardJobCompletedEvent>) override;
+    void processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent>) override;
+    void processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent>) override;
 
 private:
+
+    std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
+    std::set<std::shared_ptr<wrench::StorageService>> storage_services;
+    std::map<std::string, JobSpecification> workload_spec;
+
+
     int main() override;
 
     /** @brief The job manager */
@@ -47,14 +57,16 @@ private:
     double hitrate = 0.;
 
     /** @brief Map holding information about the first and last task of jobs for output dump */
-    std::map<std::shared_ptr<wrench::StandardJob>, std::pair<wrench::WorkflowTask*, wrench::WorkflowTask*>> job_first_last_tasks;
+//    std::map<std::shared_ptr<wrench::StandardJob>, std::pair<wrench::WorkflowTask*, wrench::WorkflowTask*>> job_first_last_tasks;
     /** @brief Filename for the output-dump file */
     std::string filename;
     /** @brief Output filestream object to write out dump */
     std::ofstream filedump;
 
+    /** @brief number of complete jobs so far **/
+    ssize_t num_completed_jobs = 0;
 
 };
 
-#endif //MY_SIMPLEWMS_H
+#endif //MY_SIMPLE_EXECUTION_CONTROLLER_H
 
