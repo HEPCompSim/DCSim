@@ -20,29 +20,63 @@ public:
 
     void operator () (std::shared_ptr<wrench::ActionExecutor> action_executor) {
         std::string hostname = action_executor->getHostname();
+
         // Identify all storage services that run on this host
-        std::set<std::shared_ptr<wrench::StorageService>> matched_storage_services;
+        std::vector<std::shared_ptr<wrench::StorageService>> matched_storage_services;
         for (auto const &ss : this->storage_services) {
             if (ss->getHostname() == hostname) {
-                matched_storage_services.insert(ss);
+                matched_storage_services.push_back(ss);
             }
         }
 
-        // For each file, either read it from a matched service or copy it to a matched service,
-        // dealing with eviction if needed
+        // For each file, identify where to read it from and/or deal with cache updates, etc.
+        std::map<std::shared_ptr<wrench::DataFile>, std::shared_ptr<wrench::FileLocation>> file_sources;
         for (auto const &f : this->files) {
-            std::shared_ptr<wrench::StorageService> target_ss;
+            // See whether the file is already available in a "local" storage service
+            std::shared_ptr<wrench::StorageService> source_ss;
             for (auto const &ss : matched_storage_services) {
                 if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
-                    target_ss = ss;
+                    source_ss = ss;
                     break;
                 }
             }
-            if (target_ss) {
+            // If yes, we're done
+            if (source_ss) {
+                file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
+                continue;
+            }
+            // If not, then we have to copy the file from some source to some local storage service
+            // TODO: Find the optimal source, whatever that means (right now it's whichever one works first)
 
+            for (auto const &ss : this->storage_services) {
+                if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
+                    source_ss = ss;
+                    break;
+                }
+            }
+            if (!source_ss) {
+                throw std::runtime_error("StreamedComputation(): Couldn't find file " + f->getID() + " on any storage service!");
             }
 
+            // TODO: Find the optimal destination, whatever that means (right now it's random, with a bad RNG!)
+            auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
+
+            // If here is not enough space on the destination_ss, we need to evict something
+            while (destination_ss->getFreeSpace().begin()->second < f->getSize()) {
+                // Pick a file to remove
+                // TODO: THIS REMOVAL HAS TO BE DONE USING SOME DATA STRUCTURE! OR PERHAPS A STORAGE SERVICE
+                // TODO: SHOULD PROVIDE THE "LIST ALL FILES YOU HAVE" FUNCTIONALIRY
+            }
+
+            // Do the copy
+            wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
+
+            file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
+
         }
+
+        // At this point, we know where all files should be read from, we just need to implement the streaming
+        // TODO: IMPLEMENT THE STREAMING
 
 
     }
