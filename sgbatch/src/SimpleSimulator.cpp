@@ -414,9 +414,11 @@ int main(int argc, char **argv) {
             double cached_files_size = 0.;
             for (auto const &f : job_spec.infiles) {
                 simulation->stageFile(f, remote_storage_service);
+                SimpleExecutionController::global_file_map[remote_storage_service].insert(f);
                 if (cached_files_size < hitrate*incr_inputfile_size) {
                     for (const auto& cache : cache_storage_services) {
                         simulation->stageFile(f, cache);
+                        SimpleExecutionController::global_file_map[cache].insert(f);
                     }
                     cached_files_size += f->getSize();
                 }

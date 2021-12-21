@@ -13,6 +13,8 @@
 #include "JobSpecification.h"
 #include "StreamedComputation.h"
 
+std::map<std::shared_ptr<wrench::StorageService>, std::set<std::shared_ptr<wrench::DataFile>>> SimpleExecutionController::global_file_map;
+
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for Simple WMS");
 
 #if 0 // THESE FUNCTIONS ARE NOT USED

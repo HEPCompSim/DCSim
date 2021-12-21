@@ -34,6 +34,8 @@ public:
               //const double& hitrate,
               const std::string& outputdump_name);
 
+    static std::map<std::shared_ptr<wrench::StorageService>, std::set<std::shared_ptr<wrench::DataFile>>> global_file_map;
+
 protected:
     void processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent>) override;
     void processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent>) override;
