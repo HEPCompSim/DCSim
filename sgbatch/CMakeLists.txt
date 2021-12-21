@@ -21,11 +21,12 @@ set(SOURCE_FILES
         src/SimpleExecutionController.cpp
         src/SimpleSimulator.cpp
         src/JobSpecification.h
+        src/StreamedComputation.h
         )
 
 # test files
 set(TEST_FILES
-        src/JobSpecification.h)
+        src/JobSpecification.h src/StreamedComputation.h)
 
 # wrench library and dependencies
 find_library(WRENCH_LIBRARY NAMES wrench)

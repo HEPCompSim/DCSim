@@ -10,6 +10,8 @@
 #include <iostream>
 
 #include "SimpleExecutionController.h"
+#include "JobSpecification.h"
+#include "StreamedComputation.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for Simple WMS");
 
@@ -78,14 +80,14 @@ std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* pa
  * @param outputdump_name: name of the file to dump simulation information
  */
 SimpleExecutionController::SimpleExecutionController(
-                                        const std::map<std::string, JobSpecification> &workload_spec,
-                                        const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
-                                         const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
-                                         const std::string& hostname,
-                                         //const double& hitrate,
-                                         const std::string& outputdump_name) : wrench::ExecutionController(
-                hostname,
-                "condor-simple") {
+        const std::map<std::string, JobSpecification> &workload_spec,
+        const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
+        const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
+        const std::string& hostname,
+        //const double& hitrate,
+        const std::string& outputdump_name) : wrench::ExecutionController(
+        hostname,
+        "condor-simple") {
     //this->hitrate = hitrate;
     this->workload_spec = workload_spec;
     this->filename = outputdump_name;
@@ -118,7 +120,7 @@ int SimpleExecutionController::main() {
     else {
         throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
     }
-    
+
     WRENCH_INFO("Starting on host %s", wrench::Simulation::getHostName().c_str());
     WRENCH_INFO("About to execute a workload of %lu jobs", workload_spec.size());
 
@@ -176,33 +178,13 @@ int SimpleExecutionController::main() {
         auto job = job_manager->createCompoundJob(job_name);
 
         // Read-Input file actions
-        std::vector<std::shared_ptr<wrench::Action>> file_read_actions;
-        for (ssize_t i=0; i < job_spec->infiles.size(); i++)  {
-            auto fr_action = job->addCustomAction("file_read_" + std::to_string(j) + "_" + std::to_string(i),
-                                                  [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                // TODO: Pick a storage service in the right order!
-                // TODO: Read the file in chunks
-            },
-                                                  [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                // No nothing
-            }
-            );
-            file_read_actions.push_back(fr_action);
-        }
-
-        // Compute action
-        // TODO: Is is okay to do a single core?
-        auto compute_action = job->addComputeAction("compute_" + std::to_string(j),
-                                                    job_spec->flops,
-                                                    job_spec->mem,
-                                                    1,
-                                                    1,
-                                                    wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
-
-        // Add necessary dependencies
-        for (auto const &fr_action : file_read_actions) {
-            job->addActionDependency(fr_action, compute_action);
-        }
+        auto streamed_computation = std::shared_ptr<StreamedComputation>(new StreamedComputation(this->storage_services, job_spec->infiles, job_spec->flops, job_spec->mem));
+        auto streaming_action = job->addCustomAction("streaming_" + std::to_string(j),
+                                              *streamed_computation,
+                                              [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                                                  // No nothing
+                                              }
+        );
 
         // Create the file write action
         auto fw_action = job->addCustomAction("file_write_" + std::to_string(j),
@@ -216,7 +198,7 @@ int SimpleExecutionController::main() {
         );
 
         // Add necessary dependencies
-        job->addActionDependency(compute_action, fw_action);
+        job->addActionDependency(streaming_action, fw_action);
 
         // Submit the job for execution!
         job_manager->submitJob(job, htcondor_compute_service);
