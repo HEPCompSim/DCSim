@@ -61,12 +61,7 @@ public:
             // TODO: Find the optimal destination, whatever that means (right now it's random, with a bad RNG!)
             auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
-            // If here is not enough space on the destination_ss, we need to evict something
-            while (destination_ss->getFreeSpace().begin()->second < f->getSize()) {
-                // Pick a file to remove
-                // TODO: THIS REMOVAL HAS TO BE DONE USING SOME DATA STRUCTURE! OR PERHAPS A STORAGE SERVICE
-                // TODO: SHOULD PROVIDE THE "LIST ALL FILES YOU HAVE" FUNCTIONALIRY
-            }
+            // TODO: EVICT FILES IF NOT ENOUGH SPACE ON THE STORAGE SERVICE
 
             // Do the copy
             wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
@@ -77,6 +72,7 @@ public:
 
         // At this point, we know where all files should be read from, we just need to implement the streaming
         // TODO: IMPLEMENT THE STREAMING
+        // TODO: QUESTION: What is the chunk size for each file (the same?) and for the computation?
 
 
     }
