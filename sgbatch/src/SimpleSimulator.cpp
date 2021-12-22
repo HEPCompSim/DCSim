@@ -125,6 +125,7 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
 
     // Initialize random number generators
 //    std::normal_distribution<> flops(average_flops, sigma_flops);
+// TODO: WHAT TO DO WITH MEMORY?
     std::normal_distribution<> mem(average_memory, sigma_memory);
     std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
     std::normal_distribution<> outsize(average_outfile_size,sigma_outfile_size);
