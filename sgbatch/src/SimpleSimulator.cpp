@@ -8,14 +8,31 @@
  * (at your option) any later version.
  */
 #include <wrench.h>
+#include "SimpleSimulator.h"
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
 
 #include <iostream>
 #include <fstream>
 
+/**
+ *
+ * "Global" static variable. Some here a a bit ugly of course, but they should help
+ * with memory footprint by avoiding passing around / storing items that apply to
+ * all jobs.
+ */
+std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
+std::mt19937 SimpleSimulator::gen(42);
+bool SimpleSimulator::use_blockstreaming;
+bool SimpleSimulator::use_simplified_blockstreaming;
+double SimpleSimulator::xrd_block_size = 1*1000*1000*1000;
+double SimpleSimulator::mean_flops_per_block;
+double SimpleSimulator::sigma_flops_per_block;
+// TODO: The initialized below is likely bogus (at compile time?)
+std::normal_distribution<double> *SimpleSimulator::flops_per_block_dist;
 
-std::mt19937 gen(42);
+
+
 
 
 /**
@@ -96,13 +113,10 @@ size_t arg_to_sizet (const std::string& arg) {
 std::map<std::string, JobSpecification> fill_streaming_workflow (
         size_t num_jobs,
         size_t infiles_per_task,
-        double average_flops, double sigma_flops,
+//        double average_flops, double sigma_flops,
         double average_memory, double sigma_memory,
         double average_infile_size, double sigma_infile_size,
         double average_outfile_size, double sigma_outfile_size,
-        const bool use_blockstreaming = false,
-        const bool use_simplified_blockstreaming = true,
-        double xrd_block_size = 1*1000*1000*1000,
         const double dummy_flops = std::numeric_limits<double>::min()
 ) {
 
@@ -110,7 +124,7 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
     std::map<std::string, JobSpecification> workload;
 
     // Initialize random number generators
-    std::normal_distribution<> flops(average_flops, sigma_flops);
+//    std::normal_distribution<> flops(average_flops, sigma_flops);
     std::normal_distribution<> mem(average_memory, sigma_memory);
     std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
     std::normal_distribution<> outsize(average_outfile_size,sigma_outfile_size);
@@ -120,28 +134,26 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         // Create a job specification
         JobSpecification job_specification;
 
-        // Sample strictly positive task flops
-        double dflops = flops(gen);
-        while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops(gen);
-        job_specification.flops = dflops;
-
-        // Sample strictly positive task memory requirements
-        double dmem = mem(gen);
-        while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem(gen);
-        job_specification.mem = dmem;
+//        // Sample strictly positive task flops
+//        double dflops = flops(SimpleSimulator::gen);
+//        while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops(SimpleSimulator::gen);
+//        job_specification.mean_flops_per_block = dflops;
+//
+//        // Sample strictly positive task memory requirements
+//        double dmem = mem(SimpleSimulator::gen);
+//        while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem(SimpleSimulator::gen);
+//        job_specification.mem = dmem;
 
         // Connect the chains spanning all input-files of a job
 //        wrench::WorkflowTask* endtask = nullptr;
 //        wrench::WorkflowTask* enddummytask = nullptr;
         // when blockstreaming is turned off create only one task with all inputfiles
-        job_specification.streaming_enabled = use_blockstreaming;
-        job_specification.simplified_streaming = use_simplified_blockstreaming;
-        job_specification.block_size = xrd_block_size;
+//        job_specification.block_size = xrd_block_size;
 
         for (size_t f = 0; f < infiles_per_task; f++) {
             // Sample inputfile sizes
-            double dinsize = insize(gen);
-            while ((average_infile_size+sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize(gen);
+            double dinsize = insize(SimpleSimulator::gen);
+            while ((average_infile_size+sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize(SimpleSimulator::gen);
 //            // when blockstreaming is turned off create only one task with all inputfiles
 //            if (!use_blockstreaming) {
 //                endtask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f), dinsize));
@@ -218,8 +230,8 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         }
 
         // Sample outfile sizes
-        double doutsize = outsize(gen);
-        while ((average_outfile_size+sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize(gen);
+        double doutsize = outsize(SimpleSimulator::gen);
+        while ((average_outfile_size+sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize(SimpleSimulator::gen);
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
 
         workload["job_" + std::to_string(j)] = job_specification;
@@ -273,24 +285,26 @@ int main(int argc, char **argv) {
     double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
     double sigma_outfile_size = 0.1*average_outfile_size;
 
+    // Create the global flops distribution
+    SimpleSimulator::mean_flops_per_block = average_flops;
+    SimpleSimulator::sigma_flops_per_block = sigma_flops;
+    SimpleSimulator::flops_per_block_dist = new std::normal_distribution<double>(average_flops, sigma_flops);
+
     // Turn on/off blockwise streaming of input-files
     //TODO: add CLI features for the blockwise streaming flag
-    bool use_blockstreaming = true;
-    bool use_simplified_blockstreaming = false;
+    SimpleSimulator::use_blockstreaming = true;
+    SimpleSimulator::use_simplified_blockstreaming = false;
 
-
-    /* Create a workflow */
-    std::cerr << "Constructing workflow specification..." << std::endl;
+    /* Create a workload */
+    std::cerr << "Constructing workload specification..." << std::endl;
 //    auto workflow = new wrench::Workflow();
 
     auto workload_spec = fill_streaming_workflow(
             num_jobs, infiles_per_job,
-            average_flops, sigma_flops,
+//            average_flops, sigma_flops,
             average_memory,sigma_memory,
             average_infile_size, sigma_infile_size,
-            average_outfile_size, sigma_outfile_size,
-            use_blockstreaming,
-            use_simplified_blockstreaming
+            average_outfile_size, sigma_outfile_size
     );
 
     std::cerr << "The workflow has " << std::to_string(num_jobs) << " jobs" << std::endl;
@@ -403,21 +417,21 @@ int main(int argc, char **argv) {
         for (ssize_t j = 0; j < workload_spec.size(); j++) {
             // Shuffle the input files
             auto job_spec = workload_spec["job_" + std::to_string(j)];
-            std::shuffle(job_spec.infiles.begin(), job_spec.infiles.end(), gen);
+            std::shuffle(job_spec.infiles.begin(), job_spec.infiles.end(), SimpleSimulator::gen);
             // Compute the task's incremental inputfiles size
             double incr_inputfile_size = 0.;
-            for (auto f : job_spec.infiles) {
+            for (auto const &f : job_spec.infiles) {
                 incr_inputfile_size += f->getSize();
             }
             // Distribute the infiles on all caches until desired hitrate is reached
             double cached_files_size = 0.;
             for (auto const &f : job_spec.infiles) {
                 simulation->stageFile(f, remote_storage_service);
-                SimpleExecutionController::global_file_map[remote_storage_service].insert(f);
+                SimpleSimulator::global_file_map[remote_storage_service].touchFile(f);
                 if (cached_files_size < hitrate*incr_inputfile_size) {
                     for (const auto& cache : cache_storage_services) {
                         simulation->stageFile(f, cache);
-                        SimpleExecutionController::global_file_map[cache].insert(f);
+                        SimpleSimulator::global_file_map[cache].touchFile(f);
                     }
                     cached_files_size += f->getSize();
                 }

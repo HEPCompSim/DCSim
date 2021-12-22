@@ -13,9 +13,7 @@
 #include "JobSpecification.h"
 #include "StreamedComputation.h"
 
-std::map<std::shared_ptr<wrench::StorageService>, std::set<std::shared_ptr<wrench::DataFile>>> SimpleExecutionController::global_file_map;
-
-XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for Simple WMS");
+XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
 
 #if 0 // THESE FUNCTIONS ARE NOT USED
 /**
@@ -72,13 +70,12 @@ std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* pa
 
 
 /**
- * @brief Create a Simple WMS with a workflow instance, a list of storage services and a list of compute services
+ * @brief Create a SimpleExecutionController with a workload specification instance, a list of storage services and a list of compute services
  *
  * @param workload_spec: the workload specification
  * @param htcondor_compute_service: an HTCondor compute service
  * @param storage_services: set of storage services holding input files //! currently only remote storages needed
  * @param hostname: host where the WMS runs
- * //@param hitrate: fraction of files present at caches
  * @param outputdump_name: name of the file to dump simulation information
  */
 SimpleExecutionController::SimpleExecutionController(
@@ -86,11 +83,9 @@ SimpleExecutionController::SimpleExecutionController(
         const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
         const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
         const std::string& hostname,
-        //const double& hitrate,
         const std::string& outputdump_name) : wrench::ExecutionController(
         hostname,
         "condor-simple") {
-    //this->hitrate = hitrate;
     this->workload_spec = workload_spec;
     this->filename = outputdump_name;
     this->htcondor_compute_services = htcondor_compute_services;
@@ -181,17 +176,13 @@ int SimpleExecutionController::main() {
 
         // Read-Input file actions
         auto streamed_computation = std::shared_ptr<StreamedComputation>(new StreamedComputation(this->storage_services,
-                                                                                                 job_spec->infiles,
-                                                                                                 job_spec->simplified_streaming,
-                                                                                                 job_spec->streaming_enabled,
-                                                                                                 job_spec->block_size,
-                                                                                                 job_spec->flops,
-                                                                                                 job_spec->mem));
+                                                                                                 job_spec->infiles));
         auto streaming_action = job->addCustomAction("streaming_" + std::to_string(j),
-                                              *streamed_computation,
-                                              [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                                                  // No nothing
-                                              }
+                                                     *streamed_computation,
+                                                     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                                                         WRENCH_INFO("Streaming computation done");
+                                                         // No nothing
+                                                     }
         );
 
         // Create the file write action
@@ -210,6 +201,7 @@ int SimpleExecutionController::main() {
 
         // Submit the job for execution!
         job_manager->submitJob(job, htcondor_compute_service);
+        WRENCH_INFO("Submitted job %s", job->getName().c_str());
 
     }
 
@@ -295,7 +287,7 @@ int SimpleExecutionController::main() {
             continue;
         }
 
-        if (this->abort || this->num_completed_jobs != this->workload_spec.size()) {
+        if (this->abort || this->num_completed_jobs == this->workload_spec.size()) {
             break;
         }
     }
@@ -304,12 +296,12 @@ int SimpleExecutionController::main() {
 
     WRENCH_INFO("--------------------------------------------------------")
     if (this->num_completed_jobs == this->workload_spec.size()){
-        WRENCH_INFO("Workflow execution is complete!");
+        WRENCH_INFO("Workload execution is complete!");
     } else{
-        WRENCH_INFO("Workflow execution is incomplete!")
+        WRENCH_INFO("Workload execution is incomplete!")
     }
 
-    WRENCH_INFO("Simple WMS daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());
+    WRENCH_INFO("SimpleExecutionController daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());
 
     this->job_manager.reset();
 
@@ -340,6 +332,8 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
 
     /* Retrieve the job that this event is for */
     WRENCH_INFO("Notified that job %s with %ld actions has completed", event->job->getName().c_str(), event->job->getActions().size());
+
+    this->num_completed_jobs++;
 
     /* Figure out execution host. All actions run on the same host, so let's just pick an arbitrary one */
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
