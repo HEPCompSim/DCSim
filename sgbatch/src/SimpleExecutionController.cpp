@@ -176,8 +176,12 @@ int SimpleExecutionController::main() {
 
         // Read-Input file actions
         auto streamed_computation = std::shared_ptr<StreamedComputation>(new StreamedComputation(this->storage_services,
+
                                                                                                  job_spec->infiles));
+        // TODO: ADD SOMETHING FOR THE MEMORY FOOTPRINT BELOW!
+        // TODO: NOTE THAT WE USE ONLY ONE CORE, WHICH IS LIKELY OK?  COULD DO MORE.
         auto streaming_action = job->addCustomAction("streaming_" + std::to_string(j),
+                                                     1, 0,
                                                      *streamed_computation,
                                                      [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
                                                          WRENCH_INFO("Streaming computation done");
@@ -187,6 +191,7 @@ int SimpleExecutionController::main() {
 
         // Create the file write action
         auto fw_action = job->addCustomAction("file_write_" + std::to_string(j),
+                                              0, 0,
                                               [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
                                                   // TODO: Pick a storage service in the right order!
                                                   // TODO: Write the file at once
