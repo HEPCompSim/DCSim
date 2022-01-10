@@ -192,14 +192,17 @@ int SimpleWMS::main() {
         std::pair<wrench::WorkflowTask *, wrench::WorkflowTask *> first_last_tasks;
         first_last_tasks.first = entry_task;
         bool found_last_task = false;
-        for (auto task : descendants) {
-            if (found_last_task) {
-                throw std::runtime_error("Found more than one last-task in the task chain starting with task " + entry_task->getID() + "!");
-            }
+        for (auto task : task_chunks) {
             if (task->getNumberOfChildren() == 0) {
+                if (found_last_task) {
+                    throw std::runtime_error("Found more than one last-task in the task chain starting with task " + entry_task->getID() + "!");
+                }
                 first_last_tasks.second = task;
                 found_last_task = true;
             }
+        }
+        if (! found_last_task) {
+            throw std::runtime_error("Couldn't find the last task for chain starting with " + entry_task->getID() + "!");
         }
 
         // Identify file-locations on storage services
