@@ -75,20 +75,9 @@ po::variables_map process_program_options(const int argc, const char **const arg
             vm
         );
     }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
     }
-
-    po::positional_options_description pos;
-    pos.add("output-file", -1);
-
-    po::store(
-        po::command_line_parser(argc, argv).options(desc).positional(p).run(),
-        vm
-    );
-    po::notify(vm);
-    
 
     if (vm.count("help")) {
         std::cerr << desc << std::endl;
@@ -98,7 +87,7 @@ po::variables_map process_program_options(const int argc, const char **const arg
         std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
     }
     else {
-        std::cerr << "Platform was not set"
+        std::cerr << "Platform must be but is not set!" << std::endl;
     }
 
     po::notify(vm);
