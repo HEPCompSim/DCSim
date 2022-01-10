@@ -199,6 +199,7 @@ int SimpleWMS::main() {
                 }
                 first_last_tasks.second = task;
                 found_last_task = true;
+                break;
             }
         }
         if (! found_last_task) {
