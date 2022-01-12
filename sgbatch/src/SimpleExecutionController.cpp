@@ -179,13 +179,13 @@ int SimpleExecutionController::main() {
 
                                                                                                  job_spec->infiles));
         // TODO: ADD SOMETHING FOR THE MEMORY FOOTPRINT BELOW!
-        // TODO: NOTE THAT WE USE ONLY ONE CORE, WHICH IS LIKELY OK?  COULD DO MORE.
+        // TODO: NOTE THAT WE USE ONLY ONE CORE, WHICH IS LIKELY OK? COULD DO MORE...
         auto streaming_action = job->addCustomAction("streaming_" + std::to_string(j),
-                                                     1, 0,
+                                                     0, 1,
                                                      *streamed_computation,
                                                      [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
                                                          WRENCH_INFO("Streaming computation done");
-                                                         // No nothing
+                                                         // Do nothing
                                                      }
         );
 
@@ -193,11 +193,13 @@ int SimpleExecutionController::main() {
         auto fw_action = job->addCustomAction("file_write_" + std::to_string(j),
                                               0, 0,
                                               [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                                                  // TODO: Pick a storage service in the right order!
+                                                  // TODO: Which storage service should we write output on?
+                                                  // TODO: Probably random selection is fine, or just a fixed
+                                                  // TODO: one that's picked by the "user"?
                                                   // TODO: Write the file at once
                                               },
                                               [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                                                  // No nothing
+                                                  // Do nothing
                                               }
         );
 

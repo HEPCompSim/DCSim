@@ -59,6 +59,16 @@ void StreamedComputation::determineFileSources(std::string hostname) {
         // TODO: But then perhaps matched_storage_services.size() is always 1? (see QUESTION above)
         auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
+        // TODO: Instead of doing this file copy right here, instead instantly create the
+        // TODO: file instantly locally for next jobs? But then the second job
+        // TODO: could complete before the first job, which doesn't
+        // TODO: Perhaps make subsequent job wait for completion of the first
+        // TODO: job so as not to finish earlier than that first job. Better idea
+        // TODO: perhaps: have the first job that streams the file update a counter
+        // TODO: of file blocks available at the storage service, and subsequent jobs
+        // TODO: can read a block only if it's available (e.g., by waiting on some
+        // TODO: condition variable, which is signaled by the first job each time it
+        // TODO: reads a block).
 
         // Evict files while to create space, using an LRU scheme!
         double free_space = destination_ss->getFreeSpace().begin()->second;
@@ -70,9 +80,11 @@ void StreamedComputation::determineFileSources(std::string hostname) {
             free_space += to_evict->getSize();
         }
 
+
         // Do the copy
         wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
         SimpleSimulator::global_file_map[destination_ss].touchFile(f);
+
 
         this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
     }
@@ -87,13 +99,12 @@ void StreamedComputation::operator () (std::shared_ptr<wrench::ActionExecutor> a
     WRENCH_INFO("Determining file sources for streamed computation");
     this->determineFileSources(hostname);
 
-    // TODO: HENRI WASN'T QUITE SURE WHAT use_blockstreaming=true AND use_simplified_streaming meant
-    // TODO: RIGHT NOW use_simplified streaming IS IGNORED. TO FIX LATER LIKELY
-    if (not SimpleSimulator::use_blockstreaming) {
-        this->performComputationNoStreaming(hostname);
-    } else {
+//    if (not SimpleSimulator::use_blockstreaming) {
+//        this->performComputationNoStreaming(hostname);
+//    } else {
         this->performComputationStreaming(hostname);
-    }
+//    }
+
 }
 
 double StreamedComputation::determineFlops(double data_size) {
@@ -125,20 +136,33 @@ void StreamedComputation::performComputationStreaming(std::string &hostname) {
     for (auto const &fs : this->file_sources) {
         WRENCH_INFO("Streaming computation for input file %s", fs.first->getID().c_str());
         double data_to_process = fs.first->getSize();
-        while (data_to_process > 0) {
+
+        // Compute the number of blocks
+        int num_blocks = int(std::ceil(data_to_process / (double) SimpleSimulator::xrd_block_size));
+
+        // Read the first block
+        fs.second->getStorageService()->readFile(fs.first, fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
+
+        // Process next blocks: compute block i while reading block i+i
+        for (int i=0; i < num_blocks - 1; i++) {
             double num_bytes = std::min<double>(SimpleSimulator::xrd_block_size, data_to_process);
             double num_flops = determineFlops(num_bytes);
 //            WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
             // Start the computation asynchronously
             simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
             exec->start();
-            // Reate data from the file
+            // Read data from the file
             fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
             // Wait for the computation to be done
             exec->wait();
             data_to_process -= num_bytes;
         }
 
+        // Process last blocks
+        double num_flops = determineFlops(std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
+        simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
+        exec->start();
+        exec->wait();
 
     }
 
