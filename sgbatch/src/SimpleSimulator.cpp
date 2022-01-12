@@ -389,7 +389,7 @@ int main(int argc, char **argv) {
     /* Instantiate a file registry service */
     std::cerr << "Instantiating a FileRegistryService on " << wms_host << "..." << std::endl;
     auto file_registry_service =
-            simulation->add(new wrench::FileRegistryService({{wms_host}}));
+            simulation->add(new wrench::FileRegistryService({wms_host}));
 
 
     /* Instantiate a WMS */
