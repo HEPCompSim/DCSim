@@ -28,7 +28,7 @@ std::mt19937 gen(42);
  * @param argv 
  * 
  */
-po::variables_map process_program_options(const int argc, const char **const argv) {
+po::variables_map process_program_options(int argc, char** argv) {
 
     // default values
     double hitrate = 0.0;
@@ -303,43 +303,28 @@ int main(int argc, char **argv) {
     /* Parsing of the command-line arguments for this WRENCH simulation */
     auto vm = process_program_options(argc, argv);
 
-    if (argc != 6) {
-        std::cerr << "Usage: " << argv[0];
-        std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
-        std::cerr << " [--wrench-full-log || --log=simple_wms.threshold=info]";
-        std::cerr << std::endl;
-        exit(1);
-    }
-
     // The first argument is the platform description file, written in XML following the SimGrid-defined DTD
-    char *platform_file = argv[1];
+    std::string platform_file = vm["platform"].as<std::string>();
 
-    // output-file name
-    //TODO: make this steerable for the user
-    std::string filename = "default.csv";
+    // output-file name containing simulation information
+    std::string filename = vm["output-file"].as<std::string>();
 
-    // The second argument is the number of jobs which need to be executed
-    size_t num_jobs = arg_to_sizet(argv[2]);
-    // The third argument is the number of input files per job which need to be transferred
-    size_t infiles_per_job = arg_to_sizet(argv[3]);
-    // The fourth argument is the average size of the inputfiles in bytes
-    double average_infile_size = arg_to_double(argv[4]);
-    // The fifth argument is the fractional cache hitrate
-    double hitrate = arg_to_double(argv[5]);
+    size_t num_jobs = vm["njobs"].as<size_t>();
+    size_t infiles_per_job = vm["ninfiles"].as<size_t>();
+    double hitrate = vm["hitrate"].as<double>();
 
-    // Set remaining task parameters for truncated normal distributions
-    double average_flops = 2164.428*1000*1000*1000;
-    double average_memory = 2.*1000*1000*1000;
-    double sigma_flops = 0.1*average_flops;
-    double sigma_memory = 0.1*average_memory;
-    double sigma_infile_size = 0.1*average_infile_size;
-    double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
-    double sigma_outfile_size = 0.1*average_outfile_size;
+    double average_flops = vm["flops"].as<double>();
+    double sigma_flops = vm["sigma-flops"].as<double>();
+    double average_memory = vm["mem"].as<double>();
+    double sigma_memory = vm["sigma-mem"].as<double>();
+    double average_infile_size = vm["insize"].as<double>();
+    double sigma_infile_size = vm["sigma-insize"].as<double>();
+    double average_outfile_size = vm["outsize"].as<double>();
+    double sigma_outfile_size = vm["sigma-outsize"].as<double>();
 
-    // Turn on/off blockwise streaming of input-files
-    //TODO: add CLI features for the blockwise streaming flag
-    bool use_blockstreaming = true;
-    bool use_simplified_blockstreaming = false;
+    // Flags to turn on/off blockwise streaming of input-files
+    bool use_blockstreaming = vm["blockstreaming"].as<bool>();
+    bool use_simplified_blockstreaming = vm["simplified-blockstreaming"].as<bool>();
 
 
     /* Create a workflow */
