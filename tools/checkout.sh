@@ -36,7 +36,7 @@ popd
 
 # 3) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
 
-git clone git@framagit.org:simgrid/simgrid.git # master branch, currently on commit: f0c07d4ab3b94286d109ff88493b01c082ad70cb
+git clone https://framagit.org/simgrid/simgrid.git # master branch, currently on commit: f0c07d4ab3b94286d109ff88493b01c082ad70cb
 pushd simgrid
 mkdir -p build
 cd build
