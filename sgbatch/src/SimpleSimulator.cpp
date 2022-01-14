@@ -99,59 +99,6 @@ po::variables_map process_program_options(int argc, char** argv) {
 
 
 /**
- * @brief helper function for converting a CLI argument string to double
- * 
- * @param arg: a CLI argument string
- * 
- * @return the converted argument
- */
-double arg_to_double (const std::string& arg) {
-    try {
-        std::size_t pos;
-        double value = std::stod(arg, &pos);
-        if (pos < arg.size()) {
-            std::cerr << "Trailing characters after number: " << arg << std::endl;
-        }
-        return value;
-    } catch (const std::invalid_argument& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Invalid number: " << arg << std::endl;
-        exit (EXIT_FAILURE);
-    } catch (const std::out_of_range& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Number out of range: " << arg << std::endl;
-        exit (EXIT_FAILURE);
-    }
-}
-
-/**
- * @brief helper function for converting CLI argument to size_t
- *
- * @param arg: a CLI argument string
- * 
- * @return the converted argument
- */
-size_t arg_to_sizet (const std::string& arg) {
-    try {
-        std::size_t pos;
-        size_t value = std::stoi(arg, &pos);
-        if (pos < arg.size()) {
-            std::cerr << "Trailing characters after number: " << arg << std::endl;
-        }
-        return value;
-    } catch (const std::invalid_argument& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Invalid number: " << arg << std::endl;
-        exit (EXIT_FAILURE);
-    } catch (const std::out_of_range& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Number out of range: " << arg << std::endl;
-        exit (EXIT_FAILURE);
-    }
-}
-
-
-/**
  * @brief fill a Workflow with tasks, which include the inputfile and outputfile dependencies of a job.
  * Optionally a task chain which takes care of streaming input data and perform computations in blocks 
  * per job can be created in a simplified and fully XRootD-ish manner.
