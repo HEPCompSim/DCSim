@@ -34,7 +34,16 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 popd
 
-# 3) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
+# 3) googletest, docu & git: https://github.com/google/googletest
+git clone git@github.com:google/googletest.git
+pushd googletest;
+mkdir -p build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+make -j 6; sudo make install
+popd
+
+# 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
 
 git clone https://framagit.org/simgrid/simgrid.git # master branch, currently on commit: f0c07d4ab3b94286d109ff88493b01c082ad70cb
 pushd simgrid
