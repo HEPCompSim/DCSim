@@ -10,7 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 
 find_package(SimGrid REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
+
 
 # include directories for dependencies and WRENCH libraries
 include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/local/include /usr/local/include/wrench ${Boost_INCLUDE_DIR})
@@ -40,6 +41,7 @@ target_link_libraries(my-executable
                        ${WRENCH_LIBRARY}
                        ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
                        ${SimGrid_LIBRARY}
+                       ${Boost_LIBRARIES}
                        ${PUGIXML_LIBRARY}
                       -lzmq )
 else()
@@ -47,6 +49,7 @@ target_link_libraries(my-executable
                        ${WRENCH_LIBRARY}
                        ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
                        ${SimGrid_LIBRARY}
+                       ${Boost_LIBRARIES}
                        ${PUGIXML_LIBRARY}
                       )
 endif()
