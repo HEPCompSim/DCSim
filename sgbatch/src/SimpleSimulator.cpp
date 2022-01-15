@@ -64,7 +64,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
         ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
 
-        ("blockstreaming", po::bool_switch()->default_value(true), "switch to turn on/off block-wise streaming of input-files")
+        ("no-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off block-wise streaming of input-files")
         ("simplified-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off simplified input-file streaming")
 
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
 
     // Flags to turn on/off blockwise streaming of input-files
-    bool use_blockstreaming = vm["blockstreaming"].as<bool>();
+    bool use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
     bool use_simplified_blockstreaming = vm["simplified-blockstreaming"].as<bool>();
 
 
