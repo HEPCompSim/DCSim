@@ -78,7 +78,7 @@ po::variables_map process_program_options(int argc, char** argv) {
 
     if (vm.count("help")) {
         std::cerr << desc << std::endl;
-        return 0;
+        exit(EXIT_SUCCESS);
     }
     if (vm.count("platform")) {
         std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
