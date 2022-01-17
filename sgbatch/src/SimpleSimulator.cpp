@@ -80,20 +80,18 @@ po::variables_map process_program_options(int argc, char** argv) {
         std::cerr << desc << std::endl;
         exit(EXIT_SUCCESS);
     }
-    if (vm.count("platform")) {
-        std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
-    }
-    else {
-        std::cerr << "Platform must be but is not set!" << std::endl;
-    }
 
     try {
         po::notify(vm);
     } catch (std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl << std::endl;
         std::cerr << desc << std::endl;
         exit(EXIT_FAILURE);
     }
+
+    // Here, all options should be properly set
+    std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
+
     return vm;
 }
 
