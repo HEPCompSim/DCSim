@@ -12,7 +12,7 @@
 WRENCH_SWDIR=./wrench
 WRENCH_BUILDDIR=${WRENCH_SWDIR}/build
 
-for njobs in 100 500 1000;
+for njobs in 0 100 500 1000;
 do
     valgrind --tool=massif --time-unit=ms --massif-out-file="massif_${njobs}_nolog_wrench2.0_test.out" \
     ${WRENCH_BUILDDIR}/examples/action_api/bare-metal-bag-of-actions/wrench-example-bare-metal-bag-of-actions ${njobs} ${WRENCH_SWDIR}/examples/action_api/bare-metal-bag-of-actions/two_hosts.xml;
