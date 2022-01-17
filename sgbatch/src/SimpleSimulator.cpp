@@ -13,60 +13,88 @@
 #include <iostream>
 #include <fstream>
 
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+
 
 std::mt19937 gen(42);
 
 
 /**
- * @brief helper function for converting a CLI argument string to double
+ * @brief helper function to process simulation options and parameters
  * 
- * @param arg: a CLI argument string
+ * @param argc
+ * @param argv 
  * 
- * @return the converted argument
  */
-double arg_to_double (const std::string& arg) {
-    try {
-        std::size_t pos;
-        double value = std::stod(arg, &pos);
-        if (pos < arg.size()) {
-            std::cerr << "Trailing characters after number: " << arg << std::endl;
-        }
-        return value;
-    } catch (const std::invalid_argument& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Invalid number: " << arg << std::endl;
-        exit (EXIT_FAILURE);
-    } catch (const std::out_of_range& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Number out of range: " << arg << std::endl;
-        exit (EXIT_FAILURE);
-    }
-}
+po::variables_map process_program_options(int argc, char** argv) {
 
-/**
- * @brief helper function for converting CLI argument to size_t
- *
- * @param arg: a CLI argument string
- * 
- * @return the converted argument
- */
-size_t arg_to_sizet (const std::string& arg) {
-    try {
-        std::size_t pos;
-        size_t value = std::stoi(arg, &pos);
-        if (pos < arg.size()) {
-            std::cerr << "Trailing characters after number: " << arg << std::endl;
-        }
-        return value;
-    } catch (const std::invalid_argument& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Invalid number: " << arg << std::endl;
-        exit (EXIT_FAILURE);
-    } catch (const std::out_of_range& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Number out of range: " << arg << std::endl;
-        exit (EXIT_FAILURE);
+    // default values
+    double hitrate = 0.0;
+
+    double average_flops = 2164.428*1000*1000*1000;
+    double sigma_flops = 0.1*average_flops;
+    double average_memory = 2.*1000*1000*1000;
+    double sigma_memory = 0.1*average_memory;
+    size_t infiles_per_job = 10;
+    double average_infile_size = 3600000000.;
+    double sigma_infile_size = 0.1*average_infile_size;
+    double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
+    double sigma_outfile_size = 0.1*average_outfile_size;
+
+    bool use_blockstreaming = true;
+    bool use_simplified_blockstreaming = false;
+
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help,h", "show brief usage message\n")
+
+        ("platform,p", po::value<std::string>()->value_name("<platform>")->required(), "platform description file, written in XML following the SimGrid-defined DTD")
+        ("hitrate,H", po::value<double>()->default_value(hitrate), "initial fraction of staged input-files on caches at simulation start")
+
+        ("njobs,n", po::value<size_t>()->required(), "number of jobs to simulate")
+        ("flops", po::value<double>()->default_value(average_flops), "amount of floating point operations jobs need to process")
+        ("sigma-flops", po::value<double>()->default_value(sigma_flops), "jobs' distribution spread in FLOPS")
+        ("mem,m", po::value<double>()->default_value(average_memory), "average size of memory needed for jobs to run")
+        ("sigma-mem", po::value<double>()->default_value(sigma_memory), "jobs' sistribution spread in memory-needs")
+        ("ninfiles", po::value<size_t>()->default_value(infiles_per_job), "number of input-files each job has to process")
+        ("insize", po::value<double>()->default_value(average_infile_size), "average size of input-files jobs read")
+        ("sigma-insize", po::value<double>()->default_value(sigma_infile_size), "jobs' distribution spread in input-file size")
+        ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
+        ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
+
+        ("no-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off block-wise streaming of input-files")
+        ("simplified-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off simplified input-file streaming")
+
+        ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
+    ;
+
+    po::variables_map vm;
+    po::store(
+        po::parse_command_line(argc, argv, desc),
+        vm
+    );
+
+    if (vm.count("help")) {
+        std::cerr << desc << std::endl;
+        return 0;
     }
+    if (vm.count("platform")) {
+        std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
+    }
+    else {
+        std::cerr << "Platform must be but is not set!" << std::endl;
+    }
+
+    try {
+        po::notify(vm);
+    } catch (std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << desc << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    return vm;
 }
 
 
@@ -220,43 +248,30 @@ int main(int argc, char **argv) {
 
 
     /* Parsing of the command-line arguments for this WRENCH simulation */
-    if (argc != 6) {
-        std::cerr << "Usage: " << argv[0];
-        std::cerr << " <xml platform file> <number of jobs> <input files per job> <average inputfile size> <cache hitrate>";
-        std::cerr << " [--wrench-full-log || --log=simple_wms.threshold=info]";
-        std::cerr << std::endl;
-        exit(1);
-    }
+    auto vm = process_program_options(argc, argv);
 
     // The first argument is the platform description file, written in XML following the SimGrid-defined DTD
-    char *platform_file = argv[1];
+    std::string platform_file = vm["platform"].as<std::string>();
 
-    // output-file name
-    //TODO: make this steerable for the user
-    std::string filename = "default.csv";
+    // output-file name containing simulation information
+    std::string filename = vm["output-file"].as<std::string>();
 
-    // The second argument is the number of jobs which need to be executed
-    size_t num_jobs = arg_to_sizet(argv[2]);
-    // The third argument is the number of input files per job which need to be transferred
-    size_t infiles_per_job = arg_to_sizet(argv[3]);
-    // The fourth argument is the average size of the inputfiles in bytes
-    double average_infile_size = arg_to_double(argv[4]);
-    // The fifth argument is the fractional cache hitrate
-    double hitrate = arg_to_double(argv[5]);
+    size_t num_jobs = vm["njobs"].as<size_t>();
+    size_t infiles_per_job = vm["ninfiles"].as<size_t>();
+    double hitrate = vm["hitrate"].as<double>();
 
-    // Set remaining task parameters for truncated normal distributions
-    double average_flops = 2164.428*1000*1000*1000;
-    double average_memory = 2.*1000*1000*1000;
-    double sigma_flops = 0.1*average_flops;
-    double sigma_memory = 0.1*average_memory;
-    double sigma_infile_size = 0.1*average_infile_size;
-    double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
-    double sigma_outfile_size = 0.1*average_outfile_size;
+    double average_flops = vm["flops"].as<double>();
+    double sigma_flops = vm["sigma-flops"].as<double>();
+    double average_memory = vm["mem"].as<double>();
+    double sigma_memory = vm["sigma-mem"].as<double>();
+    double average_infile_size = vm["insize"].as<double>();
+    double sigma_infile_size = vm["sigma-insize"].as<double>();
+    double average_outfile_size = vm["outsize"].as<double>();
+    double sigma_outfile_size = vm["sigma-outsize"].as<double>();
 
-    // Turn on/off blockwise streaming of input-files
-    //TODO: add CLI features for the blockwise streaming flag
-    bool use_blockstreaming = true;
-    bool use_simplified_blockstreaming = false;
+    // Flags to turn on/off blockwise streaming of input-files
+    bool use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
+    bool use_simplified_blockstreaming = vm["simplified-blockstreaming"].as<bool>();
 
 
     /* Create a workflow */
@@ -332,7 +347,6 @@ int main(int argc, char **argv) {
             );
         }
     }
-  
     // Instantiate a HTcondorComputeService and add it to the simulation
     std::set<shared_ptr<wrench::ComputeService>> htcondor_compute_services;
     htcondor_compute_services.insert(shared_ptr<wrench::ComputeService>(simulation->add(
