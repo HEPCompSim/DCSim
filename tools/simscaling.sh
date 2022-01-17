@@ -4,15 +4,19 @@
 #
 #
 
-SCENARIO="private"
+NJOBS=60
+NINFILES=10
+AVGINSIZE=3600000000
+
+SCENARIO="test"
 
 if [ ! -d "tmp/monitor/$SCENARIO" ]; then
     mkdir -p tmp/monitor/$SCENARIO
 fi
 
-for NJOBS in 1500 2000 2500 3000 
+for NJOBS in 10 20 50 100 200 500 1000 1200 1500 2000 2500 3000 
 do
-    ./my-executable data/platform-files/host_scaletest.xml ${NJOBS} 10 3600000000 0 & TEST_PID=$!
+    ./my-executable --platform data/platform-files/host_scaletest.xml --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} --hitrate 0.0 --output-file /dev/null --no-blockstreaming & TEST_PID=$!
     echo $TEST_PID
     (while [[ True ]]; do ps -aux | grep " ${TEST_PID} " | grep "my" >> tmp/monitor/$SCENARIO/test_privatedump_${NJOBS}jobs.txt; sleep 10; done;)& MONITOR_PID=$!
     echo $TEST_PID $MONITOR_PID

@@ -6,15 +6,17 @@ from matplotlib import pyplot as plt
 import os.path
 import glob
 
+
 plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
-scenario = 'private'
+scenario = 'test'
 
 scenario_plotlabel_dict = {
     'withdump': "with JSON dump",
     'nodump': "without JSON dump",
-    'private': "private improvements"
+    'private': "private improvements",
+    "test": "final hacky-WRENCH"
 }
 
 
@@ -23,9 +25,13 @@ def converttime(df: pd.DataFrame, a: str, b: str):
 
 
 # Create a data-frame holding all monitoring information
-monitorfiles = glob.glob(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sgbatch", "tmp", "monitor", scenario, "test_*jobs.txt")))
+monitor_dir = os.path.join(os.path.dirname(__file__), "..", "sgbatch", "tmp", "monitor", scenario)
+print(f"Searching for monitor files in {monitor_dir}")
+
+monitorfiles = glob.glob(os.path.abspath(os.path.join(monitor_dir, "test_*jobs.txt")))
+print("Found {} files".format(str(len(monitorfiles))))
+
 if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
-    print("Found all files")
     df = pd.concat(
         [
             pd.read_table(
@@ -33,7 +39,7 @@ if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
                 delimiter="\s+",
                 names=[
                     "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", 
-                    "COMMAND", "Platform file", "NJobs", "NFilesPerJob", "FileSize", "Hitrate"
+                    "COMMAND", "platform option", "Platform file", "njobs option", "NJobs", "ninfiles option", "NFilesPerJob", "insize option", "FileSize", "hitrate option", "Hitrate", "output option", "OutputName", "scenario option"
                     ],
                 )
             for f in monitorfiles
@@ -60,12 +66,12 @@ ax.set_title("Simulation scaling " + scenario_plotlabel_dict[scenario])
 
 # ax.set_xscale('log')
 ax.set_xlabel('$N_{jobs}$', loc='right')
-ax.set_ylabel('time / s', color='black')
+ax.set_ylabel('time / min', color='black')
 ax.set_xlim([0,2100])
-ax.set_ylim([0,400])
+# ax.set_ylim([0,400])
 
-ax.plot(runtimesdf['NJobs'], runtimesdf['TIME'], linestyle='dotted', color='black')
-ax.scatter(runtimesdf['NJobs'], runtimesdf['TIME'], color='black', marker='x', label='runtime')
+ax.plot(runtimesdf['NJobs'], runtimesdf['TIME']/60, linestyle='dotted', color='black')
+ax.scatter(runtimesdf['NJobs'], runtimesdf['TIME']/60, color='black', marker='x', label='runtime')
 ax.grid(axis="y", linestyle = 'dotted', which='major')
 
 secax = ax.twinx()
@@ -73,7 +79,7 @@ secax.plot(memorydf['NJobs'], memorydf['RSS'],linestyle='dotted', color='orange'
 secax.scatter(memorydf['NJobs'], memorydf['RSS'], color='orange', marker='^', label='memory')
 # secax.xaxis.set_minor_locator(AutoMinorLocator())
 secax.set_ylabel('memory / GiB', color='orange')
-secax.set_ylim([0,12])
+# secax.set_ylim([0,12])
 
 h1, l1 = ax.get_legend_handles_labels()
 h2, l2 = secax.get_legend_handles_labels()
