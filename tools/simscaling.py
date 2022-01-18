@@ -5,12 +5,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os.path
 import glob
+import argparse
 
 
 plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
-scenario = 'test'
 
 scenario_plotlabel_dict = {
     'withdump': "with JSON dump",
@@ -24,12 +24,36 @@ def converttime(df: pd.DataFrame, a: str, b: str):
     return df[a].astype(int)*60 + df[b].astype(int)
 
 
-# Create a data-frame holding all monitoring information
-monitor_dir = os.path.join(os.path.dirname(__file__), "..", "sgbatch", "tmp", "monitor", scenario)
-print(f"Searching for monitor files in {monitor_dir}")
+parser = argparse.ArgumentParser(
+    description="Produce a plot showing the runtime and memory scaling of the simulation. \
+        If you intend to use this script, make sure that the monitoring files containing the \
+        information about the simulation are in the right format. If you produced these by the \
+        `simscaling.sh` script, it should work natively.",
+    add_help=True
+)
+parser.add_argument(
+    "--scenario", 
+    type=str,
+    choices=("withdump", "nodump", "private", "test"),
+    required=True,
+    help="Choose a scenario, which sets the according plotting label and filename of the plot."
+)
+parser.add_argument(
+    "monitorfiles",
+    nargs='+',
+    help="Files containing monitoring information about the simulation run, produced by `ps -aux`.\
+        Each file produces a single point in the plot for memory and runtime respectively."
+)
 
-monitorfiles = glob.glob(os.path.abspath(os.path.join(monitor_dir, "test_*jobs.txt")))
-print("Found {} files".format(str(len(monitorfiles))))
+
+args = parser.parse_args()
+
+scenario = args.scenario
+
+
+# Create a data-frame holding all monitoring information
+monitorfiles = args.monitorfiles
+print("Found {} monitorfiles".format(str(len(monitorfiles))))
 
 if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
     df = pd.concat(
@@ -38,8 +62,10 @@ if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
                 f,
                 delimiter="\s+",
                 names=[
-                    "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", 
-                    "COMMAND", "platform option", "Platform file", "njobs option", "NJobs", "ninfiles option", "NFilesPerJob", "insize option", "FileSize", "hitrate option", "Hitrate", "output option", "OutputName", "scenario option"
+                    "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", "COMMAND",
+                    "platform option", "Platform file", "njobs option", "NJobs", "ninfiles option", "NFilesPerJob",
+                    "insize option", "FileSize", "hitrate option", "Hitrate", "output option", "OutputName",
+                    "blockstreaming option"
                     ],
                 )
             for f in monitorfiles
