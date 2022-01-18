@@ -4,16 +4,44 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import os.path
-import glob
-import json
+import argparse
 
 
 plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
-njobs = 60
-scenario = "copy"
-suffix="test"
+
+parser = argparse.ArgumentParser(
+    description="Produce a plot containing the hitrate dependency of the simulated system. \
+        It uses several files, one for each hitrate value to be represented in the scan. \
+        The files containing the simulation dump are CSV files produced by the output method of the simulator.",
+    add_help=True
+)
+parser.add_argument(
+    "--scenario", 
+    type=str,
+    choices=("copy", "simplifiedstream", "fullstream"),
+    required=True,
+    help="Choose a scenario, which is used in the according plotting label and file-name of the plot."
+)
+parser.add_argument(
+    "--suffix",
+    type=str,
+    help="Optonal suffix to add to the file-name of the plot."
+)
+parser.add_argument(
+    "simoutputs",
+    nargs='+',
+    help="CSV files containing information about the simulated jobs \
+        produced by the simulator."
+)
+
+
+args = parser.parse_args()
+
+scenario = args.scenario
+suffix=args.suffix
+
 
 scenario_plotlabel_dict = {
     "copy": "Input-files copied",
@@ -23,11 +51,11 @@ scenario_plotlabel_dict = {
 
 
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
-output_dir = os.path.join(os.path.dirname(__file__), "..", "sgbatch", "tmp", "outputs")
-print(f"Searching for simulation traces in {output_dir}")
-outputfiles = glob.glob(os.path.abspath(os.path.join(output_dir, f"hitratescaling_{scenario}_{njobs}jobs_hitrate*.csv")))
+outputfiles = args.simoutputs
+for outputfile in outputfiles:
+    outputfile = os.path.abspath(outputfile)
 
-print("Found {} output-files!".format(len(outputfiles)))
+print("Found {0} output-files! Produce a hitrate scan for {0} hitrate values...".format(len(outputfiles)))
 hitrates = [float(outfile.split("_")[-1].strip(".csv").strip("hitrate")) for outfile in outputfiles]
 
 outputfiles_dict = dict(zip(hitrates,outputfiles))
@@ -72,7 +100,7 @@ ax1.scatter(df['hitrate'], (df['job.end']-df['job.start'])/60., color='black', m
 h1, l1 = ax1.get_legend_handles_labels()
 ax1.legend(h1, l1, loc=2)
 
-fig.savefig(f"hitratescaling_{njobs}jobs{suffix}.pdf")
+fig.savefig(f"hitratescaling_{scenario}jobs{suffix}.pdf")
 
 
 fig2, ax2 = plt.subplots()
@@ -87,4 +115,4 @@ ax2.scatter(df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertim
 h2, l2 = ax2.get_legend_handles_labels()
 ax1.legend(h1, l1, loc=2)
 
-fig2.savefig(f"hitratetransfer_{njobs}jobs{suffix}.pdf")
+fig2.savefig(f"hitratetransfer_{scenario}jobs{suffix}.pdf")
