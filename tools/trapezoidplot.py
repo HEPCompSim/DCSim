@@ -18,6 +18,13 @@ import glob
 import argparse
 
 
+def valid_file(param):
+    base, ext = os.path.splitext(param)
+    if ext.lower() not in ('.csv'):
+        raise argparse.ArgumentTypeError('File must have a csv extension')
+    return param
+
+
 parser = argparse.ArgumentParser(
     description="Produce a plot for each file depicting the lifetime of all jobs of the corresponding\
         simulation using a trapezoidal representation. \
@@ -40,11 +47,13 @@ parser.add_argument(
 )
 parser.add_argument(
     "--suffix",
+    type=str,
     help="Optonal suffix to add to the plots' file-names."
 )
 parser.add_argument(
     "simoutputs",
     nargs='+',
+    type=valid_file,
     help="CSV files containing information about the simulated jobs \
         produced by the simulator."
 )
@@ -70,6 +79,9 @@ machine_color_dict = {
 
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
 outputfiles = args.simoutputs
+for outputfile in outputfiles:
+    outputfile = os.path.abspath(outputfile)
+    assert(os.path.exists(outputfile))
 
 print("Found {0} output-files! Producing {0} trapezoidal plots...".format(len(outputfiles)))
 hitrates = [float(outfile.split("_")[-1].strip(".csv").strip("hitrate")) for outfile in outputfiles]

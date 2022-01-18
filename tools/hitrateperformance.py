@@ -11,6 +11,13 @@ plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
 
+def valid_file(param):
+    base, ext = os.path.splitext(param)
+    if ext.lower() not in ('.csv'):
+        raise argparse.ArgumentTypeError('File must have a csv extension')
+    return param
+
+
 parser = argparse.ArgumentParser(
     description="Produce a plot containing the hitrate dependency of the simulated system. \
         It uses several files, one for each hitrate value to be represented in the scan. \
@@ -32,6 +39,7 @@ parser.add_argument(
 parser.add_argument(
     "simoutputs",
     nargs='+',
+    type=valid_file,
     help="CSV files containing information about the simulated jobs \
         produced by the simulator."
 )
@@ -54,6 +62,7 @@ scenario_plotlabel_dict = {
 outputfiles = args.simoutputs
 for outputfile in outputfiles:
     outputfile = os.path.abspath(outputfile)
+    assert(os.path.exists(outputfile))
 
 print("Found {0} output-files! Produce a hitrate scan for {0} hitrate values...".format(len(outputfiles)))
 hitrates = [float(outfile.split("_")[-1].strip(".csv").strip("hitrate")) for outfile in outputfiles]

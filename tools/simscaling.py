@@ -12,11 +12,18 @@ plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
 
+def valid_file(param):
+    base, ext = os.path.splitext(param)
+    if ext.lower() not in ('.txt', '.dat'):
+        raise argparse.ArgumentTypeError('File must have a txt or dat extension')
+    return param
+
+
 scenario_plotlabel_dict = {
     'withdump': "with JSON dump",
     'nodump': "without JSON dump",
     'private': "private improvements",
-    "test": "final hacky-WRENCH"
+    "hacky": "final hacky-WRENCH"
 }
 
 
@@ -34,7 +41,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--scenario", 
     type=str,
-    choices=("withdump", "nodump", "private", "test"),
+    choices=("withdump", "nodump", "private", "hacky"),
     required=True,
     help="Choose a scenario, which sets the according plotting label and filename of the plot."
 )
@@ -53,6 +60,10 @@ scenario = args.scenario
 
 # Create a data-frame holding all monitoring information
 monitorfiles = args.monitorfiles
+for mfile in monitorfiles:
+    mfile = os.path.abspath(mfile)
+    assert(os.path.exists(mfile))
+    
 print("Found {} monitorfiles".format(str(len(monitorfiles))))
 
 if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
