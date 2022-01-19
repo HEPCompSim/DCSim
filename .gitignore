@@ -21,6 +21,7 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+
 # build files and directories
 build
 *tar.gz
@@ -29,6 +30,7 @@ json*/*
 pugixml*/*
 simgrid*/*
 wrench*/*
+
 
 # outputs
 tmp
