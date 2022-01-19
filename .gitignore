@@ -21,15 +21,23 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
-# executables
-sgbatch/my-executable
+
+# build files and directories
+build
+*tar.gz
+googletest*/*
+json*/*
+pugixml*/*
+simgrid*/*
+wrench*/*
+
 
 # outputs
 tmp
 *.pdf
 *.csv
 
-# test/profiling files
+# test/profiling outputs
 *.ipynb
 callgrind.out*
 
