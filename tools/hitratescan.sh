@@ -13,5 +13,5 @@ fi
 
 for hitrate in $(LANG=en_US seq 0.0 0.1 1.0)
 do 
-    ./my-executable --platform data/platform-files/hosts.xml --njobs $NJOBS --ninfiles $NINFILES --insize $AVGINSIZE --hitrate ${hitrate} --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv --no-blockstreaming
+    sgbatch-sim --platform data/platform-files/hosts.xml --njobs $NJOBS --ninfiles $NINFILES --insize $AVGINSIZE --hitrate ${hitrate} --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv --no-blockstreaming
 done

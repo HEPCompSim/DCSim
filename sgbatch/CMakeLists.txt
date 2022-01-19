@@ -34,10 +34,10 @@ find_library(PUGIXML_LIBRARY NAMES pugixml)
 find_library(GTEST_LIBRARY NAMES gtest)
 
 # generating the executable
-add_executable(my-executable ${SOURCE_FILES})
+add_executable(sgbatch-sim ${SOURCE_FILES})
 
 if (ENABLE_BATSCHED)
-target_link_libraries(my-executable
+target_link_libraries(sgbatch-sim
                        ${WRENCH_LIBRARY}
                        ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
                        ${SimGrid_LIBRARY}
@@ -45,7 +45,7 @@ target_link_libraries(my-executable
                        ${PUGIXML_LIBRARY}
                       -lzmq )
 else()
-target_link_libraries(my-executable
+target_link_libraries(sgbatch-sim
                        ${WRENCH_LIBRARY}
                        ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
                        ${SimGrid_LIBRARY}
@@ -54,7 +54,7 @@ target_link_libraries(my-executable
                       )
 endif()
 
-install(TARGETS my-executable DESTINATION bin)
+install(TARGETS sgbatch-sim DESTINATION bin)
 
 # generating unit tests
 add_executable(unit_tests EXCLUDE_FROM_ALL
