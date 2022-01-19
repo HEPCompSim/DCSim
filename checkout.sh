@@ -68,3 +68,12 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 make -j 6 examples; sudo make install examples # needed additionally, since not done by default
 popd
+
+# install the sgbatch simulator
+
+pushd sgbatch
+mkdir -p build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+make -j 6; sudo make install
+popd
