@@ -10,7 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 
 find_package(SimGrid REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
+
 
 # include directories for dependencies and WRENCH libraries
 include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/local/include /usr/local/include/wrench ${Boost_INCLUDE_DIR})
@@ -38,25 +39,27 @@ find_library(PUGIXML_LIBRARY NAMES pugixml)
 find_library(GTEST_LIBRARY NAMES gtest)
 
 # generating the executable
-add_executable(my-executable ${SOURCE_FILES})
+add_executable(sgbatch-sim ${SOURCE_FILES})
 
 if (ENABLE_BATSCHED)
-    target_link_libraries(my-executable
-            ${WRENCH_LIBRARY}
-            ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
-            ${SimGrid_LIBRARY}
-            ${PUGIXML_LIBRARY}
-            -lzmq )
+target_link_libraries(sgbatch-sim
+                       ${WRENCH_LIBRARY}
+                       ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
+                       ${SimGrid_LIBRARY}
+                       ${Boost_LIBRARIES}
+                       ${PUGIXML_LIBRARY}
+                      -lzmq )
 else()
-    target_link_libraries(my-executable
-            ${WRENCH_LIBRARY}
-            ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
-            ${SimGrid_LIBRARY}
-            ${PUGIXML_LIBRARY}
-            )
+target_link_libraries(sgbatch-sim
+                       ${WRENCH_LIBRARY}
+                       ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
+                       ${SimGrid_LIBRARY}
+                       ${Boost_LIBRARIES}
+                       ${PUGIXML_LIBRARY}
+                      )
 endif()
 
-install(TARGETS my-executable DESTINATION bin)
+install(TARGETS sgbatch-sim DESTINATION bin)
 
 # generating unit tests
 add_executable(unit_tests EXCLUDE_FROM_ALL
