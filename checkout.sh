@@ -12,12 +12,19 @@ set -e
 # - clang: version 3.8 or higher (currently using 13.0.0-2)
 # - boost: version v1.59 or higher (currently using 1.74.0)
 #
+
+this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURCE[0]}" )"
+this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
+
+
 # checking out packages from git as prerequisites for WRENCH:
 #
 # 1) pugixml, docu: https://pugixml.org/docs/manual.html, git: https://github.com/zeux/pugixml
-
-git clone git@github.com:zeux/pugixml.git # master branch, currently on commmit: 9e382f98076e57581fcc61323728443374889646
-pushd pugixml
+echo "Installing C++ XML processing library pugixml..."
+wget http://github.com/zeux/pugixml/releases/download/v1.11/pugixml-1.11.tar.gz
+tar -xf pugixml-1.11.tar.gz
+rm pugixml-1.11.tar.gz
+pushd pugixml-1.11
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -25,9 +32,11 @@ make -j 6; sudo make install
 popd
 
 # 2) nlohmann json, docu: https://json.nlohmann.me/, git: https://github.com/nlohmann/json
-
-git clone git@github.com:nlohmann/json.git # develop branch, currently on commit: 293f67f9ff1a3c7d16cf0959c95761e89b9b64e9
-pushd json
+echo "Installing C++ JSON library..."
+wget https://github.com/nlohmann/json/archive/refs/tags/v3.10.4.tar.gz
+tar -xf v3.10.4.tar.gz
+rm v3.10.4.tar.gz
+pushd json-3.10.4
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -35,8 +44,11 @@ make -j 6; sudo make install
 popd
 
 # 3) googletest, docu & git: https://github.com/google/googletest
-git clone git@github.com:google/googletest.git
-pushd googletest;
+echo "Installing C++ code testing library googletest..."
+wget https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz
+tar -xf release-1.11.0.tar.gz
+rm release-1.11.0.tar.gz
+pushd googletest-release-1.11.0
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -44,7 +56,7 @@ make -j 6; sudo make install
 popd
 
 # 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
-
+echo "Installing SimGrid..."
 git clone https://framagit.org/simgrid/simgrid.git # master branch, currently on commit: f0c07d4ab3b94286d109ff88493b01c082ad70cb
 pushd simgrid
 mkdir -p build
@@ -54,7 +66,7 @@ make -j 6; sudo make install
 popd
 
 # installing WRENCH 2.0:
-
+echo "Installing WRENCH..."
 git clone --branch wrench-2.0 git@github.com:wrench-project/wrench.git # wrench-2.0 branch, currently on commit: ae27c2d22cc68b4077be0e1be97a26b3f2199a8d
 pushd wrench
 mkdir -p build
@@ -64,10 +76,10 @@ make -j 6; sudo make install
 make -j 6 examples; sudo make install examples # needed additionally, since not done by default
 popd
 
-# installing repo for our caching simulation:
-
-git clone --branch test/sgbatch-wrench-2.0 git@github.com:HerrHorizontal/DistCacheSim.git # test/sgbatch-wrench-2.0 branch
-pushd DistCacheSim/sgbatch
+# install the sgbatch simulator
+echo "Installing the DistCacheSim simulator..."
+git checkout test/sgbatch-wrench-2.0
+pushd $this_dir/sgbatch
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
