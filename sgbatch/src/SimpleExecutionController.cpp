@@ -239,9 +239,10 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
         double elapsed = action->getEndDate() - action->getStartDate();
         start_date = std::min<double>(start_date, action->getStartDate());
         end_date = std::max<double>(end_date, action->getEndDate());
+        // TODO: Better: Check for action type rather than doing string matching
         if (action->getName().find("file_read_")) {
             incr_infile_transfertime += elapsed;
-        } else if (action->getName().find("compute_")) {
+        } else if (action->getName().find("compute_") || action->getName().find("streaming_")) {
             incr_compute_time += elapsed;
         } else if (action->getName().find("file_write_")) {
             incr_outfile_transfertime += elapsed;
