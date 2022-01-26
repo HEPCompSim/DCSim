@@ -5,14 +5,17 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(streamed_computation, "Log category for StreamedCom
 #include "StreamedComputation.h"
 
 StreamedComputation::StreamedComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
-                                         std::vector<std::shared_ptr<wrench::DataFile>> &files) {
+                                         std::vector<std::shared_ptr<wrench::DataFile>> &files,
+                                         double total_flops) {
     this->storage_services = storage_services;
     this->files = files;
+    this->total_flops = total_flops;
+    this->total_data_size = determineTotalDataSize(files);
 
 }
 
 void StreamedComputation::determineFileSources(std::string hostname) {
-    // Identify all storage services that run on this host
+    // Identify all storage services that run on this host, which runs the streaming action
     // TODO: HENRI QUESTION: IS IT REALLY THE CASE THERE ARE COULD BE MULTIPLE LOCAL STORAGE SERVICES???
     std::vector<std::shared_ptr<wrench::StorageService>> matched_storage_services;
     for (auto const &ss : this->storage_services) {
@@ -21,14 +24,15 @@ void StreamedComputation::determineFileSources(std::string hostname) {
         }
     }
 
-    // TODO: right now now, there are loopkupFile() calls, which simulate overhead. Could be replaced
+    // TODO: right now, there are loopkupFile() calls, which simulate overhead. Could be replaced
     // TODO: by a lookup of the SimpleExecutionController::global_file_map data structure in case
     // TODO: simulating that overhead is not desired/necessary.Perhaps an option of the simulator?
 
     // For each file, identify where to read it from and/or deal with cache updates, etc.
     for (auto const &f : this->files) {
-        // See whether the file is already available in a "local" storage service
+        // find a source providing the required file
         std::shared_ptr<wrench::StorageService> source_ss;
+        // See whether the file is already available in a "local" storage service
         for (auto const &ss : matched_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
@@ -90,6 +94,15 @@ void StreamedComputation::determineFileSources(std::string hostname) {
     }
 }
 
+//? put this into the other determine function to prevent two times the same loop?
+double StreamedComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
+    double incr_file_size;
+    for (auto const &f : this->files) {
+        incr_file_size += f->getSize();
+    }
+    return incr_file_size;
+}
+
 
 
 void StreamedComputation::operator () (std::shared_ptr<wrench::ActionExecutor> action_executor) {
@@ -99,24 +112,21 @@ void StreamedComputation::operator () (std::shared_ptr<wrench::ActionExecutor> a
     WRENCH_INFO("Determining file sources for streamed computation");
     this->determineFileSources(hostname);
 
-//    if (not SimpleSimulator::use_blockstreaming) {
-//        this->performComputationNoStreaming(hostname);
-//    } else {
+   if (! SimpleSimulator::use_blockstreaming) {
+       this->performComputationNoStreaming(hostname);
+   } else {
         this->performComputationStreaming(hostname);
-//    }
+   }
 
 }
 
-double StreamedComputation::determineFlops(double data_size) {
-    double num_blocks = data_size / SimpleSimulator::xrd_block_size; // Non-integral number of blocks, but that' by design
-    double dflops = (*SimpleSimulator::flops_per_block_dist)(SimpleSimulator::gen);
-    while ((SimpleSimulator::mean_flops_per_block + SimpleSimulator::sigma_flops_per_block) < dflops || dflops < 0.)
-        dflops = (*SimpleSimulator::flops_per_block_dist)(SimpleSimulator::gen);
-    return dflops * num_blocks;
+double StreamedComputation::determineFlops(double data_size, double total_data_size) {
+    double flops = this->total_flops * data_size / total_data_size;
+    return flops;
 }
 
 void StreamedComputation::performComputationNoStreaming(std::string &hostname) {
-    WRENCH_INFO("Performing non-streamed computation!");
+    WRENCH_INFO("Performing copy computation!");
     // Read all input files
     double data_size = 0;
     for (auto const &fs : this->file_sources) {
@@ -125,8 +135,11 @@ void StreamedComputation::performComputationNoStreaming(std::string &hostname) {
         fs.second->getStorageService()->readFile(fs.first, fs.second);
         data_size += fs.first->getSize();
     }
+    if (data_size != this->total_data_size) {
+        throw std::runtime_error("Something went wrong in the data size computation!");
+    }
     // Perform the computation as needed
-    double flops = determineFlops(data_size);
+    double flops = determineFlops(data_size, this->total_data_size);
     WRENCH_INFO("Computing %.2lf flops", flops);
     wrench::Simulation::compute(flops);
 }
@@ -146,7 +159,7 @@ void StreamedComputation::performComputationStreaming(std::string &hostname) {
         // Process next blocks: compute block i while reading block i+i
         for (int i=0; i < num_blocks - 1; i++) {
             double num_bytes = std::min<double>(SimpleSimulator::xrd_block_size, data_to_process);
-            double num_flops = determineFlops(num_bytes);
+            double num_flops = determineFlops(num_bytes, this->total_data_size);
 //            WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
             // Start the computation asynchronously
             simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
@@ -159,7 +172,7 @@ void StreamedComputation::performComputationStreaming(std::string &hostname) {
         }
 
         // Process last blocks
-        double num_flops = determineFlops(std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
+        double num_flops = determineFlops(std::min<double>(SimpleSimulator::xrd_block_size, data_to_process), this->total_data_size);
         simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
         exec->start();
         exec->wait();
