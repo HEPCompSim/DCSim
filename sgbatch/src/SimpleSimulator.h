@@ -13,8 +13,6 @@ public:
     static bool use_blockstreaming;
     static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;
     static double xrd_block_size;
-
-    // Random number generator
     static std::mt19937 gen;
 
     // Flops distribution

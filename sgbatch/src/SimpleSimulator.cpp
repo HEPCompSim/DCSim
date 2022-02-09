@@ -26,9 +26,9 @@ namespace po = boost::program_options;
  * all jobs.
  */
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
-std::mt19937 SimpleSimulator::gen(42);
-bool SimpleSimulator::use_blockstreaming;
-double SimpleSimulator::xrd_block_size = 1*1000*1000*1000;
+std::mt19937 SimpleSimulator::gen(42);  // random number generator
+bool SimpleSimulator::use_blockstreaming = true;   // flag to chose between simulated job types: streaming or copy jobs
+double SimpleSimulator::xrd_block_size = 1*1000*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 // TODO: The initialized below is likely bogus (at compile time?)
 std::normal_distribution<double>* SimpleSimulator::flops_dist;
 std::normal_distribution<double>* SimpleSimulator::mem_dist;
@@ -60,7 +60,7 @@ po::variables_map process_program_options(int argc, char** argv) {
     double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
     double sigma_outfile_size = 0.1*average_outfile_size;
 
-    bool use_blockstreaming = true;
+    bool no_blockstreaming = false;
 
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -80,7 +80,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
         ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
 
-        ("no-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off block-wise streaming of input-files")
+        ("no-blockstreaming", po::bool_switch()->default_value(no_blockstreaming), "switch to turn on/off block-wise streaming of input-files")
         ("simplified-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off simplified input-file streaming")
 
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
@@ -113,12 +113,11 @@ po::variables_map process_program_options(int argc, char** argv) {
 
 
 /**
- * @brief fill a Workflow with job specifications, which include the inputfile and outputfile dependencies.
- * Optionally a task chain which takes care of streaming input data and perform computations simultaneously.
+ * @brief fill a Workflow consisting of jobs with job specifications, 
+ * which include the inputfile and outputfile dependencies.
+ * It can be chosen between jobs streaming input data and perform computations simultaneously 
+ * or jobs copying the full input-data and compute afterwards.
  *    
- * @param use_blockstreaming: switch to turn on blockwise streaming, else wait for inputfile copy
- * @param xrd_block_size: maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
- * @param dummy_flops: number of flops each dummy task is executing
  * @param num_jobs: number of tasks
  * @param infiles_per_task: number of input-files each job processes
  * @param average_flops: expectation value of the flops (truncated gaussian) distribution
@@ -138,8 +137,7 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         double average_flops, double sigma_flops,
         double average_memory, double sigma_memory,
         double average_infile_size, double sigma_infile_size,
-        double average_outfile_size, double sigma_outfile_size,
-        const double dummy_flops = std::numeric_limits<double>::min()
+        double average_outfile_size, double sigma_outfile_size
 ) {
 
     // map to store the workload specification
