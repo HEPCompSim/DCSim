@@ -66,7 +66,7 @@ private:
     std::ofstream filedump;
 
     /** @brief number of complete jobs so far **/
-    ssize_t num_completed_jobs = 0;
+    size_t num_completed_jobs = 0;
 
 };
 
