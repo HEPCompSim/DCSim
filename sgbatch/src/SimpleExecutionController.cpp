@@ -12,6 +12,7 @@
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
 #include "StreamedComputation.h"
+#include "CopyComputation.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
 
@@ -120,20 +121,37 @@ int SimpleExecutionController::main() {
 
         auto job = job_manager->createCompoundJob(job_name);
 
-        // Read-Input file actions
-        auto streamed_computation = std::shared_ptr<StreamedComputation>(
-            new StreamedComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
-        );
+        std::shared_ptr<wrench::CustomAction> run_action;
 
-        auto streaming_action = job->addCustomAction(
-            "streaming_" + job_name,
-            job_spec->total_mem, 1,
-            *streamed_computation,
-            [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                WRENCH_INFO("Streaming computation done");
-                // Do nothing
-            }
-        );
+        if (! SimpleSimulator::use_blockstreaming) {
+            auto copy_computation = std::shared_ptr<CopyComputation>(
+                new CopyComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
+            );
+
+            run_action = job->addCustomAction(
+                "copycompute_" + job_name,
+                job_spec->total_mem, 1,
+                *copy_computation,
+                [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                    WRENCH_INFO("Copy computation done")
+                }
+            );
+        } else {
+            // Read-Input file actions
+            auto streamed_computation = std::shared_ptr<StreamedComputation>(
+                new StreamedComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
+            );
+
+            run_action = job->addCustomAction(
+                "streaming_" + job_name,
+                job_spec->total_mem, 1,
+                *streamed_computation,
+                [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                    WRENCH_INFO("Streaming computation done");
+                    // Do nothing
+                }
+            );
+        }
 
         // Create the file write action
         auto fw_action = job->addCustomAction(
@@ -152,7 +170,7 @@ int SimpleExecutionController::main() {
         );
 
         // Add necessary dependencies
-        job->addActionDependency(streaming_action, fw_action);
+        job->addActionDependency(run_action, fw_action);
 
         // Submit the job for execution!
         //TODO: generalize to arbitrary numbers of htcondor services
