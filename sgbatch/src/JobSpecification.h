@@ -9,6 +9,7 @@ struct JobSpecification {
 public:
     std::vector<std::shared_ptr<wrench::DataFile>> infiles;
     std::shared_ptr<wrench::DataFile> outfile;
+    std::shared_ptr<wrench::FileLocation> outfile_destination;
     double total_flops;
     double total_mem;
 

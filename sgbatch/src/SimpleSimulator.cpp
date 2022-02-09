@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
     auto file_registry_service = simulation->add(new wrench::FileRegistryService({wms_host}));
 
 
-    /* Instantiate a WMS */
+    /* Instantiate an Execution Controller */
     auto wms = simulation->add(
         new SimpleExecutionController(
             workload_spec,
@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
         )
     );
 
-    /* Instantiate inputfiles */
+    /* Instantiate inputfiles and set outfile destinations*/
     // Check that the right remote_storage_service is passed for initial inputfile storage
     // TODO: generalize to arbitrary numbers of remote storages
     if (remote_storage_services.size() != 1) {
@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
     }
     auto remote_storage_service = *remote_storage_services.begin();
 
-    std::cerr << "Creating and staging input files..." << std::endl;
+    std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
     try {
         for (auto job_name_spec: workload_spec) {
             // job specifications
@@ -360,6 +360,10 @@ int main(int argc, char **argv) {
             if (cached_files_size/incr_inputfile_size < hitrate) {
                 throw std::runtime_error("Desired hitrate was not reached!");
             }
+
+            // Set outfile destinations
+            // TODO: Think of a way to generalize
+            job_spec.outfile_destination = wrench::FileLocation::LOCATION(remote_storage_service);
         }
     } catch (std::runtime_error &e) {
         std::cerr << "Exception: " << e.what() << std::endl;
