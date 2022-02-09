@@ -121,8 +121,8 @@ int SimpleExecutionController::main() {
 
         auto job = job_manager->createCompoundJob(job_name);
 
+        // Combined read-input-file-and-run-computation actions
         std::shared_ptr<wrench::CustomAction> run_action;
-
         if (! SimpleSimulator::use_blockstreaming) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
@@ -137,7 +137,6 @@ int SimpleExecutionController::main() {
                 }
             );
         } else {
-            // Read-Input file actions
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
                 new StreamedComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
             );
@@ -154,20 +153,26 @@ int SimpleExecutionController::main() {
         }
 
         // Create the file write action
-        auto fw_action = job->addCustomAction(
+        auto fw_action = job->addFileWriteAction(
             "file_write_" + job_name,
-            job_spec->total_mem, 0,
-            [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                // TODO: Which storage service should we write output on?
-                // TODO: Probably random selection is fine, or just a fixed
-                // TODO: one that's picked by the "user"?
-                // TODO: Write the file at once
-            },
-            [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                WRENCH_INFO("Output file was successfully written!")
-                // Do nothing
-            }
+            job_spec->outfile,
+            job_spec->outfile_destination
         );
+        //TODO: Think of a determination of storage_service to hold output data
+        // auto fw_action = job->addCustomAction(
+        //     "file_write_" + job_name,
+        //     job_spec->total_mem, 0,
+        //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+        //         // TODO: Which storage service should we write output on?
+        //         // TODO: Probably random selection is fine, or just a fixed
+        //         // TODO: one that's picked by the "user"?
+        //         // TODO: Write the file at once
+        //     },
+        //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+        //         WRENCH_INFO("Output file was successfully written!")
+        //         // Do nothing
+        //     }
+        // );
 
         // Add necessary dependencies
         job->addActionDependency(run_action, fw_action);
@@ -260,7 +265,7 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
         // TODO: Better: Check for action type rather than doing string matching
         if (action->getName().find("file_read_")) {
             incr_infile_transfertime += elapsed;
-        } else if (action->getName().find("compute_") || action->getName().find("streaming_")) {
+        } else if (action->getName().find("copycompute_") || action->getName().find("streaming_")) {
             incr_compute_time += elapsed;
         } else if (action->getName().find("file_write_")) {
             incr_outfile_transfertime += elapsed;
