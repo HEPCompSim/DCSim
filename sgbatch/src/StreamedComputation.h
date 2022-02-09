@@ -21,9 +21,7 @@ public:
 
     double determineFlops(double data_size, double total_data_size);
 
-    void performComputationNoStreaming(std::string &hostname);
-
-    void performComputationStreaming(std::string &hostname);
+    void performComputation(std::string &hostname);
 
 private:
     std::set<std::shared_ptr<wrench::StorageService>> storage_services;

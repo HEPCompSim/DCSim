@@ -112,11 +112,7 @@ void StreamedComputation::operator () (std::shared_ptr<wrench::ActionExecutor> a
     WRENCH_INFO("Determining file sources for streamed computation");
     this->determineFileSources(hostname);
 
-   if (! SimpleSimulator::use_blockstreaming) {
-       this->performComputationNoStreaming(hostname);
-   } else {
-        this->performComputationStreaming(hostname);
-   }
+    this->performComputation(hostname);
 
 }
 
@@ -125,26 +121,7 @@ double StreamedComputation::determineFlops(double data_size, double total_data_s
     return flops;
 }
 
-void StreamedComputation::performComputationNoStreaming(std::string &hostname) {
-    WRENCH_INFO("Performing copy computation!");
-    // Read all input files
-    double data_size = 0;
-    for (auto const &fs : this->file_sources) {
-        WRENCH_INFO("Reading file %s from storage service on host %s",
-                    fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
-        fs.second->getStorageService()->readFile(fs.first, fs.second);
-        data_size += fs.first->getSize();
-    }
-    if (data_size != this->total_data_size) {
-        throw std::runtime_error("Something went wrong in the data size computation!");
-    }
-    // Perform the computation as needed
-    double flops = determineFlops(data_size, this->total_data_size);
-    WRENCH_INFO("Computing %.2lf flops", flops);
-    wrench::Simulation::compute(flops);
-}
-
-void StreamedComputation::performComputationStreaming(std::string &hostname) {
+void StreamedComputation::performComputation(std::string &hostname) {
     WRENCH_INFO("Performing streamed computation!");
     for (auto const &fs : this->file_sources) {
         WRENCH_INFO("Streaming computation for input file %s", fs.first->getID().c_str());
