@@ -260,6 +260,7 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     // Figure out timings
     for (auto const &action : event->job->getActions()) {
         double elapsed = action->getEndDate() - action->getStartDate();
+        WRENCH_DEBUG("Running action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
         start_date = std::min<double>(start_date, action->getStartDate());
         end_date = std::max<double>(end_date, action->getEndDate());
         // TODO: Better: Check for action type rather than doing string matching
