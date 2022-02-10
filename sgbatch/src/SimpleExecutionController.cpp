@@ -263,11 +263,11 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
         start_date = std::min<double>(start_date, action->getStartDate());
         end_date = std::max<double>(end_date, action->getEndDate());
         // TODO: Better: Check for action type rather than doing string matching
-        if (action->getName().find("file_read_")) {
+        if (action->getName().find("file_read_") != std::string::npos) {
             incr_infile_transfertime += elapsed;
-        } else if (action->getName().find("copycompute_") || action->getName().find("streaming_")) {
+        } else if (action->getName().find("copycompute_") != std::string::npos || action->getName().find("streaming_") != std::string::npos) {
             incr_compute_time += elapsed;
-        } else if (action->getName().find("file_write_")) {
+        } else if (action->getName().find("file_write_") != std::string::npos) {
             incr_outfile_transfertime += elapsed;
         }
     }
