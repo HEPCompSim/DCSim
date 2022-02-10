@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
 
     // Flags to turn on/off blockwise streaming of input-files
-    bool use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
+    SimpleSimulator::use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
 
 
     /* Create a workload */
