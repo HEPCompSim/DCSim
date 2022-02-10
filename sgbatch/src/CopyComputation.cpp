@@ -131,7 +131,8 @@ void CopyComputation::performComputation(std::string &hostname) {
         fs.second->getStorageService()->readFile(fs.first, fs.second);
         data_size += fs.first->getSize();
     }
-    if (data_size != this->total_data_size) {
+    // TODO: find a more elegant way to avoid floating point differences
+    if (int(data_size) != int(this->total_data_size)) {
         throw std::runtime_error("Something went wrong in the data size computation!");
     }
     // Perform the computation as needed
