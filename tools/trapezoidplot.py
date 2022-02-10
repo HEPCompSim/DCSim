@@ -80,6 +80,7 @@ machine_color_dict = {
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
 outputfiles = args.simoutputs
 for outputfile in outputfiles:
+    print(outputfile)
     outputfile = os.path.abspath(outputfile)
     assert(os.path.exists(outputfile))
 
@@ -91,7 +92,7 @@ print(outputfiles_dict)
 
 
 # create a trapez plot for each CSV file corresponding to a hitrate value
-fractions = pd.Series([0., 0.5, 1., 0.])
+fractions = pd.Series([0., 1., 1., 0.])
 for hitrate, outputfile in outputfiles_dict.items():
     with open(outputfile) as f:
         # create a dataframe from CSV 
@@ -142,4 +143,6 @@ for hitrate, outputfile in outputfiles_dict.items():
         plotfilename += f"{njobs}{scenario}jobs_hitrate{hitrate}"
     if suffix:
         plotfilename += f"{suffix}.pdf"
+    else:
+        plotfilename += ".pdf"
     fig.savefig(plotfilename)
