@@ -92,7 +92,10 @@ print(outputfiles_dict)
 
 
 # create a trapez plot for each CSV file corresponding to a hitrate value
-fractions = pd.Series([0., float(args.scenario == "copy"), 1., 0.] ) 
+# fractions = pd.Series([0., float(args.scenario == "copy"), 1., 0.] )
+# TODO: currently, in case of copying no distiction is made between copy & computation
+#       move to the above soluition, if this is the case
+fractions = pd.Series([0., 0., 1., 0.] )
 for hitrate, outputfile in outputfiles_dict.items():
     with open(outputfile) as f:
         # create a dataframe from CSV 
