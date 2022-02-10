@@ -335,9 +335,9 @@ int main(int argc, char **argv) {
 
     std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
     try {
-        for (auto job_name_spec: workload_spec) {
+        for (auto &job_name_spec: wms->get_workload_spec()) {
             // job specifications
-            auto job_spec = job_name_spec.second;
+            auto &job_spec = job_name_spec.second;
             std::shuffle(job_spec.infiles.begin(), job_spec.infiles.end(), SimpleSimulator::gen); // Shuffle the input files
             // Compute the task's incremental inputfiles size
             double incr_inputfile_size = 0.;

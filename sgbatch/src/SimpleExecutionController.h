@@ -35,6 +35,10 @@ public:
               //const double& hitrate,
               const std::string& outputdump_name);
 
+    std::map<std::string, JobSpecification>& get_workload_spec() {
+        return workload_spec;
+    }
+
 
 protected:
     void processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent>) override;
