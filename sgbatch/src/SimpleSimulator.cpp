@@ -60,6 +60,8 @@ po::variables_map process_program_options(int argc, char** argv) {
     double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
     double sigma_outfile_size = 0.1*average_outfile_size;
 
+    size_t duplications = 1;
+
     bool no_blockstreaming = false;
 
     po::options_description desc("Allowed options");
@@ -79,6 +81,8 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("sigma-insize", po::value<double>()->default_value(sigma_infile_size), "jobs' distribution spread in input-file size")
         ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
         ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
+
+        ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workflow to feed into the simulation")
 
         ("no-blockstreaming", po::bool_switch()->default_value(no_blockstreaming), "switch to turn on/off block-wise streaming of input-files")
         ("simplified-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off simplified input-file streaming")
@@ -128,6 +132,7 @@ po::variables_map process_program_options(int argc, char** argv) {
  * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
  * @param average_outfile_size: expectation value of the output-file size (truncated gaussian) distribution
  * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
+ * @param duplications: number of duplications of the workflow to feed into the simulation
  * 
  * @throw std::runtime_error
  */
@@ -137,7 +142,8 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         double average_flops, double sigma_flops,
         double average_memory, double sigma_memory,
         double average_infile_size, double sigma_infile_size,
-        double average_outfile_size, double sigma_outfile_size
+        double average_outfile_size, double sigma_outfile_size,
+        size_t duplications
 ) {
 
     // map to store the workload specification
@@ -177,8 +183,9 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
 
-        workload["job_" + std::to_string(j)] = job_specification;
-
+        for (size_t d=0; d < duplications; d++) {
+            workload["job_" + std::to_string(j+d)] = job_specification;
+        }
     }
     return workload;
 }
@@ -214,6 +221,8 @@ int main(int argc, char **argv) {
     double average_outfile_size = vm["outsize"].as<double>();
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
 
+    size_t duplications = vm["duplications"].as<double>();
+
     // Flags to turn on/off blockwise streaming of input-files
     bool use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
 
@@ -226,7 +235,8 @@ int main(int argc, char **argv) {
         average_flops, sigma_flops,
         average_memory,sigma_memory,
         average_infile_size, sigma_infile_size,
-        average_outfile_size, sigma_outfile_size
+        average_outfile_size, sigma_outfile_size,
+        duplications
     );
 
     std::cerr << "The workflow has " << std::to_string(num_jobs) << " jobs" << std::endl;
