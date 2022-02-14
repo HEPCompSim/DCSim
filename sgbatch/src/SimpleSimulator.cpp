@@ -85,7 +85,6 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workflow to feed into the simulation")
 
         ("no-blockstreaming", po::bool_switch()->default_value(no_blockstreaming), "switch to turn on/off block-wise streaming of input-files")
-        ("simplified-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off simplified input-file streaming")
 
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
     ;
