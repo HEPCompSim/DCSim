@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
     double average_outfile_size = vm["outsize"].as<double>();
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
 
-    size_t duplications = vm["duplications"].as<double>();
+    size_t duplications = vm["duplications"].as<size_t>();
 
     // Flags to turn on/off blockwise streaming of input-files
     SimpleSimulator::use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
