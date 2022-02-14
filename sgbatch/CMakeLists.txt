@@ -22,6 +22,8 @@ set(SOURCE_FILES
         src/SimpleExecutionController.cpp
         src/SimpleSimulator.cpp
         src/JobSpecification.h
+        src/CacheComputation.h
+        src/CacheComputation.cpp
         src/StreamedComputation.h
         src/StreamedComputation.cpp
         src/CopyComputation.h

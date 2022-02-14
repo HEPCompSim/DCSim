@@ -23,7 +23,7 @@ public:
 
     virtual void performComputation(std::string &hostname);
 
-private:
+protected:
     std::set<std::shared_ptr<wrench::StorageService>> storage_services;
     std::vector<std::shared_ptr<wrench::DataFile>> files; //? does this need to be ordered?
     double total_flops;
