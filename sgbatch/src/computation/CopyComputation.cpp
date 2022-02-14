@@ -24,7 +24,9 @@ void CopyComputation::performComputation(std::string &hostname) {
         fs.second->getStorageService()->readFile(fs.first, fs.second);
         data_size += fs.first->getSize();
     }
-    if (data_size != total_data_size) {
+    //? Question to Henri: How can there be floating point difference?
+    //TODO: Why is there a floating point difference?
+    if (int(data_size) != int(total_data_size)) {
         throw std::runtime_error("Something went wrong in the data size computation!");
     }
     // Perform the computation as needed
