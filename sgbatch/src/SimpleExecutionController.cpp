@@ -11,8 +11,8 @@
 
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
-#include "StreamedComputation.h"
-#include "CopyComputation.h"
+#include "computation/StreamedComputation.h"
+#include "computation/CopyComputation.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
 

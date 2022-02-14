@@ -5,7 +5,7 @@
 
 #include <wrench-dev.h>
 
-#include "SimpleSimulator.h"
+#include "../SimpleSimulator.h"
 
 class CacheComputation {
 
