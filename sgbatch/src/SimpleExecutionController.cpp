@@ -221,6 +221,7 @@ int SimpleExecutionController::main() {
 
 /**
  * @brief Process a ExecutionEvent::COMPOUND_JOB_FAILURE
+ * Abort simulation once there is a failure.
  * 
  * @param event: an execution event
  */

@@ -8,6 +8,11 @@
 class LRU_FileList {
 
 public:
+    /**
+     * @brief Touch a file to update its last access time
+     * 
+     * @param file 
+     */
     void touchFile(std::shared_ptr<wrench::DataFile> file) {
         // If the file is new, then it's easy
         if (this->indexed_files.find(file) == this->indexed_files.end()) {
@@ -23,6 +28,12 @@ public:
         this->lru_list.insert(this->lru_list.begin(), file);
     }
 
+    /**
+     * @brief Identify the file touched last from file collection, 
+     * which shall be evicted according to LRU policy
+     * 
+     * @return std::shared_ptr<wrench::DataFile> 
+     */
     std::shared_ptr<wrench::DataFile> removeLRUFile() {
         auto file = this->lru_list.back();
         this->lru_list.pop_back();
@@ -31,8 +42,10 @@ public:
     }
 
 private:
+    // File collection mapped to index
     std::map<std::shared_ptr<wrench::DataFile>, ssize_t> indexed_files;
-    std::vector<std::shared_ptr<wrench::DataFile>> lru_list;  // front is most used
+    // Ordered list of files in file collection -- front is most recently used.
+    std::vector<std::shared_ptr<wrench::DataFile>> lru_list;
 
 };
 

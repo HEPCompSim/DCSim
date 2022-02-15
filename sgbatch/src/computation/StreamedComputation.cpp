@@ -5,6 +5,16 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(streamed_computation, "Log category for StreamedCom
 #include "StreamedComputation.h"
 
 
+/**
+ * @brief Construct a new StreamedComputation::StreamedComputation object
+ * to be used within a compute action, which shall take caching of input-files into account.
+ * File read is performed asynchronously in blocks and the according coompute step is executed 
+ * once the corresponding block is available.
+ * 
+ * @param storage_services Storage services reachable to retrieve input files (caches plus remote)
+ * @param files Input files of the job to process
+ * @param total_flops Total #FLOPS of the whole compute action of the job
+ */
 StreamedComputation::StreamedComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
                                          std::vector<std::shared_ptr<wrench::DataFile>> &files,
                                          double total_flops) : CacheComputation::CacheComputation(
@@ -13,6 +23,13 @@ StreamedComputation::StreamedComputation(std::set<std::shared_ptr<wrench::Storag
                                              total_flops
                                          ) {}
 
+/**
+ * @brief Perform the computation within the simulation of the job.
+ * Asynchronously read the input files (don't wait for previous computation to finish) in blocks 
+ * and compute the according share of FLOPS once read finished.
+ * 
+ * @param hostname DEPRECATED: Actually not needed anymore
+ */
 void StreamedComputation::performComputation(std::string &hostname) {
     WRENCH_INFO("Performing streamed computation!");
     // Incremental size of all input files to be processed

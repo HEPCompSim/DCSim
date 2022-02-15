@@ -4,6 +4,14 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputati
 
 #include "CacheComputation.h"
 
+/**
+ * @brief Construct a new CacheComputation::CacheComputation object
+ * to be used within a compute action, which shall take caching of input-files into account.
+ * 
+ * @param storage_services Storage services reachable to retrieve input files (caches plus remote)
+ * @param files Input files of the job to process
+ * @param total_flops Total #FLOPS of the whole compute action of the job
+ */
 CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
                                 std::vector<std::shared_ptr<wrench::DataFile>> &files,
                                 double total_flops) {
@@ -13,6 +21,15 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
     this->total_data_size = determineTotalDataSize(files);
 }
 
+/**
+ * @brief Cache by the job required files on local host's storage service. 
+ * Free space when needed according to an LRU scheme.
+ * 
+ * TODO: Find some optimal sources serving and destinations providing files to jobs.
+ * TODO: Find solutions for possible race conditions, when several jobs require same files.
+ * 
+ * @param hostname Name of the host, where the job runs
+ */
 void CacheComputation::determineFileSources(std::string hostname) {
     // Identify all storage services that run on this host, which runs the streaming action
     // TODO: HENRI QUESTION: IS IT REALLY THE CASE THERE ARE COULD BE MULTIPLE LOCAL STORAGE SERVICES???
@@ -53,7 +70,7 @@ void CacheComputation::determineFileSources(std::string hostname) {
             }
         }
         if (!source_ss) {
-            throw std::runtime_error("StreamedComputation(): Couldn't find file " + f->getID() + " on any storage service!");
+            throw std::runtime_error("CacheComputation(): Couldn't find file " + f->getID() + " on any storage service!");
         } else {
             SimpleSimulator::global_file_map[source_ss].touchFile(f);
         }
@@ -93,7 +110,13 @@ void CacheComputation::determineFileSources(std::string hostname) {
     }
 }
 
-//? put this into the other determine function to prevent two times the same loop?
+//? Question for Henri: put this into determineFileSources function to prevent two times the same loop?
+/**
+ * @brief Determine the incremental size of all input-files of a job
+ * 
+ * @param files Input files of the job to consider
+ * @return double
+ */
 double CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
     double incr_file_size;
     for (auto const &f : this->files) {
@@ -102,6 +125,11 @@ double CacheComputation::determineTotalDataSize(const std::vector<std::shared_pt
     return incr_file_size;
 }
 
+/**
+ * @brief Functor operator to be usable as lambda in custom action
+ * 
+ * @param action_executor 
+ */
 void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> action_executor) {
     std::string hostname = action_executor->getHostname();
 
@@ -113,11 +141,24 @@ void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> acti
 
 }
 
+/**
+ * @brief Determine the share on the total number of FLOPS to be computed 
+ * in the step processing a fraction of the full input data
+ * 
+ * @param data_size Size of the input-data block considered
+ * @param total_data_size Total incremental size of all input-files
+ * @return double 
+ */
 double CacheComputation::determineFlops(double data_size, double total_data_size) {
     double flops = this->total_flops * data_size / total_data_size;
     return flops;
 }
 
+/**
+ * @brief Perform the computation within the simulation of the job
+ * 
+ * @param hostname DEPRECATED: Actually not needed anymore
+ */
 void CacheComputation::performComputation(std::string &hostname) {
     throw std::runtime_error(
         "Base class CacheComputation has no performComputation implemented! \
