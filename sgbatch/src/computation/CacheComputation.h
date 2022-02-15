@@ -21,7 +21,7 @@ public:
 
     double determineFlops(double data_size, double total_data_size);
 
-    virtual void performComputation(std::string &hostname);
+    virtual void performComputation(std::string &hostname) = 0;
 
 protected:
     std::set<std::shared_ptr<wrench::StorageService>> storage_services;
