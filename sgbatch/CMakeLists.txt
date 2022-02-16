@@ -22,21 +22,32 @@ set(SOURCE_FILES
         src/SimpleExecutionController.cpp
         src/SimpleSimulator.cpp
         src/JobSpecification.h
-        src/StreamedComputation.h
-        src/StreamedComputation.cpp
+        src/computation/CacheComputation.h
+        src/computation/CacheComputation.cpp
+        src/computation/StreamedComputation.h
+        src/computation/StreamedComputation.cpp
+        src/computation/CopyComputation.h
+        src/computation/CopyComputation.cpp
         src/SimpleSimulator.h
         src/LRU_FileList.h
         )
 
 # test files
 set(TEST_FILES
-        src/JobSpecification.h src/StreamedComputation.h src/LRU_FileList.h src/SimpleSimulator.h)
+        src/JobSpecification.h
+        src/computation/CacheComputation.h
+        src/computation/StreamedComputation.h
+        src/computation/CopyComputation.h
+        src/LRU_FileList.h
+        src/SimpleSimulator.h
+        )
 
 # wrench library and dependencies
 find_library(WRENCH_LIBRARY NAMES wrench)
 find_library(WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY NAMES wrenchpegasusworkflowparser)
 find_library(PUGIXML_LIBRARY NAMES pugixml)
 find_library(GTEST_LIBRARY NAMES gtest)
+find_library(SimGrid_LIBRARY NAMES simgrid)
 
 # generating the executable
 add_executable(sgbatch-sim ${SOURCE_FILES})

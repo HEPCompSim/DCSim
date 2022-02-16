@@ -35,6 +35,10 @@ public:
               //const double& hitrate,
               const std::string& outputdump_name);
 
+    std::map<std::string, JobSpecification>& get_workload_spec() {
+        return workload_spec;
+    }
+
 
 protected:
     void processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent>) override;
@@ -66,7 +70,7 @@ private:
     std::ofstream filedump;
 
     /** @brief number of complete jobs so far **/
-    ssize_t num_completed_jobs = 0;
+    size_t num_completed_jobs = 0;
 
 };
 

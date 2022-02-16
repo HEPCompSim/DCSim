@@ -11,63 +11,10 @@
 
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
-#include "StreamedComputation.h"
+#include "computation/StreamedComputation.h"
+#include "computation/CopyComputation.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
-
-#if 0 // THESE FUNCTIONS ARE NOT USED
-/**
- * @brief Helper function to recursively retrieve all descendants of a WorkflowTask recursively. 
- * The returned vector is unfiltered and contains duplicates, which have to be removed.
- * 
- * @param task: a WorkflowTask
- * 
- * @return vector of WorkflowTask pointers to duplicated descendant tasks
- * 
- * @throw std::invalid_argument
- */
-std::vector<wrench::WorkflowTask*> getUnfilteredDescendants(const wrench::WorkflowTask* task) {
-    if (task == nullptr) {
-        throw std::invalid_argument("getDescendants(): Invalid arguments");
-    }
-    // Recursively get all children and children's children
-    std::vector<wrench::WorkflowTask*> descendants;
-    auto children = task->getChildren();
-    if (!children.empty()) {
-        descendants.insert(descendants.end(), children.begin(), children.end());
-    }
-    for (auto child : children) {
-        auto tmp_descendants = getUnfilteredDescendants(child);
-        if (!tmp_descendants.empty()) {
-            descendants.insert(descendants.end(), tmp_descendants.begin(), tmp_descendants.end());
-        }
-    }
-
-    return descendants;
-}
-
-/**
- * @brief Helper function to retrieve a vector of unique descendant WorkflowTasks of a common ancestor
- * 
- * @param patriarch: common ancestor WorkflowTask of the chain
- * 
- * @return filtered vector of WorkflowTask pointers to descendant tasks
- * 
- * @throw std::invalid_argument
- */
-std::vector<wrench::WorkflowTask*> getDescendants(const wrench::WorkflowTask* patriarch) {
-    // get unfiltered vector of descendants
-    auto descendants = getUnfilteredDescendants(patriarch);
-    // Filter duplicates
-    std::sort(descendants.begin(), descendants.end());
-    auto last = std::unique(descendants.begin(), descendants.end());
-    descendants.erase(last, descendants.end()); 
-
-    return descendants;
-}
-
-#endif
-
 
 /**
  * @brief Create a SimpleExecutionController with a workload specification instance, a list of storage services and a list of compute services
@@ -87,9 +34,9 @@ SimpleExecutionController::SimpleExecutionController(
         hostname,
         "condor-simple") {
     this->workload_spec = workload_spec;
-    this->filename = outputdump_name;
     this->htcondor_compute_services = htcondor_compute_services;
     this->storage_services = storage_services;
+    this->filename = outputdump_name;
 }
 
 /**
@@ -168,120 +115,76 @@ int SimpleExecutionController::main() {
 
     // Create and submit all the jobs!
     WRENCH_INFO("There are %ld jobs to schedule", this->workload_spec.size());
-    for (ssize_t j = 0; j < this->workload_spec.size(); j++) {
-        std::string job_name = "job_" + std::to_string(j);
+    for (auto job_name_spec: this->workload_spec) {
+        std::string job_name = job_name_spec.first;
         auto job_spec = &this->workload_spec[job_name];
 
         auto job = job_manager->createCompoundJob(job_name);
 
-        // Read-Input file actions
-        auto streamed_computation = std::shared_ptr<StreamedComputation>(new StreamedComputation(this->storage_services,
+        // Combined read-input-file-and-run-computation actions
+        std::shared_ptr<wrench::CustomAction> run_action;
+        if (! SimpleSimulator::use_blockstreaming) {
+            auto copy_computation = std::shared_ptr<CopyComputation>(
+                new CopyComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
+            );
 
-                                                                                                 job_spec->infiles));
-        // TODO: ADD SOMETHING FOR THE MEMORY FOOTPRINT BELOW!
-        // TODO: NOTE THAT WE USE ONLY ONE CORE, WHICH IS LIKELY OK? COULD DO MORE...
-        auto streaming_action = job->addCustomAction("streaming_" + std::to_string(j),
-                                                     0, 1,
-                                                     *streamed_computation,
-                                                     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                                                         WRENCH_INFO("Streaming computation done");
-                                                         // Do nothing
-                                                     }
-        );
+            run_action = job->addCustomAction(
+                "copycompute_" + job_name,
+                job_spec->total_mem, 1,
+                *copy_computation,
+                [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                    WRENCH_INFO("Copy computation done")
+                }
+            );
+        } else {
+            auto streamed_computation = std::shared_ptr<StreamedComputation>(
+                new StreamedComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
+            );
+
+            run_action = job->addCustomAction(
+                "streaming_" + job_name,
+                job_spec->total_mem, 1,
+                *streamed_computation,
+                [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                    WRENCH_INFO("Streaming computation done");
+                    // Do nothing
+                }
+            );
+        }
 
         // Create the file write action
-        auto fw_action = job->addCustomAction("file_write_" + std::to_string(j),
-                                              0, 0,
-                                              [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                                                  // TODO: Which storage service should we write output on?
-                                                  // TODO: Probably random selection is fine, or just a fixed
-                                                  // TODO: one that's picked by the "user"?
-                                                  // TODO: Write the file at once
-                                              },
-                                              [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                                                  // Do nothing
-                                              }
+        auto fw_action = job->addFileWriteAction(
+            "file_write_" + job_name,
+            job_spec->outfile,
+            job_spec->outfile_destination
         );
+        //TODO: Think of a determination of storage_service to hold output data
+        // auto fw_action = job->addCustomAction(
+        //     "file_write_" + job_name,
+        //     job_spec->total_mem, 0,
+        //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+        //         // TODO: Which storage service should we write output on?
+        //         // TODO: Probably random selection is fine, or just a fixed
+        //         // TODO: one that's picked by the "user"?
+        //         // TODO: Write the file at once
+        //     },
+        //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+        //         WRENCH_INFO("Output file was successfully written!")
+        //         // Do nothing
+        //     }
+        // );
 
         // Add necessary dependencies
-        job->addActionDependency(streaming_action, fw_action);
+        job->addActionDependency(run_action, fw_action);
 
         // Submit the job for execution!
+        //TODO: generalize to arbitrary numbers of htcondor services
         job_manager->submitJob(job, htcondor_compute_service);
         WRENCH_INFO("Submitted job %s", job->getName().c_str());
 
     }
 
     WRENCH_INFO("Done with creation/submission of all compound jobs");
-
-    // BELOW IS OLD CODE
-//
-//    // Group task chunks belonging to the same task-chain into single job
-//    for (auto entry_task : entry_tasks) {
-//
-//        // Group all tasks of the same chain
-//        std::vector<wrench::WorkflowTask*> task_chunks;
-//        // starting with the entry task
-//        task_chunks.push_back(entry_task);
-//        // and add all children and children's children
-//        auto descendants = getDescendants(entry_task);
-//        task_chunks.insert(task_chunks.end(), descendants.begin(), descendants.end());
-//
-//        // Identify first and last task of the job for output
-//        std::pair<wrench::WorkflowTask *, wrench::WorkflowTask *> first_last_tasks;
-//        first_last_tasks.first = entry_task;
-//        bool found_last_task = false;
-//        for (auto task : descendants) {
-//            if (found_last_task) {
-//                throw std::runtime_error("Found more than one last-task in the task chain starting with task " + entry_task->getID() + "!");
-//            }
-//            if (task->getNumberOfChildren() == 0) {
-//                first_last_tasks.second = task;
-//                found_last_task = true;
-//            }
-//        }
-//
-//        // Identify file-locations on storage services
-//        std::map<wrench::WorkflowFile *, std::vector<std::shared_ptr<wrench::FileLocation>>> file_locations;
-//        for (auto task : task_chunks) {
-//            // std::cerr << "\t" << task->getID().c_str() << std::endl;
-//            // Identify input-file locations
-//            for (auto f : task->getInputFiles()) {
-//                // Fill vector of input-file locations in order of read-priority
-//                std::vector<std::shared_ptr<wrench::FileLocation>> locations;
-//                //! Caches have highest priority -> Caches are added in HTCondorNegotiator
-//                //! only give remote file locations, local caches will be filled by caching functionality
-//                // for (auto cache : worker_storage_services) {
-//                //     locations.insert(locations.end(), wrench::FileLocation::LOCATION(cache));
-//                // }
-//                // Remote storages are fallback
-//                for (auto remote_storage : remote_storage_services) {
-//                    locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
-//                }
-//                file_locations[f] = locations;
-//            }
-//            // Identify output-file locations
-//            for (auto f : task->getOutputFiles()) {
-//                // Fill vector of output-file locations in order of write-priority
-//                std::vector<std::shared_ptr<wrench::FileLocation>> locations;
-//                // Write to first remote storage
-//                //TODO: chose the output file location according to a logic?
-//                for (auto remote_storage : remote_storage_services) {
-//                    locations.insert(locations.end(), wrench::FileLocation::LOCATION(remote_storage));
-//                }
-//                file_locations[f] = locations;
-//            }
-//        }
-//
-//        // Create and submit a job for each chain
-//        auto job = this->job_manager->createStandardJob(task_chunks, file_locations);
-//        this->job_first_last_tasks[job] = first_last_tasks;
-//        std::map<std::string, std::string> htcondor_service_specific_args = {};
-//        //TODO: generalize to arbitrary numbers of htcondor services
-//        this->job_manager->submitJob(job, htcondor_compute_service, htcondor_service_specific_args);
-//    }
-//
-//    WRENCH_INFO("Done with scheduling tasks as standard jobs");
 
 
     this->num_completed_jobs = 0;
@@ -318,12 +221,13 @@ int SimpleExecutionController::main() {
 
 /**
  * @brief Process a ExecutionEvent::COMPOUND_JOB_FAILURE
+ * Abort simulation once there is a failure.
  * 
  * @param event: an execution event
  */
 void SimpleExecutionController::processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent> event) {
     WRENCH_INFO("Notified that compound job %s has failed!", event->job->getName().c_str());
-    WRENCH_INFO("Failure case: %s", event->failure_cause->toString().c_str());
+    WRENCH_INFO("Failure cause: %s", event->failure_cause->toString().c_str());
     WRENCH_INFO("As a SimpleExecutionController, I abort as soon as there is a failure");
     this->abort = true;
 }
@@ -345,7 +249,7 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     /* Figure out execution host. All actions run on the same host, so let's just pick an arbitrary one */
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
 
-    /* Remove all tasks and compute incremental output values in one loop */
+    /* Remove all actions from memory and compute incremental output values in one loop */
     double incr_compute_time = 0.;
     double incr_infile_transfertime = 0.;
     double incr_infile_size = 0.;
@@ -357,13 +261,15 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     // Figure out timings
     for (auto const &action : event->job->getActions()) {
         double elapsed = action->getEndDate() - action->getStartDate();
+        WRENCH_DEBUG("Running action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
         start_date = std::min<double>(start_date, action->getStartDate());
         end_date = std::max<double>(end_date, action->getEndDate());
-        if (action->getName().find("file_read_")) {
+        // TODO: Better: Check for action type rather than doing string matching
+        if (action->getName().find("file_read_") != std::string::npos) {
             incr_infile_transfertime += elapsed;
-        } else if (action->getName().find("compute_")) {
+        } else if (action->getName().find("copycompute_") != std::string::npos || action->getName().find("streaming_") != std::string::npos) {
             incr_compute_time += elapsed;
-        } else if (action->getName().find("file_write_")) {
+        } else if (action->getName().find("file_write_") != std::string::npos) {
             incr_outfile_transfertime += elapsed;
         }
     }
@@ -374,55 +280,6 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     }
     incr_outfile_size += this->workload_spec[event->job->getName()].outfile->getSize();
 
-//    /* Identify first/last tasks and harvest information*/
-//    auto first_task = std::get<0>(this->job_first_last_tasks[job]);
-//    auto last_task = std::get<1>(this->job_first_last_tasks[job]);
-//    // get start and end date of job
-//    double start_date = first_task->getReadInputStartDate();
-//    double end_date = last_task->getWriteOutputEndDate();
-//    // clear first/last tasks job records
-//    this->job_first_last_tasks.erase(job);
-//
-//    /* Remove all tasks and compute incremental output values in one loop */
-//    double incr_compute_time = 0.;
-//    double incr_infile_transfertime = 0.;
-//    double incr_infile_size = 0.;
-//    double incr_outfile_transfertime = 0.;
-//    double incr_outfile_size = 0.;
-//    std::string execution_host = "";
-//
-//    for (auto const &task: job->getTasks()) {
-//        // Compute job's time data
-//        if (
-//            (task->getComputationEndDate() != -1.0) && (task->getComputationStartDate() != -1.0)
-//            && (task->getReadInputEndDate() != -1.0) && (task->getReadInputStartDate() != -1.0)
-//            && (task->getWriteOutputEndDate() != -1.0) && (task->getWriteOutputStartDate() != -1.0)
-//        ) {
-//            incr_compute_time += (task->getComputationEndDate() - task->getComputationStartDate());
-//            incr_infile_transfertime += (task->getReadInputEndDate() - task->getReadInputStartDate());
-//            incr_outfile_transfertime += (task->getWriteOutputEndDate() - task->getWriteOutputStartDate());
-//        }
-//        else {
-//            throw std::runtime_error("One of the task " + task->getID() + "'s date getters returned unmeaningful default value -1.0!");
-//        }
-//        // Compute job's I/O sizes
-//        if (task->getInputFiles().size() > 0) {
-//            for (auto infile : task->getInputFiles()) {
-//                incr_infile_size += infile->getSize();
-//            }
-//        }
-//        if (task->getOutputFiles().size() > 0) {
-//            for (auto outfile : task->getOutputFiles()) {
-//                incr_outfile_size += outfile->getSize();
-//            }
-//        }
-//        if (execution_host == "") {
-//            execution_host = task->getPhysicalExecutionHost();
-//        }
-//
-//        // free some memory
-//        this->getWorkflow()->removeTask(task);
-//    }
 
     /* Dump relevant information to file */
     this->filedump.open(this->filename, ios::out | ios::app);

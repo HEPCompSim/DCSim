@@ -1,18 +1,37 @@
 #include <wrench-dev.h>
 
-XBT_LOG_NEW_DEFAULT_CATEGORY(streamed_computation, "Log category for StreamedComputation");
+XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputation");
 
-#include "StreamedComputation.h"
+#include "CacheComputation.h"
 
-StreamedComputation::StreamedComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
-                                         std::vector<std::shared_ptr<wrench::DataFile>> &files) {
+/**
+ * @brief Construct a new CacheComputation::CacheComputation object
+ * to be used within a compute action, which shall take caching of input-files into account.
+ * 
+ * @param storage_services Storage services reachable to retrieve input files (caches plus remote)
+ * @param files Input files of the job to process
+ * @param total_flops Total #FLOPS of the whole compute action of the job
+ */
+CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
+                                std::vector<std::shared_ptr<wrench::DataFile>> &files,
+                                double total_flops) {
     this->storage_services = storage_services;
     this->files = files;
-
+    this->total_flops = total_flops;
+    this->total_data_size = determineTotalDataSize(files);
 }
 
-void StreamedComputation::determineFileSources(std::string hostname) {
-    // Identify all storage services that run on this host
+/**
+ * @brief Cache by the job required files on local host's storage service. 
+ * Free space when needed according to an LRU scheme.
+ * 
+ * TODO: Find some optimal sources serving and destinations providing files to jobs.
+ * TODO: Find solutions for possible race conditions, when several jobs require same files.
+ * 
+ * @param hostname Name of the host, where the job runs
+ */
+void CacheComputation::determineFileSources(std::string hostname) {
+    // Identify all storage services that run on this host, which runs the streaming action
     // TODO: HENRI QUESTION: IS IT REALLY THE CASE THERE ARE COULD BE MULTIPLE LOCAL STORAGE SERVICES???
     std::vector<std::shared_ptr<wrench::StorageService>> matched_storage_services;
     for (auto const &ss : this->storage_services) {
@@ -21,14 +40,15 @@ void StreamedComputation::determineFileSources(std::string hostname) {
         }
     }
 
-    // TODO: right now now, there are loopkupFile() calls, which simulate overhead. Could be replaced
+    // TODO: right now, there are loopkupFile() calls, which simulate overhead. Could be replaced
     // TODO: by a lookup of the SimpleExecutionController::global_file_map data structure in case
     // TODO: simulating that overhead is not desired/necessary.Perhaps an option of the simulator?
 
     // For each file, identify where to read it from and/or deal with cache updates, etc.
     for (auto const &f : this->files) {
-        // See whether the file is already available in a "local" storage service
+        // find a source providing the required file
         std::shared_ptr<wrench::StorageService> source_ss;
+        // See whether the file is already available in a "local" storage service
         for (auto const &ss : matched_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
@@ -50,7 +70,7 @@ void StreamedComputation::determineFileSources(std::string hostname) {
             }
         }
         if (!source_ss) {
-            throw std::runtime_error("StreamedComputation(): Couldn't find file " + f->getID() + " on any storage service!");
+            throw std::runtime_error("CacheComputation(): Couldn't find file " + f->getID() + " on any storage service!");
         } else {
             SimpleSimulator::global_file_map[source_ss].touchFile(f);
         }
@@ -90,81 +110,58 @@ void StreamedComputation::determineFileSources(std::string hostname) {
     }
 }
 
+//? Question for Henri: put this into determineFileSources function to prevent two times the same loop?
+/**
+ * @brief Determine the incremental size of all input-files of a job
+ * 
+ * @param files Input files of the job to consider
+ * @return double
+ */
+double CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
+    double incr_file_size;
+    for (auto const &f : this->files) {
+        incr_file_size += f->getSize();
+    }
+    return incr_file_size;
+}
 
-
-void StreamedComputation::operator () (std::shared_ptr<wrench::ActionExecutor> action_executor) {
+/**
+ * @brief Functor operator to be usable as lambda in custom action
+ * 
+ * @param action_executor 
+ */
+void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> action_executor) {
     std::string hostname = action_executor->getHostname();
 
     // Identify all file sources (and deal with caching, evictions, etc.
     WRENCH_INFO("Determining file sources for streamed computation");
     this->determineFileSources(hostname);
 
-//    if (not SimpleSimulator::use_blockstreaming) {
-//        this->performComputationNoStreaming(hostname);
-//    } else {
-        this->performComputationStreaming(hostname);
-//    }
+    this->performComputation(hostname);
 
 }
 
-double StreamedComputation::determineFlops(double data_size) {
-    double num_blocks = data_size / SimpleSimulator::xrd_block_size; // Non-integral number of blocks, but that' by design
-    double dflops = (*SimpleSimulator::flops_per_block_dist)(SimpleSimulator::gen);
-    while ((SimpleSimulator::mean_flops_per_block + SimpleSimulator::sigma_flops_per_block) < dflops || dflops < 0.)
-        dflops = (*SimpleSimulator::flops_per_block_dist)(SimpleSimulator::gen);
-    return dflops * num_blocks;
+/**
+ * @brief Determine the share on the total number of FLOPS to be computed 
+ * in the step processing a fraction of the full input data
+ * 
+ * @param data_size Size of the input-data block considered
+ * @param total_data_size Total incremental size of all input-files
+ * @return double 
+ */
+double CacheComputation::determineFlops(double data_size, double total_data_size) {
+    double flops = this->total_flops * data_size / total_data_size;
+    return flops;
 }
 
-void StreamedComputation::performComputationNoStreaming(std::string &hostname) {
-    WRENCH_INFO("Performing non-streamed computation!");
-    // Read all input files
-    double data_size = 0;
-    for (auto const &fs : this->file_sources) {
-        WRENCH_INFO("Reading file %s from storage service on host %s",
-                    fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
-        fs.second->getStorageService()->readFile(fs.first, fs.second);
-        data_size += fs.first->getSize();
-    }
-    // Perform the computation as needed
-    double flops = determineFlops(data_size);
-    WRENCH_INFO("Computing %.2lf flops", flops);
-    wrench::Simulation::compute(flops);
+/**
+ * @brief Perform the computation within the simulation of the job
+ * 
+ * @param hostname DEPRECATED: Actually not needed anymore
+ */
+void CacheComputation::performComputation(std::string &hostname) {
+    throw std::runtime_error(
+        "Base class CacheComputation has no performComputation implemented! \
+        It is meant only as an placeholder. Use one of the derived classes for the compute action!"
+    );
 }
-
-void StreamedComputation::performComputationStreaming(std::string &hostname) {
-    WRENCH_INFO("Performing streamed computation!");
-    for (auto const &fs : this->file_sources) {
-        WRENCH_INFO("Streaming computation for input file %s", fs.first->getID().c_str());
-        double data_to_process = fs.first->getSize();
-
-        // Compute the number of blocks
-        int num_blocks = int(std::ceil(data_to_process / (double) SimpleSimulator::xrd_block_size));
-
-        // Read the first block
-        fs.second->getStorageService()->readFile(fs.first, fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
-
-        // Process next blocks: compute block i while reading block i+i
-        for (int i=0; i < num_blocks - 1; i++) {
-            double num_bytes = std::min<double>(SimpleSimulator::xrd_block_size, data_to_process);
-            double num_flops = determineFlops(num_bytes);
-//            WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
-            // Start the computation asynchronously
-            simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
-            exec->start();
-            // Read data from the file
-            fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
-            // Wait for the computation to be done
-            exec->wait();
-            data_to_process -= num_bytes;
-        }
-
-        // Process last blocks
-        double num_flops = determineFlops(std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
-        simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
-        exec->start();
-        exec->wait();
-
-    }
-
-}
-
