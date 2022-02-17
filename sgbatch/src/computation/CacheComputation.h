@@ -15,6 +15,8 @@ public:
                 double total_flops
     );
 
+    virtual ~CacheComputation() = default;
+
     void determineFileSources(std::string hostname);
 
     void operator () (std::shared_ptr<wrench::ActionExecutor> action_executor);
