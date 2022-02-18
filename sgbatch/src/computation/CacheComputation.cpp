@@ -79,17 +79,6 @@ void CacheComputation::determineFileSources(std::string hostname) {
         // TODO: But then perhaps matched_storage_services.size() is always 1? (see QUESTION above)
         auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
-        // TODO: Instead of doing this file copy right here, instead instantly create the
-        // TODO: file instantly locally for next jobs? But then the second job
-        // TODO: could complete before the first job, which doesn't
-        // TODO: Perhaps make subsequent job wait for completion of the first
-        // TODO: job so as not to finish earlier than that first job. Better idea
-        // TODO: perhaps: have the first job that streams the file update a counter
-        // TODO: of file blocks available at the storage service, and subsequent jobs
-        // TODO: can read a block only if it's available (e.g., by waiting on some
-        // TODO: condition variable, which is signaled by the first job each time it
-        // TODO: reads a block).
-
         // Evict files while to create space, using an LRU scheme!
         double free_space = destination_ss->getFreeSpace().begin()->second;
         while (free_space < f->getSize()) {
@@ -101,12 +90,20 @@ void CacheComputation::determineFileSources(std::string hostname) {
         }
 
 
-        // Do the copy
-        wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
+        // Instead of doing this file copy right here, instantly create the file locally for next jobs
+        //? Alternative: Wait for computation to finish and copy file then
+        // TODO: Better idea perhaps: have the first job that streams the file update a counter
+        // TODO: of file blocks available at the storage service, and subsequent jobs
+        // TODO: can read a block only if it's available (e.g., by waiting on some
+        // TODO: condition variable, which is signaled by the first job each time it
+        // TODO: reads a block).
+        // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
+        wrench::StorageService::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
+
         SimpleSimulator::global_file_map[destination_ss].touchFile(f);
 
-
-        this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
+        // this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
+        this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
     }
 }
 
