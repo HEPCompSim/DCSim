@@ -28,7 +28,7 @@ namespace po = boost::program_options;
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
 std::mt19937 SimpleSimulator::gen(42);  // random number generator
 bool SimpleSimulator::use_blockstreaming = true;   // flag to chose between simulated job types: streaming or copy jobs
-double SimpleSimulator::xrd_block_size = 1*1000*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
+double SimpleSimulator::xrd_block_size = 1.*100*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 // TODO: The initialized below is likely bogus (at compile time?)
 std::normal_distribution<double>* SimpleSimulator::flops_dist;
 std::normal_distribution<double>* SimpleSimulator::mem_dist;
