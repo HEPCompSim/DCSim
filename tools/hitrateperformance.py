@@ -43,12 +43,18 @@ parser.add_argument(
     help="CSV files containing information about the simulated jobs \
         produced by the simulator."
 )
+parser.add_argument(
+    "--color-clusters",
+    action='store_true',
+    help="Colorize jobs according to the machine they ran on?"
+)
 
 
 args = parser.parse_args()
 
 scenario = args.scenario
 suffix=args.suffix
+colorize=args.color_clusters
 
 
 scenario_plotlabel_dict = {
@@ -56,6 +62,11 @@ scenario_plotlabel_dict = {
     "simplifiedstream": "Input-files streamed (simpl.)",
     "fullstream": "Block-streaming"
 }
+
+
+colors = ['red', 'green', 'blue']
+machines = ['sg01', 'sg02', 'sg03']
+machine_color_dict = dict(zip(machines, colors))
 
 
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
@@ -71,12 +82,16 @@ outputfiles_dict = dict(zip(hitrates,outputfiles))
 print(outputfiles_dict)
 
 
-# create a dataframe for each JSON file and add hitrate information
+# create a dataframe for each CSV file and add hitrate information
 dfs = []
 for hitrate, outputfile in outputfiles_dict.items():
     with open(outputfile) as f:
         df_tmp = pd.read_csv(f, sep=',\t')
         df_tmp['hitrate'] = hitrate
+        if colorize:
+            df_tmp['color'] = df_tmp['machine.name'].map(machine_color_dict)
+        else:
+            df_tmp['color'] = 'black'
         dfs.append(df_tmp)
 
 
@@ -94,7 +109,7 @@ else:
     print("Couldn't find any files")
     exit(1)
 
-# plot the job runtime dependence on hitrate
+# plot the job-runtime dependence on hitrate
 fig, ax1 = plt.subplots()
 ax1.set_title(scenario_plotlabel_dict[scenario])
 
@@ -103,7 +118,9 @@ ax1.set_ylabel('jobtime / min', color='black')
 ax1.set_xlim([-0.05,1.05])
 # ax1.set_ylim([0,400])
 
-ax1.scatter(df['hitrate'], (df['job.end']-df['job.start'])/60., color='black', marker='x')
+# ax1 = df.plot.scatter(x='hitrate', y='walltime', c=)
+
+ax1.scatter(df['hitrate'], (df['job.end']-df['job.start'])/60., color=df['color'], marker='x')
 # ax1.grid(axis="y", linestyle = 'dotted', which='major')
 
 h1, l1 = ax1.get_legend_handles_labels()
@@ -119,7 +136,7 @@ ax2.set_xlabel('hitrate', loc='right')
 ax2.set_ylabel('transfer time / min', color='black')
 ax2.set_xlim([-0.05,1.05])
 
-ax2.scatter(df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime']))/60., color='black', marker='x')
+ax2.scatter(df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime']))/60., color=df['color'], marker='x')
 
 h2, l2 = ax2.get_legend_handles_labels()
 ax1.legend(h1, l1, loc=2)
