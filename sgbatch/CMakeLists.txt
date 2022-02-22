@@ -18,20 +18,36 @@ include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/
 
 # source files
 set(SOURCE_FILES
-       src/SimpleWMS.h
-       src/SimpleWMS.cpp
-       src/SimpleSimulator.cpp
-       )
+        src/SimpleExecutionController.h
+        src/SimpleExecutionController.cpp
+        src/SimpleSimulator.cpp
+        src/JobSpecification.h
+        src/computation/CacheComputation.h
+        src/computation/CacheComputation.cpp
+        src/computation/StreamedComputation.h
+        src/computation/StreamedComputation.cpp
+        src/computation/CopyComputation.h
+        src/computation/CopyComputation.cpp
+        src/SimpleSimulator.h
+        src/LRU_FileList.h
+        )
 
 # test files
 set(TEST_FILES
-       )
+        src/JobSpecification.h
+        src/computation/CacheComputation.h
+        src/computation/StreamedComputation.h
+        src/computation/CopyComputation.h
+        src/LRU_FileList.h
+        src/SimpleSimulator.h
+        )
 
 # wrench library and dependencies
 find_library(WRENCH_LIBRARY NAMES wrench)
 find_library(WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY NAMES wrenchpegasusworkflowparser)
 find_library(PUGIXML_LIBRARY NAMES pugixml)
 find_library(GTEST_LIBRARY NAMES gtest)
+find_library(SimGrid_LIBRARY NAMES simgrid)
 
 # generating the executable
 add_executable(sgbatch-sim ${SOURCE_FILES})
@@ -58,9 +74,9 @@ install(TARGETS sgbatch-sim DESTINATION bin)
 
 # generating unit tests
 add_executable(unit_tests EXCLUDE_FROM_ALL
-                   ${SOURCE_FILES}
-                   ${TEST_FILES}
-               )
+        ${SOURCE_FILES}
+        ${TEST_FILES}
+        )
 target_link_libraries(unit_tests
-                       ${GTEST_LIBRARY} wrench -lpthread -lm
-                      )
+        ${GTEST_LIBRARY} wrench -lpthread -lm
+        )

@@ -8,7 +8,9 @@
  * (at your option) any later version.
  */
 #include <wrench.h>
-#include "SimpleWMS.h"
+#include "SimpleSimulator.h"
+#include "SimpleExecutionController.h"
+#include "JobSpecification.h"
 
 #include <iostream>
 #include <fstream>
@@ -17,8 +19,23 @@
 
 namespace po = boost::program_options;
 
+/**
+ *
+ * "Global" static variables. Some here are a bit ugly of course, but they should help
+ * with memory footprint by avoiding passing around / storing items that apply to
+ * all jobs.
+ */
+std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
+std::mt19937 SimpleSimulator::gen(42);  // random number generator
+bool SimpleSimulator::use_blockstreaming = true;   // flag to chose between simulated job types: streaming or copy jobs
+double SimpleSimulator::xrd_block_size = 1.*100*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
+// TODO: The initialized below is likely bogus (at compile time?)
+std::normal_distribution<double>* SimpleSimulator::flops_dist;
+std::normal_distribution<double>* SimpleSimulator::mem_dist;
+std::normal_distribution<double>* SimpleSimulator::insize_dist;
+std::normal_distribution<double>* SimpleSimulator::outsize_dist;
 
-std::mt19937 gen(42);
+
 
 
 /**
@@ -43,8 +60,9 @@ po::variables_map process_program_options(int argc, char** argv) {
     double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
     double sigma_outfile_size = 0.1*average_outfile_size;
 
-    bool use_blockstreaming = true;
-    bool use_simplified_blockstreaming = false;
+    size_t duplications = 1;
+
+    bool no_blockstreaming = false;
 
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -64,8 +82,9 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
         ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
 
-        ("no-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off block-wise streaming of input-files")
-        ("simplified-blockstreaming", po::bool_switch()->default_value(false), "switch to turn on/off simplified input-file streaming")
+        ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workflow to feed into the simulation")
+
+        ("no-blockstreaming", po::bool_switch()->default_value(no_blockstreaming), "switch to turn on/off block-wise streaming of input-files")
 
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
     ;
@@ -97,15 +116,11 @@ po::variables_map process_program_options(int argc, char** argv) {
 
 
 /**
- * @brief fill a Workflow with tasks, which include the inputfile and outputfile dependencies of a job.
- * Optionally a task chain which takes care of streaming input data and perform computations in blocks 
- * per job can be created in a simplified and fully XRootD-ish manner.
+ * @brief fill a Workflow consisting of jobs with job specifications, 
+ * which include the inputfile and outputfile dependencies.
+ * It can be chosen between jobs streaming input data and perform computations simultaneously 
+ * or jobs copying the full input-data and compute afterwards.
  *    
- * @param workflow: Workflow to fill with tasks
- * @param use_blockstreaming: switch to turn on blockwise streaming, else wait for inputfile copy
- * @param use_simplified_blockstreaming: switch to turn on simplified blockwise streaming (1 block) of input data, when blockwise streaming true
- * @param xrd_block_size: maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
- * @param dummy_flops: numer of flops each dummy task is executing
  * @param num_jobs: number of tasks
  * @param infiles_per_task: number of input-files each job processes
  * @param average_flops: expectation value of the flops (truncated gaussian) distribution
@@ -116,134 +131,72 @@ po::variables_map process_program_options(int argc, char** argv) {
  * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
  * @param average_outfile_size: expectation value of the output-file size (truncated gaussian) distribution
  * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
+ * @param duplications: number of duplications of the workflow to feed into the simulation
  * 
  * @throw std::runtime_error
  */
-void fill_streaming_workflow (
-    wrench::Workflow* workflow,
-    size_t num_jobs,
-    size_t infiles_per_task,
-    double average_flops, double sigma_flops,
-    double average_memory, double sigma_memory,
-    double average_infile_size, double sigma_infile_size,
-    double average_outfile_size, double sigma_outfile_size,
-    const bool use_blockstreaming = false,
-    const bool use_simplified_blockstreaming = true,
-    double xrd_block_size = 1*1000*1000*1000,
-    const double dummy_flops = std::numeric_limits<double>::min()
+std::map<std::string, JobSpecification> fill_streaming_workflow (
+        size_t num_jobs,
+        size_t infiles_per_task,
+        double average_flops, double sigma_flops,
+        double average_memory, double sigma_memory,
+        double average_infile_size, double sigma_infile_size,
+        double average_outfile_size, double sigma_outfile_size,
+        size_t duplications
 ) {
+
+    // map to store the workload specification
+    std::map<std::string, JobSpecification> workload;
+
     // Initialize random number generators
-    std::normal_distribution<> flops(average_flops, sigma_flops);
-    std::normal_distribution<> mem(average_memory, sigma_memory);
-    std::normal_distribution<> insize(average_infile_size, sigma_infile_size);
-    std::normal_distribution<> outsize(average_outfile_size,sigma_outfile_size);
+    std::normal_distribution<> flops_dist(average_flops, sigma_flops);
+// TODO: WHAT TO DO WITH MEMORY?
+    std::normal_distribution<> mem_dist(average_memory, sigma_memory);
+    std::normal_distribution<> insize_dist(average_infile_size, sigma_infile_size);
+    std::normal_distribution<> outsize_dist(average_outfile_size,sigma_outfile_size);
 
     for (size_t j = 0; j < num_jobs; j++) {
-        // Sample strictly positive task flops
-        double dflops = flops(gen);
-        while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops(gen);
-        // Sample strictly positive task memory requirements
-        double dmem = mem(gen);
-        while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem(gen);
 
-        // Connect the chains spanning all input-files of a job
-        wrench::WorkflowTask* endtask = nullptr;
-        wrench::WorkflowTask* enddummytask = nullptr;
-        // when blockstreaming is turned off create only one task with all inputfiles
-        if (!use_blockstreaming) {
-            endtask = workflow->addTask("task_"+std::to_string(j), dflops, 1, 1, dmem);
-        }
+        // Create a job specification
+        JobSpecification job_specification;
+
+        // Sample strictly positive task flops
+        double dflops = flops_dist(SimpleSimulator::gen);
+        while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops_dist(SimpleSimulator::gen);
+        job_specification.total_flops = dflops;
+
+        // Sample strictly positive task memory requirements
+        double dmem = mem_dist(SimpleSimulator::gen);
+        while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem_dist(SimpleSimulator::gen);
+        job_specification.total_mem = dmem;
+
         for (size_t f = 0; f < infiles_per_task; f++) {
             // Sample inputfile sizes
-            double dinsize = insize(gen);
-            while ((average_infile_size+sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize(gen); 
-            
-            // when blockstreaming is turned off create only one task with all inputfiles
-            if (!use_blockstreaming) {
-                endtask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f), dinsize));
-                continue;
-            }
-
-            // when simplified blockstreaming is turned on create only one dummytask and task per infile
-            if (use_simplified_blockstreaming) {
-                xrd_block_size = dinsize;
-            }    
-            // Chunk inputfiles into blocks and create blockwise tasks and dummy tasks
-            // chain them as sketched in https://github.com/HerrHorizontal/DistCacheSim/blob/test/sgbatch/Sketches/Task_streaming_idea.pdf to enable task streaming
-            size_t nblocks = static_cast<size_t>(dinsize/xrd_block_size);
-            wrench::WorkflowTask* dummytask_parent = nullptr;
-            wrench::WorkflowTask* task_parent = nullptr;
-            if (enddummytask && endtask) {
-                // Connect the chain to the previous input-file's
-                dummytask_parent = enddummytask;
-                task_parent = endtask;
-            }
-            else if (endtask) {
-                throw std::runtime_error("There is no matching enddummytask for endtask "+endtask->getID());
-            }
-            else if (enddummytask) {
-                throw std::runtime_error("There is no matching endtask for enddummytask "+enddummytask->getID());
-            }
-            for (size_t b = 0; b < nblocks; b++) {
-                // Dummytask with inputblock and previous dummytask dependence
-                // with minimal number of memory and flops 
-                auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), dummy_flops, 1, 1, dummy_flops);
-                double blocksize = xrd_block_size;
-                dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blocksize));
-                if (dummytask_parent) {
-                    workflow->addControlDependency(dummytask_parent, dummytask);
-                }
-                dummytask_parent = dummytask;
-                // Task with dummytask and previous task dependence
-                double blockflops = dflops * blocksize/dinsize;
-                auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(b), blockflops, 1, 1, dmem);
-                workflow->addControlDependency(dummytask, task);
-                if (task_parent) {
-                    workflow->addControlDependency(task_parent, task);
-                }
-                task_parent = task;
-                // Last blocktask is endtask
-                if (b == nblocks-1) {
-                    enddummytask = dummytask;
-                    endtask = task;
-                }
-            }
-            // when the input-file size is not an integer multiple of the XRootD blocksize create a last block task which takes care of the modulo
-            // when blockwise streaming is turned off this evaluates to false
-            if (double blocksize = (dinsize - nblocks*xrd_block_size)) {
-                auto dummytask = workflow->addTask("dummytask_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), dummy_flops, 1, 1, dummy_flops);
-                dummytask->addInputFile(workflow->addFile("infile_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), blocksize));
-                if (dummytask_parent) {
-                    workflow->addControlDependency(dummytask_parent, dummytask);
-                }
-                double blockflops = dflops * blocksize/dinsize;
-                auto task = workflow->addTask("task_"+std::to_string(j)+"_file_"+std::to_string(f)+"_block_"+std::to_string(nblocks), blockflops, 1, 1, dmem);
-                workflow->addControlDependency(dummytask, task);
-                if (task_parent) {
-                    workflow->addControlDependency(task_parent, task);
-                }
-                enddummytask = dummytask;
-                endtask = task;
-            }
+            double dinsize = insize_dist(SimpleSimulator::gen);
+            while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(SimpleSimulator::gen);
+            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + std::to_string(j) + "_" + std::to_string(f), dinsize));
         }
 
         // Sample outfile sizes
-        double doutsize = outsize(gen);
-        while ((average_outfile_size+sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize(gen); 
-        endtask->addOutputFile(workflow->addFile("outfile_"+std::to_string(j), doutsize));
-        //TODO: test if the complete chain has the right amount of tasks and dummytasks
+        double doutsize = outsize_dist(SimpleSimulator::gen);
+        while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
+        job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
+
+        for (size_t d=0; d < duplications; d++) {
+            workload["job_" + std::to_string(j+d)] = job_specification;
+        }
     }
+    return workload;
 }
 
 
 int main(int argc, char **argv) {
 
-    // Declaration of the top-level WRENCH simulation object
-    auto simulation = new wrench::Simulation();
+    // instantiate a simulation
+    auto simulation = wrench::Simulation::createSimulation();
 
     // Initialization of the simulation
     simulation->init(&argc, argv);
-
 
     /* Parsing of the command-line arguments for this WRENCH simulation */
     auto vm = process_program_options(argc, argv);
@@ -267,27 +220,25 @@ int main(int argc, char **argv) {
     double average_outfile_size = vm["outsize"].as<double>();
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
 
+    size_t duplications = vm["duplications"].as<size_t>();
+
     // Flags to turn on/off blockwise streaming of input-files
-    bool use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
-    bool use_simplified_blockstreaming = vm["simplified-blockstreaming"].as<bool>();
+    SimpleSimulator::use_blockstreaming = !(vm["no-blockstreaming"].as<bool>());
 
 
-    /* Create a workflow */
-    std::cerr << "Loading workflow..." << std::endl;
-    auto workflow = new wrench::Workflow();
-    
-    fill_streaming_workflow(
-        workflow, 
+    /* Create a workload */
+    std::cerr << "Constructing workload specification..." << std::endl;
+
+    auto workload_spec = fill_streaming_workflow(
         num_jobs, infiles_per_job,
         average_flops, sigma_flops,
         average_memory,sigma_memory,
         average_infile_size, sigma_infile_size,
         average_outfile_size, sigma_outfile_size,
-        use_blockstreaming,
-        use_simplified_blockstreaming
+        duplications
     );
 
-    std::cerr << "The workflow has " << workflow->getNumberOfTasks() << " tasks in " << std::to_string(num_jobs) << " chains" << std::endl;
+    std::cerr << "The workflow has " << std::to_string(num_jobs) << " jobs" << std::endl;
 
 
     /* Read and parse the platform description file to instantiate a simulation platform */
@@ -295,7 +246,7 @@ int main(int argc, char **argv) {
     simulation->instantiatePlatform(platform_file);
 
 
-    /* Create storage and compute services and add them to the simulation */ 
+    /* Create storage and compute services and add them to the simulation */
     // Loop over vector of all the hosts in the simulated platform
     std::vector<std::string> hostname_list = simulation->getHostnameList();
     // Create a list of storage services that will be used by the WMS
@@ -322,10 +273,10 @@ int main(int argc, char **argv) {
                 cache_storage_services.insert(storage_service);
             }
             storage_services.insert(storage_service);
-        } 
+        }
         // Instantiate bare-metal compute-services
         if (
-            (*hostname != wms_host) && 
+            (*hostname != wms_host) &&
             (hostname_transformed.find("storage") == std::string::npos)
         ) {
             condor_compute_resources.insert(
@@ -345,46 +296,45 @@ int main(int argc, char **argv) {
             );
         }
     }
+
     // Instantiate a HTcondorComputeService and add it to the simulation
-    std::set<shared_ptr<wrench::ComputeService>> htcondor_compute_services;
-    htcondor_compute_services.insert(shared_ptr<wrench::ComputeService>(simulation->add(
-        new wrench::HTCondorComputeService(
-            wms_host,
-            condor_compute_resources,
-            {
-                {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "1.0"},
-                {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "10.0"},
-                {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "10.0"},
-                {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "5.0"},
-                {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "5.0"}
-            },
-            {}
-        )
-    )));
+    std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
+    htcondor_compute_services.insert(simulation->add(
+            new wrench::HTCondorComputeService(
+                    wms_host,
+                    condor_compute_resources,
+                    {
+                            {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "1.0"},
+                            {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "10.0"},
+                            {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "10.0"},
+                            {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "5.0"},
+                            {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "5.0"}
+                    },
+                    {}
+            )
+    ));
+
 
 
     /* Instantiate a file registry service */
-    std::string file_registry_service_host = wms_host;
-    std::cerr << "Instantiating a FileRegistryService on " << file_registry_service_host << "..." << std::endl;
-    auto file_registry_service =
-                    simulation->add(new wrench::FileRegistryService(file_registry_service_host));
+    std::cerr << "Instantiating a FileRegistryService on " << wms_host << "..." << std::endl;
+    auto file_registry_service = simulation->add(new wrench::FileRegistryService({wms_host}));
 
 
-    /* Instantiate a WMS */
+    /* Instantiate an Execution Controller */
     auto wms = simulation->add(
-                    new SimpleWMS(
-                        htcondor_compute_services, 
-                        //TODO: at this point only remote storage services should be sufficient
-                        storage_services,
-                        wms_host,
-                        //hitrate,
-                        filename
-                    )
+        new SimpleExecutionController(
+            workload_spec,
+            htcondor_compute_services,
+            //TODO: at this point only remote storage services should be sufficient
+            storage_services,
+            wms_host,
+            //hitrate,
+            filename
+        )
     );
-    wms->addWorkflow(workflow);
 
-
-    /* Instatiate inputfiles */
+    /* Instantiate inputfiles and set outfile destinations*/
     // Check that the right remote_storage_service is passed for initial inputfile storage
     // TODO: generalize to arbitrary numbers of remote storages
     if (remote_storage_services.size() != 1) {
@@ -392,26 +342,26 @@ int main(int argc, char **argv) {
     }
     auto remote_storage_service = *remote_storage_services.begin();
 
-    // It is necessary to store, or "stage", input files (blocks)
-    std::cerr << "Staging input files..." << std::endl;
-    std::vector<wrench::WorkflowTask*> tasks = workflow->getTasks();
+    std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
     try {
-        for (auto task : tasks) {
-            auto input_files = task->getInputFiles();
-            // Shuffle the input files
-            std::shuffle(input_files.begin(), input_files.end(), gen);
+        for (auto &job_name_spec: wms->get_workload_spec()) {
+            // job specifications
+            auto &job_spec = job_name_spec.second;
+            std::shuffle(job_spec.infiles.begin(), job_spec.infiles.end(), SimpleSimulator::gen); // Shuffle the input files
             // Compute the task's incremental inputfiles size
             double incr_inputfile_size = 0.;
-            for (auto f : input_files) {
+            for (auto const &f : job_spec.infiles) {
                 incr_inputfile_size += f->getSize();
             }
-            // Distribute the infiles on all caches untill desired hitrate is reached
+            // Distribute the infiles on all caches until desired hitrate is reached
             double cached_files_size = 0.;
-            for (auto const &f : input_files) {
+            for (auto const &f : job_spec.infiles) {
                 simulation->stageFile(f, remote_storage_service);
+                SimpleSimulator::global_file_map[remote_storage_service].touchFile(f);
                 if (cached_files_size < hitrate*incr_inputfile_size) {
-                    for (auto cache : cache_storage_services) {
+                    for (const auto& cache : cache_storage_services) {
                         simulation->stageFile(f, cache);
+                        SimpleSimulator::global_file_map[cache].touchFile(f);
                     }
                     cached_files_size += f->getSize();
                 }
@@ -419,10 +369,14 @@ int main(int argc, char **argv) {
             if (cached_files_size/incr_inputfile_size < hitrate) {
                 throw std::runtime_error("Desired hitrate was not reached!");
             }
+
+            // Set outfile destinations
+            // TODO: Think of a way to generalize
+            job_spec.outfile_destination = wrench::FileLocation::LOCATION(remote_storage_service);
         }
     } catch (std::runtime_error &e) {
-            std::cerr << "Exception: " << e.what() << std::endl;
-            return 0;
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return 0;
     }
 
 
@@ -435,7 +389,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     std::cerr << "Simulation done!" << std::endl;
-    
+
 
     return 0;
 }

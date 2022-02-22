@@ -58,6 +58,9 @@ scenario_plotlabel_dict = {
 }
 
 
+machines = ['sg01', 'sg02', 'sg03']
+
+
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
 outputfiles = args.simoutputs
 for outputfile in outputfiles:
@@ -71,7 +74,7 @@ outputfiles_dict = dict(zip(hitrates,outputfiles))
 print(outputfiles_dict)
 
 
-# create a dataframe for each JSON file and add hitrate information
+# create a dataframe for each CSV file and add hitrate information
 dfs = []
 for hitrate, outputfile in outputfiles_dict.items():
     with open(outputfile) as f:
@@ -94,7 +97,7 @@ else:
     print("Couldn't find any files")
     exit(1)
 
-# plot the job runtime dependence on hitrate
+# plot the job-runtime dependence on hitrate
 fig, ax1 = plt.subplots()
 ax1.set_title(scenario_plotlabel_dict[scenario])
 
@@ -103,11 +106,16 @@ ax1.set_ylabel('jobtime / min', color='black')
 ax1.set_xlim([-0.05,1.05])
 # ax1.set_ylim([0,400])
 
-ax1.scatter(df['hitrate'], (df['job.end']-df['job.start'])/60., color='black', marker='x')
+# ax1 = df.plot.scatter(x='hitrate', y='walltime', c=)
+
+scatter = ax1.scatter(df['hitrate'], (df['job.end']-df['job.start'])/60., c=df['machine.name'].astype('category').cat.codes, marker='x')
 # ax1.grid(axis="y", linestyle = 'dotted', which='major')
 
-h1, l1 = ax1.get_legend_handles_labels()
-ax1.legend(h1, l1, loc=2)
+ax1.legend(
+    handles=scatter.legend_elements()[0], 
+    labels=machines,
+    title="machines"
+)
 
 fig.savefig(f"hitratescaling_{scenario}jobs{suffix}.pdf")
 
@@ -119,9 +127,12 @@ ax2.set_xlabel('hitrate', loc='right')
 ax2.set_ylabel('transfer time / min', color='black')
 ax2.set_xlim([-0.05,1.05])
 
-ax2.scatter(df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime']))/60., color='black', marker='x')
+scatter = ax2.scatter(df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime']))/60., c=df['machine.name'].astype('category').cat.codes, marker='x')
 
-h2, l2 = ax2.get_legend_handles_labels()
-ax1.legend(h1, l1, loc=2)
+ax2.legend(
+    handles=scatter.legend_elements()[0], 
+    labels=machines,
+    title="machines"
+)
 
 fig2.savefig(f"hitratetransfer_{scenario}jobs{suffix}.pdf")
