@@ -53,7 +53,6 @@ suffix=args.suffix
 
 scenario_plotlabel_dict = {
     "copy": "Input-files copied",
-    "simplifiedstream": "Input-files streamed (simpl.)",
     "fullstream": "Block-streaming"
 }
 
