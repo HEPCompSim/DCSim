@@ -93,6 +93,7 @@ int SimpleExecutionController::main() {
 
     // Get the available storage services
     // and split between workers and remote storages
+    // TODO: generalize to arbitrary platforms
     std::set<std::shared_ptr<wrench::StorageService>> worker_storage_services;
     std::set<std::shared_ptr<wrench::StorageService>> remote_storage_services;
     for (auto storage : this->storage_services) {
