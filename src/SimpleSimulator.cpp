@@ -120,7 +120,7 @@ po::variables_map process_program_options(int argc, char** argv) {
 
 
 /**
- * @brief fill a Workflow consisting of jobs with job specifications, 
+ * @brief Fill a Workflow consisting of jobs with job specifications, 
  * which include the inputfile and outputfile dependencies.
  * It can be chosen between jobs streaming input data and perform computations simultaneously 
  * or jobs copying the full input-data and compute afterwards.
@@ -149,12 +149,11 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         size_t duplications
 ) {
 
-    // map to store the workload specification
+    // Map to store the workload specification
     std::map<std::string, JobSpecification> workload;
 
     // Initialize random number generators
     std::normal_distribution<> flops_dist(average_flops, sigma_flops);
-// TODO: WHAT TO DO WITH MEMORY?
     std::normal_distribution<> mem_dist(average_memory, sigma_memory);
     std::normal_distribution<> insize_dist(average_infile_size, sigma_infile_size);
     std::normal_distribution<> outsize_dist(average_outfile_size,sigma_outfile_size);
