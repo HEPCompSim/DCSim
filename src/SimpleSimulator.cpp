@@ -192,6 +192,42 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
     return workload;
 }
 
+/**
+ * @brief Identify demanded services on hosts to run based on configured "type" property tag
+ * 
+ * @param simulation Simulation object with already instantiated hosts
+ * 
+ * @throw std::runtime_error, std::invalid_argument
+ */
+void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation){
+    std::vector<std::string> hostname_list = simulation->getHostnameList();
+    if (hostname_list.size() == 0) {
+        throw std::runtime_error("Empty hostname list! Have you instantiated the platform already?");
+    }
+    for (const auto& hostname: hostname_list) {
+        auto hostProperties = wrench::S4U_Simulation::getHostProperty(hostname, "type");
+        bool validType = false;
+        if (hostProperties == ""){
+            throw std::runtime_error("Configuration property \"type\" missing for host " + hostname);
+        }
+        if (hostProperties.find("storage") != std::string::npos) {
+            this->storage_hosts.insert(hostname);
+        }
+        if (hostProperties.find("cache") != std::string::npos) {
+            this->cache_hosts.insert(hostname);
+        }
+        if (hostProperties.find("worker") != std::string::npos) {
+            this->worker_hosts.insert(hostname);
+        }
+        if (hostProperties.find("scheduler") != std::string::npos) {
+            this->scheduler_hosts.insert(hostname);
+        }
+        if (! validType) {
+            throw std::runtime_error("Invalid type " + hostProperties + " configuration in host " + hostname + "!");
+        }
+    }
+}
+
 
 int main(int argc, char **argv) {
 
