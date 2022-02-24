@@ -8,7 +8,13 @@
 class SimpleSimulator {
 
 public:
-    std::set<std::shared_ptr<wrench::StorageService>> storage_services;
+
+    void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation);
+
+    std::set<std::string> cache_hosts;
+    std::set<std::string> storage_hosts;
+    std::set<std::string> worker_hosts;
+    std::set<std::string> scheduler_hosts;
 
     static bool use_blockstreaming;
     static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;
