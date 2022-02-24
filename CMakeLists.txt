@@ -54,7 +54,6 @@ add_executable(sgbatch-sim ${SOURCE_FILES})
 if (ENABLE_BATSCHED)
 target_link_libraries(sgbatch-sim
                        ${WRENCH_LIBRARY}
-                       ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
                        ${PUGIXML_LIBRARY}
@@ -62,7 +61,6 @@ target_link_libraries(sgbatch-sim
 else()
 target_link_libraries(sgbatch-sim
                        ${WRENCH_LIBRARY}
-                       ${WRENCH_PEGASUS_WORKFLOW_PARSER_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
                        ${PUGIXML_LIBRARY}
