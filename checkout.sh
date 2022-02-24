@@ -57,8 +57,10 @@ popd
 
 # 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
 echo "Installing SimGrid..."
-git clone https://framagit.org/simgrid/simgrid.git # master branch, currently on commit: f0c07d4ab3b94286d109ff88493b01c082ad70cb
-pushd simgrid
+wget https://framagit.org/simgrid/simgrid/-/archive/v3.30/simgrid-v3.30.tar.gz
+tar -xf simgrid-v3.30.tar.gz
+rm simgrid-v3.30.tar.gz
+pushd simgrid-v3.30
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -67,18 +69,17 @@ popd
 
 # installing WRENCH 2.0:
 echo "Installing WRENCH..."
-git clone --branch wrench-2.0 git@github.com:wrench-project/wrench.git # wrench-2.0 branch, currently on commit: ae27c2d22cc68b4077be0e1be97a26b3f2199a8d
+git clone --branch wrench-2.0 git@github.com:wrench-project/wrench.git
 pushd wrench
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
-make -j 6 examples; sudo make install examples # needed additionally, since not done by default
+# make -j 6 examples; sudo make install examples # needed additionally, since not done by default
 popd
 
 # install the sgbatch simulator
 echo "Installing the DistCacheSim simulator..."
-git checkout test/sgbatch-wrench-2.0
 pushd $this_dir/sgbatch
 mkdir -p build
 cd build
