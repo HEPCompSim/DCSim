@@ -69,7 +69,7 @@ popd
 
 # installing WRENCH 2.0:
 echo "Installing WRENCH..."
-git clone --branch wrench-2.0 git@github.com:wrench-project/wrench.git
+git clone git@github.com:wrench-project/wrench.git
 pushd wrench
 mkdir -p build
 cd build
@@ -80,7 +80,7 @@ popd
 
 # install the sgbatch simulator
 echo "Installing the DistCacheSim simulator..."
-pushd $this_dir/sgbatch
+pushd $this_dir
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
