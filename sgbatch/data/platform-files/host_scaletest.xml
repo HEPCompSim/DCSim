@@ -28,7 +28,7 @@
           </disk>
          </host>
         <host id="WMSHost" speed="10Gf" core="10">
-          <prop id="type" value="scheduler"/>
+          <prop id="type" value="scheduler,executor"/>
           <prop id="ram" value="16GB"/>
         </host>
 
