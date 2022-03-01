@@ -131,7 +131,7 @@ void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> acti
     std::string hostname = action_executor->getHostname();
 
     // Identify all file sources (and deal with caching, evictions, etc.
-    WRENCH_INFO("Determining file sources for streamed computation");
+    WRENCH_INFO("Determining file sources for cache computation");
     this->determineFileSources(hostname);
 
     this->performComputation(hostname);

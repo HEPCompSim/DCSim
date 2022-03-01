@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Bash script tu run simulations for several hitrate values.
-# The simulation monitoring outputs can be plotted using the hitrateferfromance.py plotting script.
+# The simulation monitoring outputs can be plotted using the hitrateperfromance.py plotting script.
 
 NJOBS=60
 NINFILES=10
