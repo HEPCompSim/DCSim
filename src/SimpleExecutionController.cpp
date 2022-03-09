@@ -17,25 +17,30 @@
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
 
 /**
- * @brief Create a SimpleExecutionController with a workload specification instance, a list of storage services and a list of compute services
- *
- * @param workload_spec: the workload specification
- * @param htcondor_compute_service: an HTCondor compute service
- * @param storage_services: set of storage services holding input files //! currently only remote storages needed
- * @param hostname: host where the WMS runs
- * @param outputdump_name: name of the file to dump simulation information
+ *  @brief A simple ExecutionController building jobs from job-specifications, 
+ *  submitting them and monitoring their execution
+ * 
+ *  @param workload_spec collection of job specifications
+ *  @param htcondor_compute_services collection of HTCondorComputeServices submitting jobs
+ *  @param grid_storage_services GRID storages holding files "for ever"
+ *  @param cache_storage_services local caches evicting files when needed
+ *  @param hostname host running the execution controller
+ *  @param outputdump_name name of the file where the simulation's job information is stored
+ *  
  */
 SimpleExecutionController::SimpleExecutionController(
-        const std::map<std::string, JobSpecification> &workload_spec,
+        const std::map<std::string, JobSpecification>& workload_spec,
         const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
-        const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
+        const std::set<std::shared_ptr<wrench::StorageService>>& grid_storage_services,
+        const std::set<std::shared_ptr<wrench::StorageService>>& cache_storage_services,
         const std::string& hostname,
         const std::string& outputdump_name) : wrench::ExecutionController(
         hostname,
         "condor-simple") {
     this->workload_spec = workload_spec;
     this->htcondor_compute_services = htcondor_compute_services;
-    this->storage_services = storage_services;
+    this->grid_storage_services = grid_storage_services;
+    this->cache_storage_services = cache_storage_services;
     this->filename = outputdump_name;
 }
 
@@ -84,34 +89,13 @@ int SimpleExecutionController::main() {
         throw std::runtime_error("Aborting - No compute services available!");
     }
     if (this->htcondor_compute_services.size() != 1) {
-        throw std::runtime_error("This example Simple HTCondor Scheduler requires a single compute service");
+        throw std::runtime_error("This execution controller running on " + this->getHostname() + " requires a single HTCondorCompute service");
     }
-
-    auto htcondor_compute_service = *(this->htcondor_compute_services.begin());
-    WRENCH_INFO("Found %ld HTCondor Service(s) on %s", htcondor_compute_services.size(), htcondor_compute_service->getHostname().c_str());
-
-
-    // Get the available storage services
-    // and split between workers and remote storages
-    // TODO: generalize to arbitrary platforms
-    std::set<std::shared_ptr<wrench::StorageService>> worker_storage_services;
-    std::set<std::shared_ptr<wrench::StorageService>> remote_storage_services;
-    for (auto storage : this->storage_services) {
-        std::string hostname = storage->getHostname();
-        std::for_each(hostname.begin(), hostname.end(), [](char& c){c = std::tolower(c);});
-        if (hostname.find("remote") != std::string::npos) {
-            remote_storage_services.insert(storage);
-        } else {
-            worker_storage_services.insert(storage);
-        }
+    WRENCH_INFO("Found %ld HTCondor Service(s) on:", this->htcondor_compute_services.size());
+    for (auto htcondor_compute_service: this->htcondor_compute_services) {
+        WRENCH_INFO("\t%s", htcondor_compute_service->getHostname().c_str());
     }
-    // Check that the right remote_storage_service is passed for outputfile storage
-    // TODO: generalize to arbitrary numbers of remote storages
-    if (remote_storage_services.size() != 1) {
-        throw std::runtime_error("This example Simple Simulator requires a single remote_storage_service");
-    }
-    auto remote_storage_service = *remote_storage_services.begin();
-    WRENCH_INFO("Found %ld Remote Storage Service(s) on %s", remote_storage_services.size(), remote_storage_service->getHostname().c_str());
+    auto htcondor_compute_service = *this->htcondor_compute_services.begin();
 
 
     // Create and submit all the jobs!
@@ -126,9 +110,10 @@ int SimpleExecutionController::main() {
         std::shared_ptr<wrench::CustomAction> run_action;
         if (! SimpleSimulator::use_blockstreaming) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
-                new CopyComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
+                new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
+            //? Split this into a caching file read and a standard compute action?
             run_action = job->addCustomAction(
                 "copycompute_" + job_name,
                 job_spec->total_mem, 1,
@@ -139,7 +124,7 @@ int SimpleExecutionController::main() {
             );
         } else {
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
-                new StreamedComputation(this->storage_services, job_spec->infiles, job_spec->total_flops)
+                new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
             run_action = job->addCustomAction(
@@ -185,7 +170,10 @@ int SimpleExecutionController::main() {
 
     }
 
-    WRENCH_INFO("Done with creation/submission of all compound jobs");
+    WRENCH_INFO(
+        "Job manager %s: Done with creation/submission of all compound jobs on host %s", 
+        job_manager->getName().c_str(), job_manager->getHostname().c_str()
+    );
 
 
     this->num_completed_jobs = 0;
@@ -207,9 +195,9 @@ int SimpleExecutionController::main() {
 
     WRENCH_INFO("--------------------------------------------------------")
     if (this->num_completed_jobs == this->workload_spec.size()){
-        WRENCH_INFO("Workload execution is complete!");
+        WRENCH_INFO("Workload execution on %s is complete!", this->getHostname().c_str());
     } else{
-        WRENCH_INFO("Workload execution is incomplete!")
+        WRENCH_INFO("Workload execution on %s is incomplete!", this->getHostname().c_str());
     }
 
     WRENCH_INFO("SimpleExecutionController daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());

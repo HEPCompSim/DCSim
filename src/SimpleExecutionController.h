@@ -19,16 +19,14 @@
 
 class Simulation;
 
-/**
- *  @brief A simple ExecutionController implementation
- */
 class SimpleExecutionController : public wrench::ExecutionController {
 public:
     // Constructor
     SimpleExecutionController(
               const std::map<std::string, JobSpecification> &workload_spec,
               const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
-              const std::set<std::shared_ptr<wrench::StorageService>>& storage_services,
+              const std::set<std::shared_ptr<wrench::StorageService>>& grid_storage_services,
+              const std::set<std::shared_ptr<wrench::StorageService>>& cache_storage_services,
               //const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
               //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
               const std::string& hostname,
@@ -47,7 +45,8 @@ protected:
 private:
 
     std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
-    std::set<std::shared_ptr<wrench::StorageService>> storage_services;
+    std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
+    std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
     std::map<std::string, JobSpecification> workload_spec;
 
 
