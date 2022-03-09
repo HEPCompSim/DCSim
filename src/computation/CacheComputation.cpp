@@ -8,21 +8,25 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputati
  * @brief Construct a new CacheComputation::CacheComputation object
  * to be used within a compute action, which shall take caching of input-files into account.
  * 
- * @param storage_services Storage services reachable to retrieve input files (caches plus remote)
+ * @param cache_storage_services Storage services reachable to retrieve and cache input files
+ * @param grid_storage_services Storage services reachable to retrieve input files
  * @param files Input files of the job to process
  * @param total_flops Total #FLOPS of the whole compute action of the job
  */
-CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
+CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+                                std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
                                 std::vector<std::shared_ptr<wrench::DataFile>> &files,
                                 double total_flops) {
-    this->storage_services = storage_services;
+    this->cache_storage_services = cache_storage_services;
+    this->grid_storage_services = grid_storage_services;
     this->files = files;
     this->total_flops = total_flops;
     this->total_data_size = determineTotalDataSize(files);
 }
 
 /**
- * @brief Cache by the job required files on local host's storage service. 
+ * @brief Cache by the job required files on one of the local host's 
+ * reachable cache storage services. 
  * Free space when needed according to an LRU scheme.
  * 
  * TODO: Find some optimal sources serving and destinations providing files to jobs.
@@ -31,10 +35,11 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  * @param hostname Name of the host, where the job runs
  */
 void CacheComputation::determineFileSources(std::string hostname) {
-    // Identify all storage services that run on this host, which runs the streaming action
-    // TODO: HENRI QUESTION: IS IT REALLY THE CASE THERE ARE COULD BE MULTIPLE LOCAL STORAGE SERVICES???
+    // Identify all cache storage services that can be reached from 
+    // this host, which runs the streaming action
+    //TODO: Think of a better definition of "reachable" other than local
     std::vector<std::shared_ptr<wrench::StorageService>> matched_storage_services;
-    for (auto const &ss : this->storage_services) {
+    for (auto const &ss : this->cache_storage_services) {
         if (ss->getHostname() == hostname) {
             matched_storage_services.push_back(ss);
         }
@@ -48,7 +53,7 @@ void CacheComputation::determineFileSources(std::string hostname) {
     for (auto const &f : this->files) {
         // find a source providing the required file
         std::shared_ptr<wrench::StorageService> source_ss;
-        // See whether the file is already available in a "local" storage service
+        // See whether the file is already available in a "reachable" cache storage service
         for (auto const &ss : matched_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
@@ -61,9 +66,9 @@ void CacheComputation::determineFileSources(std::string hostname) {
             this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
             continue;
         }
-        // If not, then we have to copy the file from some source to some local storage service
-        // TODO: Find the optimal source, whatever that means (right now it's whichever one works first)
-        for (auto const &ss : this->storage_services) {
+        // If not, then we have to copy the file from some GRID source to some reachable cache storage service
+        // TODO: Find the optimal GRID source, whatever that means (right now it's whichever one works first)
+        for (auto const &ss : this->grid_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
                 break;
@@ -75,8 +80,8 @@ void CacheComputation::determineFileSources(std::string hostname) {
             SimpleSimulator::global_file_map[source_ss].touchFile(f);
         }
 
-        // TODO: Find the optimal destination, whatever that means (right now it's random, with a bad RNG!)
-        // TODO: But then perhaps matched_storage_services.size() is always 1? (see QUESTION above)
+        // Destination storage to cache the file
+        // TODO: Find the optimal reachable cache destination, whatever that means (right now it's random, with a bad RNG!)
         auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
         // Evict files while to create space, using an LRU scheme!

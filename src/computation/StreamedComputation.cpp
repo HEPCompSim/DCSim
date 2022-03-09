@@ -15,13 +15,16 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(streamed_computation, "Log category for StreamedCom
  * @param files Input files of the job to process
  * @param total_flops Total #FLOPS of the whole compute action of the job
  */
-StreamedComputation::StreamedComputation(std::set<std::shared_ptr<wrench::StorageService>> &storage_services,
-                                         std::vector<std::shared_ptr<wrench::DataFile>> &files,
-                                         double total_flops) : CacheComputation::CacheComputation(
-                                             storage_services,
-                                             files,
-                                             total_flops
-                                         ) {}
+StreamedComputation::StreamedComputation(
+    std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+    std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+    std::vector<std::shared_ptr<wrench::DataFile>> &files,
+    double total_flops) : CacheComputation::CacheComputation(
+        cache_storage_services,
+        grid_storage_services,
+        files,
+        total_flops
+    ) {}
 
 /**
  * @brief Perform the computation within the simulation of the job.

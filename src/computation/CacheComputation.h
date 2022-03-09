@@ -10,9 +10,11 @@
 class CacheComputation {
 
 public:
-    CacheComputation(std::set<std::shared_ptr<wrench::StorageService>> & storage_services,
-                std::vector<std::shared_ptr<wrench::DataFile>> &files,
-                double total_flops
+    CacheComputation(
+        std::set<std::shared_ptr<wrench::StorageService>> & cache_storage_services,
+        std::set<std::shared_ptr<wrench::StorageService>> & grid_storage_services,
+        std::vector<std::shared_ptr<wrench::DataFile>> &files,
+        double total_flops
     );
 
     virtual ~CacheComputation() = default;
@@ -26,7 +28,8 @@ public:
     virtual void performComputation(std::string &hostname) = 0;
 
 protected:
-    std::set<std::shared_ptr<wrench::StorageService>> storage_services;
+    std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
+    std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     std::vector<std::shared_ptr<wrench::DataFile>> files; //? does this need to be ordered?
     double total_flops;
 
