@@ -34,6 +34,11 @@ std::normal_distribution<double>* SimpleSimulator::flops_dist;
 std::normal_distribution<double>* SimpleSimulator::mem_dist;
 std::normal_distribution<double>* SimpleSimulator::insize_dist;
 std::normal_distribution<double>* SimpleSimulator::outsize_dist;
+std::set<std::string> SimpleSimulator::cache_hosts;
+std::set<std::string> SimpleSimulator::storage_hosts;
+std::set<std::string> SimpleSimulator::worker_hosts;
+std::set<std::string> SimpleSimulator::scheduler_hosts;
+std::set<std::string> SimpleSimulator::executors;
 
 
 
@@ -210,17 +215,26 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
         if (hostProperties == ""){
             throw std::runtime_error("Configuration property \"type\" missing for host " + hostname);
         }
+        if (hostProperties.find("executor") != std::string::npos) {
+            SimpleSimulator::executors.insert(hostname);
+        }
+        if (hostProperties.find("fileregistry") != std::string::npos) {
+            SimpleSimulator::file_registries.insert(hostname);
+        }
+        if (hostProperties.find("networkmonitor") != std::string::npos) {
+            SimpleSimulator::network_monitors.insert(hostname);
+        }
         if (hostProperties.find("storage") != std::string::npos) {
-            this->storage_hosts.insert(hostname);
+            SimpleSimulator::storage_hosts.insert(hostname);
         }
         if (hostProperties.find("cache") != std::string::npos) {
-            this->cache_hosts.insert(hostname);
+            SimpleSimulator::cache_hosts.insert(hostname);
         }
         if (hostProperties.find("worker") != std::string::npos) {
-            this->worker_hosts.insert(hostname);
+            SimpleSimulator::worker_hosts.insert(hostname);
         }
         if (hostProperties.find("scheduler") != std::string::npos) {
-            this->scheduler_hosts.insert(hostname);
+            SimpleSimulator::scheduler_hosts.insert(hostname);
         }
         if (! validType) {
             throw std::runtime_error("Invalid type " + hostProperties + " configuration in host " + hostname + "!");
@@ -288,118 +302,122 @@ int main(int argc, char **argv) {
     simulation->instantiatePlatform(platform_file);
 
 
-    /* Create storage and compute services and add them to the simulation */
-    // Loop over vector of all the hosts in the simulated platform
-    std::vector<std::string> hostname_list = simulation->getHostnameList();
-    // Create a list of storage services that will be used by the WMS
-    std::set<std::shared_ptr<wrench::StorageService>> storage_services;
-    // Split into cache storages
+    /* Identify demanded and create storage and compute services and add them to the simulation */
+    SimpleSimulator::identifyHostTypes(simulation);
+
+    // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
-    // and a remote storage that is able to serve all file requests
-    std::set<std::shared_ptr<wrench::StorageService>> remote_storage_services;
+    for (auto host: SimpleSimulator::cache_hosts) {
+        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"}));
+        cache_storage_services.insert(storage_service);
+    }
+
+    // and remote storages that are able to serve all file requests
+    std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
+    for (auto host: SimpleSimulator::storage_hosts) {
+        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"}));
+        grid_storage_services.insert(storage_service);
+    }
+
     // Create a list of compute services that will be used by the HTCondorService
     std::set<std::shared_ptr<wrench::ComputeService>> condor_compute_resources;
-    std::string wms_host = "WMSHost";
-    for (std::vector<std::string>::iterator hostname = hostname_list.begin(); hostname != hostname_list.end(); ++hostname) {
-        std::string hostname_transformed = *hostname;
-        std::for_each(hostname_transformed.begin(), hostname_transformed.end(), [](char& c){c = std::tolower(c);});
-        // Instantiate storage services
-        // WMSHost doesn't need a StorageService
-        if (*hostname != wms_host) {
-            std::string storage_host = *hostname;
-            std::cerr << "Instantiating a SimpleStorageService on " << storage_host << "..." << std::endl;
-            auto storage_service = simulation->add(new wrench::SimpleStorageService(storage_host, {"/"}));
-            if (hostname_transformed.find("remote") != std::string::npos) {
-                remote_storage_services.insert(storage_service);
-            } else {
-                cache_storage_services.insert(storage_service);
-            }
-            storage_services.insert(storage_service);
-        }
-        // Instantiate bare-metal compute-services
-        if (
-            (*hostname != wms_host) &&
-            (hostname_transformed.find("storage") == std::string::npos)
-        ) {
-            condor_compute_resources.insert(
-                simulation->add(
-                    new wrench::BareMetalComputeService(
-                        *hostname,
-                        {std::make_pair(
-                            *hostname,
-                            std::make_tuple(
-                                wrench::Simulation::getHostNumCores(*hostname),
-                                wrench::Simulation::getHostMemoryCapacity(*hostname)
-                            )
-                        )},
-                        ""
-                    )
+    for (auto host: SimpleSimulator::worker_hosts) {
+        condor_compute_resources.insert(
+            simulation->add(
+                new wrench::BareMetalComputeService(
+                    host,
+                    {std::make_pair(
+                        host,
+                        std::make_tuple(
+                            wrench::Simulation::getHostNumCores(host),
+                            wrench::Simulation::getHostMemoryCapacity(host)
+                        )
+                    )},
+                    ""
                 )
-            );
-        }
+            )
+        );
     }
 
     // Instantiate a HTcondorComputeService and add it to the simulation
     std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
-    htcondor_compute_services.insert(simulation->add(
-            new wrench::HTCondorComputeService(
-                    wms_host,
+    //TODO: Think of a way to support more than one HTCondor scheduler
+    if (SimpleSimulator::scheduler_hosts.size() != 1) {
+        throw std::runtime_error("Currently this simulator supports only a single HTCondor scheduler!");
+    }
+    for (auto host: SimpleSimulator::scheduler_hosts) {
+        htcondor_compute_services.insert(
+            simulation->add(
+                new wrench::HTCondorComputeService(
+                    host,
                     condor_compute_resources,
                     {
-                            {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "1.0"},
-                            {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "10.0"},
-                            {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "10.0"},
-                            {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "5.0"},
-                            {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "5.0"}
+                        {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "1.0"},
+                        {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "10.0"},
+                        {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "10.0"},
+                        {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "5.0"},
+                        {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "5.0"}
                     },
                     {}
+                )
             )
-    ));
+        );
+    }
 
 
+    /* Instantiate file registry services */
+    std::set<std::shared_ptr<wrench::FileRegistryService>> file_registry_services;
+    for (auto host: SimpleSimulator::file_registries) {
+        std::cerr << "Instantiating a FileRegistryService on " << host << "..." << std::endl;
+        auto file_registry_service = simulation->add(new wrench::FileRegistryService(host));
+        file_registry_services.insert(file_registry_service);
+    }
 
-    /* Instantiate a file registry service */
-    std::cerr << "Instantiating a FileRegistryService on " << wms_host << "..." << std::endl;
-    auto file_registry_service = simulation->add(new wrench::FileRegistryService({wms_host}));
 
-
-    /* Instantiate an Execution Controller */
-    auto wms = simulation->add(
-        new SimpleExecutionController(
-            workload_spec,
-            htcondor_compute_services,
-            //TODO: at this point only remote storage services should be sufficient
-            storage_services,
-            wms_host,
-            //hitrate,
-            filename
-        )
-    );
+    /* Instantiate Execution Controllers */
+    std::set<std::shared_ptr<SimpleExecutionController>> execution_controllers;
+    //TODO: Think of a way to support more than one execution controller
+    if (SimpleSimulator::executors.size() != 1) {
+        throw std::runtime_error("Currently this simulator supports only a single execution controller!");
+    }
+    for (auto host: SimpleSimulator::executors) {
+        auto wms = simulation->add(
+            new SimpleExecutionController(
+                workload_spec,
+                htcondor_compute_services,
+                grid_storage_services,
+                cache_storage_services,
+                host,
+                //hitrate,
+                filename
+            )
+        );
+        execution_controllers.insert(wms);
+    }
+    
 
     /* Instantiate inputfiles and set outfile destinations*/
-    // Check that the right remote_storage_service is passed for initial inputfile storage
-    // TODO: generalize to arbitrary numbers of remote storages
-    if (remote_storage_services.size() != 1) {
-        throw std::runtime_error("This example Simple Simulator requires a single remote_storage_service");
-    }
-    auto remote_storage_service = *remote_storage_services.begin();
-
+    auto wms = *execution_controllers.begin();
     std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
     try {
         for (auto &job_name_spec: wms->get_workload_spec()) {
             // job specifications
             auto &job_spec = job_name_spec.second;
             std::shuffle(job_spec.infiles.begin(), job_spec.infiles.end(), SimpleSimulator::gen); // Shuffle the input files
-            // Compute the task's incremental inputfiles size
+            // Compute the job's incremental inputfiles size
             double incr_inputfile_size = 0.;
             for (auto const &f : job_spec.infiles) {
                 incr_inputfile_size += f->getSize();
             }
-            // Distribute the infiles on all caches until desired hitrate is reached
             double cached_files_size = 0.;
             for (auto const &f : job_spec.infiles) {
-                simulation->stageFile(f, remote_storage_service);
-                SimpleSimulator::global_file_map[remote_storage_service].touchFile(f);
+                // Distribute the inputfiles on all GRID storages
+                //TODO: Think of a more realistic distribution pattern and avoid duplications
+                for (auto storage_service: grid_storage_services) {
+                    simulation->stageFile(f, storage_service);
+                    SimpleSimulator::global_file_map[storage_service].touchFile(f);
+                }
+                // Distribute the infiles on all caches until desired hitrate is reached
                 if (cached_files_size < hitrate*incr_inputfile_size) {
                     for (const auto& cache : cache_storage_services) {
                         simulation->stageFile(f, cache);
@@ -413,8 +431,11 @@ int main(int argc, char **argv) {
             }
 
             // Set outfile destinations
-            // TODO: Think of a way to generalize
-            job_spec.outfile_destination = wrench::FileLocation::LOCATION(remote_storage_service);
+            // TODO: Think of a way to identify a specific (GRID) storage
+            for (auto storage_service: grid_storage_services) {
+                job_spec.outfile_destination = wrench::FileLocation::LOCATION(storage_service);
+                break;
+            }
         }
     } catch (std::runtime_error &e) {
         std::cerr << "Exception: " << e.what() << std::endl;
