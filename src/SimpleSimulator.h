@@ -9,12 +9,15 @@ class SimpleSimulator {
 
 public:
 
-    void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation);
+    static void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation);
 
-    std::set<std::string> cache_hosts;
-    std::set<std::string> storage_hosts;
-    std::set<std::string> worker_hosts;
-    std::set<std::string> scheduler_hosts;
+    static std::set<std::string> cache_hosts;       // hosts configured to provide a cache
+    static std::set<std::string> storage_hosts;     // hosts configured to provide GRID storage
+    static std::set<std::string> worker_hosts;      // hosts configured to provide worker capacity
+    static std::set<std::string> scheduler_hosts;   // hosts configured to provide HTCondor scheduler
+    static std::set<std::string> executors;         // hosts configured to provide manage job activities
+    static std::set<std::string> file_registries;   // hosts configured to manage a file registry
+    static std::set<std::string> network_monitors;  // hosts configured to monitor network
 
     static bool use_blockstreaming;
     static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;
