@@ -39,6 +39,8 @@ std::set<std::string> SimpleSimulator::storage_hosts;
 std::set<std::string> SimpleSimulator::worker_hosts;
 std::set<std::string> SimpleSimulator::scheduler_hosts;
 std::set<std::string> SimpleSimulator::executors;
+std::set<std::string> SimpleSimulator::file_registries;
+std::set<std::string> SimpleSimulator::network_monitors;
 
 
 
