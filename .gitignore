@@ -33,6 +33,7 @@ wrench*/*
 
 
 # outputs
+data/sgbatch/*
 tmp
 *.pdf
 *.csv
