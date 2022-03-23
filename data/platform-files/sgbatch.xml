@@ -63,7 +63,7 @@
     <zone id="Remote" routing="Full">
       <host id="RemoteStorage" speed="1000Gf" core="10">
         <prop id="type" value="storage"/>
-        <disk id="hard_drive" read_bw="40GBps" write_bw="40GBps">
+        <disk id="hard_drive" read_bw="40Gbps" write_bw="40Gbps">
             <prop id="size" value="1PB"/>
             <prop id="mount" value="/"/>
         </disk>
