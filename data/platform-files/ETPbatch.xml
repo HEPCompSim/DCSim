@@ -9,7 +9,7 @@
         <host id="sg01" speed="2726Mf" core="24">
           <prop id="type" value="worker,cache"/>
           <prop id="ram" value="64GiB"/>
-          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="6.7Gbps">
             <prop id="size" value="2.5TB"/>
             <prop id="mount" value="/"/>
           </disk>
@@ -17,7 +17,7 @@
         <host id="sg02" speed="1611Mf" core="24">
           <prop id="type" value="worker,cache"/>
           <prop id="ram" value="64GiB"/>
-          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="6.7Gbps">
             <prop id="size" value="2.5TB"/>
             <prop id="mount" value="/"/>
           </disk>
@@ -25,7 +25,7 @@
         <host id="sg03" speed="2166Mf" core="12">
           <prop id="type" value="worker,cache"/>
           <prop id="ram" value="32GiB"/>
-          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="6.7Gbps">
             <prop id="size" value="2.5TB"/>
             <prop id="mount" value="/"/>
           </disk>
@@ -33,7 +33,7 @@
         <!-- <host id="sm01" speed="1117Mf" core="24">
           <prop id="type" value="worker,cache"/>
           <prop id="ram" value="64GiB"/>
-          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+          <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="6.7Gbps">
              <prop id="size" value="952GB"/>
              <prop id="mount" value="/"/>
           </disk>
