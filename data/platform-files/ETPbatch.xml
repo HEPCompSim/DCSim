@@ -2,7 +2,7 @@
 <!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
 <platform version="4.1">
 
-  <zone id="global" routing="Full">
+  <zone id="global" routing="Floyd">
 
     <zone id="ETP" routing="Floyd">
 
@@ -98,6 +98,8 @@
 
         <link id="etp_to_gridka" bandwidth="100Gbps" latency="0us"/>
 
+        <link id="etp_to_freiburg" bandwidth="100Gbps" latency="0us"/>
+
 
         <route src="etpgateway" dst="WMSHost">
           <link_ctn id="etp_sched"/>
@@ -144,7 +146,7 @@
 
       <host id="TOPAS" speed="3194Mf" core="1644">
         <prop id="type" value="worker,cache"/>
-        <prop id="ram" value="192GiB"/>
+        <prop id="ram" value="9410GiB"/>
         <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
           <prop id="size" value="1PB"/>
           <prop id="mount" value="/"/>
@@ -193,10 +195,35 @@
     </zone>  
 
 
+    <zone id="Freiburg" routing="Floyd">
+
+      <host id="NEMO" speed="2500Mf" core="1000">
+        <prop id="type" value="worker"/>
+        <prop id="ram" value="5000GiB"/>
+      </host>
+
+
+      <router id="freiburggateway"/>
+
+
+      <link id="freiburg_nemo" bandwidth="40Gbps" latency="0us"/>
+
+
+      <route src="freiburggateway" dst="NEMO">
+        <link_ctn id="freiburg_nemo"/>
+      </route>
+
+    </zone>
+
+
     <zoneRoute src="ETP" dst="GridKA" gw_src="etpgateway" gw_dst="gridkagateway">
       <link_ctn id="etp_to_gridka"/>
     </zoneRoute>
-    
+
+    <zoneRoute src="ETP" dst="NEMO" gw_src="etpgateway" gw_dst="freiburggateway">
+      <link_ctn id="etp_to_freiburg"/>
+    </zoneRoute>
+
   </zone>  
 
 </platform>
