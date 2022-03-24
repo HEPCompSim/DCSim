@@ -163,7 +163,7 @@
 
       <host id="DCMSdCache" speed="1000Gf" core="10">
         <prop id="type" value="storage"/>
-        <disk id="hard_drive" read_bw="40Gbps" write_bw="40Gbps">
+        <disk id="hard_drive" read_bw="80Gbps" write_bw="80Gbps">
             <prop id="size" value="1.8PB"/>
             <prop id="mount" value="/"/>
         </disk>
@@ -173,15 +173,18 @@
       <router id="gridkagateway"/>
 
 
-      <link id="gridka_topas" bandwidth="100Gbps" latency="0us"/>
+      <link id="gridka_topas1" bandwidth="100Gbps" latency="0us"/>
+      <link id="gridka_topas2" bandwidth="100Gbps" latency="0us"/>
 
       <!-- <link id="gridka_dcache" bandwidth="100Gbps" latency="0us"/> -->
 
-      <link id="gridka_dcmsdcache" bandwidth="100Gbps" latency="0us"/>
+      <link id="gridka_dcmsdcachepool1" bandwidth="40Gbps" latency="0us"/>
+      <link id="gridka_dcmsdcachepool2" bandwidth="40Gbps" latency="0us"/>
 
 
       <route src="gridkagateway" dst="TOPAS">
-        <link_ctn id="gridka_topas"/>
+        <link_ctn id="gridka_topas1"/>
+        <link_ctn id="gridka_topas2"/>
       </route>
 
       <!-- <route src="gridkagateway" dst="dCache">
@@ -189,7 +192,8 @@
       </route> -->
 
       <route src="gridkagateway" dst="DCMSdCache">
-        <link_ctn id="gridka_dcmsdcache"/>
+        <link_ctn id="gridka_dcmsdcachepool1"/>
+        <link_ctn id="gridka_dcmsdcachepool2"/>
       </route>
 
     </zone>  
