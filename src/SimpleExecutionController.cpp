@@ -239,6 +239,7 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
 
     /* Remove all actions from memory and compute incremental output values in one loop */
+    // TODO: Remove job from containers
     double incr_compute_time = 0.;
     double incr_infile_transfertime = 0.;
     double incr_infile_size = 0.;
