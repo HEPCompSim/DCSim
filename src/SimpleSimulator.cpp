@@ -310,11 +310,14 @@ int main(int argc, char **argv) {
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
     for (auto host: SimpleSimulator::cache_hosts) {
+        //TODO: Support more than one type of cache mounted differently?
+        //TODO: This might not be necessary since different cache layers are typically on different hosts
         auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"}));
         cache_storage_services.insert(storage_service);
     }
 
     // and remote storages that are able to serve all file requests
+    //TODO: Think of a way to support grid storages serving only some datasets
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     for (auto host: SimpleSimulator::storage_hosts) {
         auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"}));
