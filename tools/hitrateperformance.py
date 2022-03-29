@@ -103,11 +103,15 @@ ax1.set_title(scenario_plotlabel_dict[scenario])
 ax1.set_xlabel('hitrate', loc='right')
 ax1.set_ylabel('jobtime / min', color='black')
 ax1.set_xlim([-0.05,1.05])
-# ax1.set_ylim([0,400])
+# ax1.set_ylim([20,80])
 
 # ax1 = df.plot.scatter(x='hitrate', y='walltime', c=)
 
-scatter = ax1.scatter(df['hitrate'], (df['job.end']-df['job.start'])/60., c=df['machine.name'].astype('category').cat.codes, marker='x')
+scatter = ax1.scatter(
+    df['hitrate'], (df['job.end']-df['job.start'])/60., 
+    c=df['machine.name'].astype('category').cat.codes, 
+    marker='x'
+)
 # ax1.grid(axis="y", linestyle = 'dotted', which='major')
 
 ax1.legend(
@@ -126,7 +130,11 @@ ax2.set_xlabel('hitrate', loc='right')
 ax2.set_ylabel('transfer time / min', color='black')
 ax2.set_xlim([-0.05,1.05])
 
-scatter = ax2.scatter(df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime']))/60., c=df['machine.name'].astype('category').cat.codes, marker='x')
+scatter = ax2.scatter(
+    df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime']))/60., 
+    c=df['machine.name'].astype('category').cat.codes, 
+    marker='x'
+)
 
 ax2.legend(
     handles=scatter.legend_elements()[0], 
