@@ -71,7 +71,7 @@ int SimpleExecutionController::main() {
     }
 
     WRENCH_INFO("Starting on host %s", wrench::Simulation::getHostName().c_str());
-    WRENCH_INFO("About to execute a workload of %lu jobs", workload_spec.size());
+    WRENCH_INFO("About to execute a workload of %lu jobs", this->workload_spec.size());
 
 
     // Create a job manager
@@ -239,7 +239,6 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
 
     /* Remove all actions from memory and compute incremental output values in one loop */
-    // TODO: Remove job from containers
     double incr_compute_time = 0.;
     double incr_infile_transfertime = 0.;
     double incr_infile_size = 0.;
@@ -270,6 +269,8 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     }
     incr_outfile_size += this->workload_spec[event->job->getName()].outfile->getSize();
 
+    //? Remove job from containers like this?
+    this->workload_spec.erase(event->job->getName());
 
     /* Dump relevant information to file */
     this->filedump.open(this->filename, ios::out | ios::app);
