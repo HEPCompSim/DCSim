@@ -238,9 +238,10 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
         if (hostProperties.find("scheduler") != std::string::npos) {
             SimpleSimulator::scheduler_hosts.insert(hostname);
         }
-        if (! validType) {
-            throw std::runtime_error("Invalid type " + hostProperties + " configuration in host " + hostname + "!");
-        }
+        //TODO: Check for invalid types
+        // if (! validType) {
+        //     throw std::runtime_error("Invalid type " + hostProperties + " configuration in host " + hostname + "!");
+        // }
     }
 }
 
@@ -419,13 +420,16 @@ int main(int argc, char **argv) {
                 // Distribute the inputfiles on all GRID storages
                 //TODO: Think of a more realistic distribution pattern and avoid duplications
                 for (auto storage_service: grid_storage_services) {
-                    simulation->stageFile(f, storage_service);
+                    // simulation->stageFile(f, storage_service);
+                    storage_service->createFile(f,wrench::FileLocation::LOCATION(storage_service));
                     SimpleSimulator::global_file_map[storage_service].touchFile(f);
                 }
                 // Distribute the infiles on all caches until desired hitrate is reached
+                //TODO: Rework the initialization of input files on caches
                 if (cached_files_size < hitrate*incr_inputfile_size) {
                     for (const auto& cache : cache_storage_services) {
-                        simulation->stageFile(f, cache);
+                        // simulation->stageFile(f, cache);
+                        cache->createFile(f,wrench::FileLocation::LOCATION(cache));
                         SimpleSimulator::global_file_map[cache].touchFile(f);
                     }
                     cached_files_size += f->getSize();
