@@ -42,13 +42,17 @@ void CacheComputation::determineFileSources(std::string hostname) {
     for (auto const &ss : this->cache_storage_services) {
         if (ss->getHostname() == hostname) {
             matched_storage_services.push_back(ss);
+            WRENCH_DEBUG("Found a reachable cache on host %s", ss->getHostname().c_str());
         }
     }
+    if (matched_storage_services.empty()) {
+        WRENCH_DEBUG("Couldn't find a reachable cache");
+    }
+    
 
     // TODO: right now, there are loopkupFile() calls, which simulate overhead. Could be replaced
     // TODO: by a lookup of the SimpleExecutionController::global_file_map data structure in case
     // TODO: simulating that overhead is not desired/necessary.Perhaps an option of the simulator?
-
     // For each file, identify where to read it from and/or deal with cache updates, etc.
     for (auto const &f : this->files) {
         // find a source providing the required file
@@ -80,34 +84,37 @@ void CacheComputation::determineFileSources(std::string hostname) {
             SimpleSimulator::global_file_map[source_ss].touchFile(f);
         }
 
-        // Destination storage to cache the file
-        // TODO: Find the optimal reachable cache destination, whatever that means (right now it's random, with a bad RNG!)
-        auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
+        // When there is a reachable cache, cache the file and evict others when needed
+        if (!matched_storage_services.empty()) {
+            // Destination storage to cache the file
+            // TODO: Find the optimal reachable cache destination, whatever that means (right now it's random, with a bad RNG!)
+            auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
-        // Evict files while to create space, using an LRU scheme!
-        double free_space = destination_ss->getFreeSpace().begin()->second;
-        while (free_space < f->getSize()) {
-            auto to_evict = SimpleSimulator::global_file_map[destination_ss].removeLRUFile();
-            WRENCH_INFO("Evicting file %s from storage service on host %s",
-                        to_evict->getID().c_str(), destination_ss->getHostname().c_str());
-            destination_ss->deleteFile(to_evict, wrench::FileLocation::LOCATION(destination_ss));
-            free_space += to_evict->getSize();
+            // Evict files while to create space, using an LRU scheme!
+            double free_space = destination_ss->getFreeSpace().begin()->second;
+            while (free_space < f->getSize()) {
+                auto to_evict = SimpleSimulator::global_file_map[destination_ss].removeLRUFile();
+                WRENCH_INFO("Evicting file %s from storage service on host %s",
+                            to_evict->getID().c_str(), destination_ss->getHostname().c_str());
+                destination_ss->deleteFile(to_evict, wrench::FileLocation::LOCATION(destination_ss));
+                free_space += to_evict->getSize();
+            }
+
+            // Instead of doing this file copy right here, instantly create the file locally for next jobs
+            //? Alternative: Wait for computation to finish and copy file then
+            // TODO: Better idea perhaps: have the first job that streams the file update a counter
+            // TODO: of file blocks available at the storage service, and subsequent jobs
+            // TODO: can read a block only if it's available (e.g., by waiting on some
+            // TODO: condition variable, which is signaled by the first job each time it
+            // TODO: reads a block).
+            // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
+            wrench::StorageService::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
+
+            SimpleSimulator::global_file_map[destination_ss].touchFile(f);
+            
+            // this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
         }
 
-
-        // Instead of doing this file copy right here, instantly create the file locally for next jobs
-        //? Alternative: Wait for computation to finish and copy file then
-        // TODO: Better idea perhaps: have the first job that streams the file update a counter
-        // TODO: of file blocks available at the storage service, and subsequent jobs
-        // TODO: can read a block only if it's available (e.g., by waiting on some
-        // TODO: condition variable, which is signaled by the first job each time it
-        // TODO: reads a block).
-        // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
-        wrench::StorageService::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
-
-        SimpleSimulator::global_file_map[destination_ss].touchFile(f);
-
-        // this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
         this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
     }
 }
@@ -138,7 +145,7 @@ void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> acti
     // Identify all file sources (and deal with caching, evictions, etc.
     WRENCH_INFO("Determining file sources for cache computation");
     this->determineFileSources(hostname);
-
+    WRENCH_INFO("Performing the computation action");
     this->performComputation(hostname);
 
 }
