@@ -21,9 +21,11 @@ this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 #
 # 1) pugixml, docu: https://pugixml.org/docs/manual.html, git: https://github.com/zeux/pugixml
 echo "Installing C++ XML processing library pugixml..."
-wget http://github.com/zeux/pugixml/releases/download/v1.11/pugixml-1.11.tar.gz
-tar -xf pugixml-1.11.tar.gz
-rm pugixml-1.11.tar.gz
+if [ ! -d "pugixml-1.11" ]; then
+    wget http://github.com/zeux/pugixml/releases/download/v1.11/pugixml-1.11.tar.gz
+    tar -xf pugixml-1.11.tar.gz
+    rm pugixml-1.11.tar.gz
+fi
 pushd pugixml-1.11
 mkdir -p build
 cd build
@@ -33,9 +35,11 @@ popd
 
 # 2) nlohmann json, docu: https://json.nlohmann.me/, git: https://github.com/nlohmann/json
 echo "Installing C++ JSON library..."
-wget https://github.com/nlohmann/json/archive/refs/tags/v3.10.4.tar.gz
-tar -xf v3.10.4.tar.gz
-rm v3.10.4.tar.gz
+if [ ! -d "json-3.10.4" ]; then
+    wget https://github.com/nlohmann/json/archive/refs/tags/v3.10.4.tar.gz
+    tar -xf v3.10.4.tar.gz
+    rm v3.10.4.tar.gz
+fi
 pushd json-3.10.4
 mkdir -p build
 cd build
@@ -45,9 +49,11 @@ popd
 
 # 3) googletest, docu & git: https://github.com/google/googletest
 echo "Installing C++ code testing library googletest..."
-wget https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz
-tar -xf release-1.11.0.tar.gz
-rm release-1.11.0.tar.gz
+if [ ! -d "googletest-release-1.11.0" ]; then
+    wget https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz
+    tar -xf release-1.11.0.tar.gz
+    rm release-1.11.0.tar.gz
+fi
 pushd googletest-release-1.11.0
 mkdir -p build
 cd build
@@ -57,10 +63,12 @@ popd
 
 # 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
 echo "Installing SimGrid..."
-wget https://framagit.org/simgrid/simgrid/-/archive/v3.30/simgrid-v3.30.tar.gz
-tar -xf simgrid-v3.30.tar.gz
-rm simgrid-v3.30.tar.gz
-pushd simgrid-v3.30
+if [ ! -d "simgrid-v3.31" ]; then
+    wget https://framagit.org/simgrid/simgrid/-/archive/v3.31/simgrid-v3.31.tar.gz
+    tar -xf simgrid-v3.31.tar.gz
+    rm simgrid-v3.31.tar.gz
+fi
+pushd simgrid-v3.31
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
