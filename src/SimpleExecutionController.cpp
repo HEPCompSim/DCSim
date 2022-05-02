@@ -16,6 +16,39 @@
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
 
+
+/**
+ * @brief Extension of CustomAction to distinguish CacheComputeActions from others
+ */
+class CacheComputeAction : wrench::CustomAction {
+public:
+    double infile_transfer_time; // non-zero for jobs where infile-read and compute steps are separated
+    double calculation_time; // compute time of the job
+    // double outfile_transfer_time; // transfer time for output files
+    double hitrate; // fraction of input files read from cache (cache definition dependent)
+
+    /**
+     * @brief Constructor that adds some more parameters for monitoring purposes
+     */
+    CacheComputeAction(
+        const std::string &name, std::shared_ptr<wrench::CompoundJob> job,
+        double ram,
+        unsigned long num_cores,
+        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_execute,
+        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate,
+        double in_transfer_time = -1.,
+        double cpu_time = -1.,
+        double out_transfer_time = -1.,
+        double hitrate = -1.
+    ) : CustomAction(name, ram, num_cores, std::move(lambda_execute), std::move(lambda_terminate)),
+    infile_transfer_time(in_transfer_time),
+    calculation_time(cpu_time),
+    // outfile_transfer_time(out_transfer_time),
+    hitrate(hitrate) {}
+
+};
+
+
 /**
  *  @brief A simple ExecutionController building jobs from job-specifications, 
  *  submitting them and monitoring their execution
@@ -107,35 +140,37 @@ int SimpleExecutionController::main() {
         auto job = job_manager->createCompoundJob(job_name);
 
         // Combined read-input-file-and-run-computation actions
-        std::shared_ptr<wrench::CustomAction> run_action;
+        std::shared_ptr<CacheComputeAction> run_action;
         if (! SimpleSimulator::use_blockstreaming) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
             //? Split this into a caching file read and a standard compute action?
-            run_action = job->addCustomAction(
+            run_action = std::make_shared<CacheComputeAction>(
                 "copycompute_" + job_name,
                 job_spec->total_mem, 1,
                 *copy_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                    WRENCH_INFO("Copy computation done")
+                    WRENCH_INFO("Copy computation terminating")
                 }
             );
+            job->addCustomAction(run_action);
         } else {
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
                 new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
-            run_action = job->addCustomAction(
+            run_action = std::make_shared<CacheComputeAction>(
                 "streaming_" + job_name,
                 job_spec->total_mem, 1,
                 *streamed_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                    WRENCH_INFO("Streaming computation done");
+                    WRENCH_INFO("Streaming computation terminating");
                     // Do nothing
                 }
             );
+            job->addCustomAction(run_action);
         }
 
         // Create the file write action
@@ -249,8 +284,6 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
 
     // Figure out timings
     for (auto const &action : event->job->getActions()) {
-        double elapsed = action->getEndDate() - action->getStartDate();
-        WRENCH_DEBUG("Running action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
         start_date = std::min<double>(start_date, action->getStartDate());
         end_date = std::max<double>(end_date, action->getEndDate());
         // TODO: Better: Check for action type rather than doing string matching
