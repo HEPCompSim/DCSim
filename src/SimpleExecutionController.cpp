@@ -93,6 +93,7 @@ int SimpleExecutionController::main() {
     if (this->filedump.is_open()) {
         this->filedump << "job.tag" << ",\t"; // << "job.ncpu" << ",\t" << "job.memory" << ",\t" << "job.disk" << ",\t";
         this->filedump << "machine.name" << ",\t";
+        this->filedump << "hitrate" << ",\t";
         this->filedump << "job.start" << ",\t" << "job.end" << ",\t" << "job.computetime" << ",\t";
         this->filedump << "infiles.transfertime" << ",\t" << "infiles.size" << ",\t" << "outfiles.transfertime" << ",\t" << "outfiles.size" << std::endl;
         this->filedump.close();
@@ -274,24 +275,50 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
 
     /* Remove all actions from memory and compute incremental output values in one loop */
-    double incr_compute_time = 0.;
+    double incr_compute_time = DBL_MIN;
     double incr_infile_transfertime = 0.;
     double incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
     double incr_outfile_size = 0.;
     double start_date = DBL_MAX;
-    double end_date = 0;
+    double end_date = DBL_MIN;
+    double hitrate = DBL_MIN;
+
+    bool found_computation_action = false;
 
     // Figure out timings
     for (auto const &action : event->job->getActions()) {
         start_date = std::min<double>(start_date, action->getStartDate());
         end_date = std::max<double>(end_date, action->getEndDate());
+        if (start_date < 0. || end_date < 0.) {
+            throw std::runtime_error(
+                "Start date " + std::to_string(start_date) +
+                " or end date " + std::to_string(end_date) + 
+                " of action " + action->getName() + " out of scope!"
+            );
+        }
+        double elapsed = end_date - start_date;
+        WRENCH_DEBUG("Analyzing action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
+
         // TODO: Better: Check for action type rather than doing string matching
-        if (action->getName().find("file_read_") != std::string::npos) {
+        if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
             incr_infile_transfertime += elapsed;
-        } else if (action->getName().find("copycompute_") != std::string::npos || action->getName().find("streaming_") != std::string::npos) {
-            incr_compute_time += elapsed;
-        } else if (action->getName().find("file_write_") != std::string::npos) {
+        } else if (auto cachecompute_action = std::dynamic_pointer_cast<CacheComputeAction>(action)) {
+            if (found_computation_action) {
+                throw std::runtime_error("There was more than one computation action in job " + event->job->getName());
+            }
+            found_computation_action = true;
+            if (incr_infile_transfertime <= 0. && incr_compute_time < 0. && hitrate < 0.) {
+                incr_infile_transfertime = cachecompute_action->infile_transfer_time;
+                incr_compute_time = cachecompute_action->calculation_time;
+                hitrate = cachecompute_action->hitrate;
+            } else {
+                throw std::runtime_error(
+                    "Some of the job information for action " + cachecompute_action->getName() +
+                    " has already been filled. Abort!"
+                );
+            }
+        } else if (auto file_write_action = std::dynamic_pointer_cast<wrench::FileWriteAction>(action)) {
             incr_outfile_transfertime += elapsed;
         }
     }
@@ -309,10 +336,15 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     this->filedump.open(this->filename, ios::out | ios::app);
     if (this->filedump.is_open()) {
 
-        this->filedump << event->job->getName() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
-        this->filedump << execution_host << ",\t";
-        this->filedump << std::to_string(start_date) << ",\t" << std::to_string(end_date) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
-        this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
+        this->filedump << event->job->getName() << ",\t"; 
+        // << std::to_string(job->getMinimumRequiredNumCores()) << ",\t" 
+        // << std::to_string(job->getMinimumRequiredMemory()) << ",\t" 
+        // << /*TODO: find a way to get disk usage on scratch space */ << ",\t";
+        this->filedump << execution_host << ",\t" << hitrate << ",\t";
+        this->filedump << std::to_string(start_date) << ",\t" << std::to_string(end_date) << ",\t"; 
+        this->filedump << std::to_string(incr_compute_time) << ",\t";
+        this->filedump << std::to_string(incr_infile_transfertime) << ",\t" << std::to_string(incr_infile_size) << ",\t" ;
+        this->filedump << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
 
         this->filedump.close();
 
