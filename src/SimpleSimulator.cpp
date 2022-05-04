@@ -421,7 +421,7 @@ int main(int argc, char **argv) {
                 //TODO: Think of a more realistic distribution pattern and avoid duplications
                 for (auto storage_service: grid_storage_services) {
                     // simulation->stageFile(f, storage_service);
-                    storage_service->createFile(f,wrench::FileLocation::LOCATION(storage_service));
+                    simulation->createFile(f, wrench::FileLocation::LOCATION(storage_service));
                     SimpleSimulator::global_file_map[storage_service].touchFile(f);
                 }
                 // Distribute the infiles on all caches until desired hitrate is reached
@@ -429,7 +429,7 @@ int main(int argc, char **argv) {
                 if (cached_files_size < hitrate*incr_inputfile_size) {
                     for (const auto& cache : cache_storage_services) {
                         // simulation->stageFile(f, cache);
-                        cache->createFile(f,wrench::FileLocation::LOCATION(cache));
+                        simulation->createFile(f, wrench::FileLocation::LOCATION(cache));
                         SimpleSimulator::global_file_map[cache].touchFile(f);
                     }
                     cached_files_size += f->getSize();
