@@ -1,9 +1,9 @@
-#include "CacheComputeAction.h"
+#include "MonitorAction.h"
 
 /**
  * @brief Constructor that adds some more parameters for monitoring purposes
  */
-CacheComputeAction::CacheComputeAction(
+MonitorAction::MonitorAction(
     const std::string &name,
     double ram,
     unsigned long num_cores,

@@ -24,8 +24,8 @@ set(SOURCE_FILES
         src/SimpleSimulator.cpp
         src/JobSpecification.h
         src/LRU_FileList.h
-        src/CacheComputeAction.h
-        src/CacheComputeAction.cpp
+        src/MonitorAction.h
+        src/MonitorAction.cpp
         src/computation/CacheComputation.h
         src/computation/CacheComputation.cpp
         src/computation/StreamedComputation.h
@@ -37,7 +37,7 @@ set(SOURCE_FILES
 # test files
 set(TEST_FILES
         src/JobSpecification.h
-        src/CacheComputeAction.h
+        src/MonitorAction.h
         src/computation/CacheComputation.h
         src/computation/StreamedComputation.h
         src/computation/CopyComputation.h

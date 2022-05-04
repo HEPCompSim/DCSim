@@ -6,14 +6,14 @@
 #include <wrench-dev.h>
 
 /**
- * @brief Extension of CustomAction to distinguish CacheComputeActions from others
+ * @brief Extension of CustomAction to monitor job execution
  */
-class CacheComputeAction : public wrench::CustomAction {
+class MonitorAction : public wrench::CustomAction {
 public:
     /**
      * @brief Constructor that adds some more parameters for monitoring purposes
      */
-    CacheComputeAction(
+    MonitorAction(
         const std::string &name,
         double ram,
         unsigned long num_cores,

@@ -13,7 +13,7 @@
 #include "JobSpecification.h"
 #include "computation/StreamedComputation.h"
 #include "computation/CopyComputation.h"
-#include "CacheComputeAction.h"
+#include "MonitorAction.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
 
@@ -110,14 +110,14 @@ int SimpleExecutionController::main() {
         auto job = job_manager->createCompoundJob(job_name);
 
         // Combined read-input-file-and-run-computation actions
-        std::shared_ptr<CacheComputeAction> run_action;
+        std::shared_ptr<MonitorAction> run_action;
         if (! SimpleSimulator::use_blockstreaming) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
             //? Split this into a caching file read and a standard compute action?
-            run_action = std::make_shared<CacheComputeAction>(
+            run_action = std::make_shared<MonitorAction>(
                 "copycompute_" + job_name,
                 job_spec->total_mem, 1,
                 *copy_computation,
@@ -131,7 +131,7 @@ int SimpleExecutionController::main() {
                 new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
-            run_action = std::make_shared<CacheComputeAction>(
+            run_action = std::make_shared<MonitorAction>(
                 "streaming_" + job_name,
                 job_spec->total_mem, 1,
                 *streamed_computation,
@@ -272,18 +272,18 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
         // TODO: Better: Check for action type rather than doing string matching
         if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
             incr_infile_transfertime += elapsed;
-        } else if (auto cachecompute_action = std::dynamic_pointer_cast<CacheComputeAction>(action)) {
+        } else if (auto monitor_action = std::dynamic_pointer_cast<MonitorAction>(action)) {
             if (found_computation_action) {
                 throw std::runtime_error("There was more than one computation action in job " + event->job->getName());
             }
             found_computation_action = true;
             if (incr_infile_transfertime <= 0. && incr_compute_time < 0. && hitrate < 0.) {
-                incr_infile_transfertime = cachecompute_action->get_infile_transfer_time();
-                incr_compute_time = cachecompute_action->get_calculation_time();
-                hitrate = cachecompute_action->get_hitrate();
+                incr_infile_transfertime = monitor_action->get_infile_transfer_time();
+                incr_compute_time = monitor_action->get_calculation_time();
+                hitrate = monitor_action->get_hitrate();
             } else {
                 throw std::runtime_error(
-                    "Some of the job information for action " + cachecompute_action->getName() +
+                    "Some of the job information for action " + monitor_action->getName() +
                     " has already been filled. Abort!"
                 );
             }

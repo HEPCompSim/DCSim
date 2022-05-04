@@ -3,7 +3,7 @@
 XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputation");
 
 #include "CacheComputation.h"
-#include "../CacheComputeAction.h"
+#include "../MonitorAction.h"
 
 /**
  * @brief Construct a new CacheComputation::CacheComputation object
@@ -37,7 +37,7 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  */
 void CacheComputation::determineFileSources(std::shared_ptr<wrench::ActionExecutor> action_executor) {
 
-    auto the_action = std::dynamic_pointer_cast<CacheComputeAction>(action_executor->getAction()); // executed action
+    auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
     std::string hostname = action_executor->getHostname(); // host where action is executed
 
     // Identify all cache storage services that can be reached from 
