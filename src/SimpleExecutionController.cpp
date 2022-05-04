@@ -13,40 +13,9 @@
 #include "JobSpecification.h"
 #include "computation/StreamedComputation.h"
 #include "computation/CopyComputation.h"
+#include "CacheComputeAction.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
-
-
-/**
- * @brief Extension of CustomAction to distinguish CacheComputeActions from others
- */
-class CacheComputeAction : public wrench::CustomAction {
-public:
-    double infile_transfer_time; // non-zero for jobs where infile-read and compute steps are separated
-    double calculation_time; // compute time of the job
-    // double outfile_transfer_time; // transfer time for output files
-    double hitrate; // fraction of input files read from cache (cache definition dependent)
-
-    /**
-     * @brief Constructor that adds some more parameters for monitoring purposes
-     */
-    CacheComputeAction(
-        const std::string &name, std::shared_ptr<wrench::CompoundJob> job,
-        double ram,
-        unsigned long num_cores,
-        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_execute,
-        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate,
-        double in_transfer_time = -1.,
-        double cpu_time = -1.,
-        double out_transfer_time = -1.,
-        double hitrate = -1.
-    ) : CustomAction(name, ram, num_cores, std::move(lambda_execute), std::move(lambda_terminate)),
-    infile_transfer_time(in_transfer_time),
-    calculation_time(cpu_time),
-    // outfile_transfer_time(out_transfer_time),
-    hitrate(hitrate) {}
-
-};
 
 
 /**
@@ -91,11 +60,11 @@ int SimpleExecutionController::main() {
     /* initialize output-dump file */
     this->filedump.open(this->filename, ios::out | ios::trunc);
     if (this->filedump.is_open()) {
-        this->filedump << "job.tag" << ",\t"; // << "job.ncpu" << ",\t" << "job.memory" << ",\t" << "job.disk" << ",\t";
-        this->filedump << "machine.name" << ",\t";
-        this->filedump << "hitrate" << ",\t";
-        this->filedump << "job.start" << ",\t" << "job.end" << ",\t" << "job.computetime" << ",\t";
-        this->filedump << "infiles.transfertime" << ",\t" << "infiles.size" << ",\t" << "outfiles.transfertime" << ",\t" << "outfiles.size" << std::endl;
+        this->filedump << "job.tag" << ", "; // << "job.ncpu" << ", " << "job.memory" << ", " << "job.disk" << ", ";
+        this->filedump << "machine.name" << ", ";
+        this->filedump << "hitrate" << ", ";
+        this->filedump << "job.start" << ", " << "job.end" << ", " << "job.computetime" << ", ";
+        this->filedump << "infiles.transfertime" << ", " << "infiles.size" << ", " << "outfiles.transfertime" << ", " << "outfiles.size" << std::endl;
         this->filedump.close();
 
         WRENCH_INFO("Wrote header of the output dump into file %s", this->filename.c_str());
@@ -309,9 +278,9 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
             }
             found_computation_action = true;
             if (incr_infile_transfertime <= 0. && incr_compute_time < 0. && hitrate < 0.) {
-                incr_infile_transfertime = cachecompute_action->infile_transfer_time;
-                incr_compute_time = cachecompute_action->calculation_time;
-                hitrate = cachecompute_action->hitrate;
+                incr_infile_transfertime = cachecompute_action->get_infile_transfer_time();
+                incr_compute_time = cachecompute_action->get_calculation_time();
+                hitrate = cachecompute_action->get_hitrate();
             } else {
                 throw std::runtime_error(
                     "Some of the job information for action " + cachecompute_action->getName() +
@@ -336,15 +305,15 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     this->filedump.open(this->filename, ios::out | ios::app);
     if (this->filedump.is_open()) {
 
-        this->filedump << event->job->getName() << ",\t"; 
-        // << std::to_string(job->getMinimumRequiredNumCores()) << ",\t" 
-        // << std::to_string(job->getMinimumRequiredMemory()) << ",\t" 
-        // << /*TODO: find a way to get disk usage on scratch space */ << ",\t";
-        this->filedump << execution_host << ",\t" << hitrate << ",\t";
-        this->filedump << std::to_string(start_date) << ",\t" << std::to_string(end_date) << ",\t"; 
-        this->filedump << std::to_string(incr_compute_time) << ",\t";
-        this->filedump << std::to_string(incr_infile_transfertime) << ",\t" << std::to_string(incr_infile_size) << ",\t" ;
-        this->filedump << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
+        this->filedump << event->job->getName() << ", "; 
+        // << std::to_string(job->getMinimumRequiredNumCores()) << ", " 
+        // << std::to_string(job->getMinimumRequiredMemory()) << ", " 
+        // << /*TODO: find a way to get disk usage on scratch space */ << ", ";
+        this->filedump << execution_host << ", " << hitrate << ", ";
+        this->filedump << std::to_string(start_date) << ", " << std::to_string(end_date) << ", "; 
+        this->filedump << std::to_string(incr_compute_time) << ", ";
+        this->filedump << std::to_string(incr_infile_transfertime) << ", " << std::to_string(incr_infile_size) << ", " ;
+        this->filedump << std::to_string(incr_outfile_transfertime) << ", " << std::to_string(incr_outfile_size) << std::endl;
 
         this->filedump.close();
 
