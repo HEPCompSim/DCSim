@@ -6,7 +6,7 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(copy_computation, "Log category for CopyComputation
 
 /**
  * @brief Construct a new CopyComputation::CopyComputation object
- * to be used within a compute action, which shall take caching of input-files into account.
+ * to be used as a lambda within a compute action, which shall take caching of input-files into account.
  * File read of all input-files and compute steps are performed sequentially.
  * 
  * @param storage_services Storage services reachable to retrieve input files (caches plus remote)
@@ -28,9 +28,9 @@ CopyComputation::CopyComputation(
  * @brief Perform the computation within the simulation of the job.
  * First read all input-files and then compute the whole number of FLOPS.
  * 
- * @param hostname DEPRECATED: Actually not needed anymore
+ * @param action_executor Handle to access the action this computation belongs to
  */
-void CopyComputation::performComputation(std::string &hostname) {
+void CopyComputation::performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) {
     WRENCH_INFO("Performing copy computation!");
     // Incremental size of all input files to process
     double total_data_size = this->total_data_size;

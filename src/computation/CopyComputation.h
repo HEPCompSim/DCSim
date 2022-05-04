@@ -18,7 +18,7 @@ public:
         double total_flops
     );
 
-    void performComputation(std::string &hostname) override;
+    void performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) override;
 
 private:
 
