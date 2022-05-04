@@ -5,6 +5,8 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputati
 #include "CacheComputation.h"
 #include "../MonitorAction.h"
 
+#define EPSILON 0.000001
+
 /**
  * @brief Construct a new CacheComputation::CacheComputation object
  * to be used as a lambda within a compute action, which shall take caching of input-files into account.
@@ -37,8 +39,11 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  */
 void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor) {
 
-    auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
     std::string hostname = action_executor->getHostname(); // host where action is executed
+    auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
+
+    double cached_data_size = 0.;
+    double remote_data_size = 0.;
 
     // Identify all cache storage services that can be reached from 
     // this host, which runs the streaming action
@@ -66,6 +71,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         for (auto const &ss : matched_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
+                cached_data_size += f->getSize();
                 break;
             }
         }
@@ -80,6 +86,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         for (auto const &ss : this->grid_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
+                remote_data_size += f->getSize();
                 break;
             }
         }
@@ -121,6 +128,12 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
 
         this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
+
+        // Fill monitoring information
+        if (std::abs(cached_data_size + remote_data_size - total_data_size) > EPSILON) {
+            throw std::runtime_error("There is more data read from cache plus remote than the job's input-data size!");
+        }
+        the_action->set_hitrate(cached_data_size/this->total_data_size);
     }
 }
 
