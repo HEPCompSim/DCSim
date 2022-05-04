@@ -35,7 +35,7 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  * 
  * @param hostname Name of the host, where the job runs
  */
-void CacheComputation::determineFileSources(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor) {
 
     auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
     std::string hostname = action_executor->getHostname(); // host where action is executed
@@ -149,7 +149,7 @@ void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> acti
 
     // Identify all file sources (and deal with caching, evictions, etc.
     WRENCH_INFO("Determining file sources for cache computation");
-    this->determineFileSources(action_executor);
+    this->determineFileSourcesAndCache(action_executor);
     // Perform computation
     WRENCH_INFO("Performing the computation action");
     this->performComputation(action_executor);
