@@ -34,6 +34,19 @@ public:
         return hitrate;
     }
 
+    void set_infile_transfer_time(double value) {
+        this->infile_transfer_time = value;
+    }
+    void set_calculation_time(double value) {
+        this->calculation_time = value;
+    }
+    // void set_outfile_transfer_time(double value) {
+    //     this->outfile_transfer_time = value;
+    // }
+    void set_hitrate(double value) {
+        this->hitrate = value;
+    }
+    
 protected:
     /** @brief Attribute monitoring accumulated transfer-time of input-files.
      * Non-zero for jobs where infile-read and compute steps are separated. */
