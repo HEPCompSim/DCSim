@@ -20,7 +20,7 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionContro
 /**
  * @brief Extension of CustomAction to distinguish CacheComputeActions from others
  */
-class CacheComputeAction : wrench::CustomAction {
+class CacheComputeAction : public wrench::CustomAction {
 public:
     double infile_transfer_time; // non-zero for jobs where infile-read and compute steps are separated
     double calculation_time; // compute time of the job
