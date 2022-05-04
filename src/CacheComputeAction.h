@@ -14,15 +14,11 @@ public:
      * @brief Constructor that adds some more parameters for monitoring purposes
      */
     CacheComputeAction(
-        const std::string &name, std::shared_ptr<wrench::CompoundJob> job,
+        const std::string &name,
         double ram,
         unsigned long num_cores,
         const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_execute,
-        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate,
-        double in_transfer_time = -1.,
-        double cpu_time = -1.,
-        // double out_transfer_time = -1.,
-        double hitrate = -1.
+        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate
     );
 
     double get_infile_transfer_time() {
