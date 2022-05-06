@@ -182,7 +182,7 @@ int SimpleExecutionController::main() {
 
 
     this->num_completed_jobs = 0;
-    while (this->num_completed_jobs != this->workload_spec.size()) {
+    while (this->workload_spec.size() > 0) {
         // Wait for a workflow execution event, and process it
         try {
             this->waitForAndProcessNextEvent();
@@ -191,7 +191,7 @@ int SimpleExecutionController::main() {
             continue;
         }
 
-        if (this->abort || this->num_completed_jobs == this->workload_spec.size()) {
+        if (this->abort || this->workload_spec.size() == 0) {
             break;
         }
     }
@@ -199,7 +199,7 @@ int SimpleExecutionController::main() {
     wrench::Simulation::sleep(10);
 
     WRENCH_INFO("--------------------------------------------------------")
-    if (this->num_completed_jobs == this->workload_spec.size()){
+    if (this->workload_spec.size() == 0){
         WRENCH_INFO("Workload execution on %s is complete!", this->getHostname().c_str());
     } else{
         WRENCH_INFO("Workload execution on %s is incomplete!", this->getHostname().c_str());
