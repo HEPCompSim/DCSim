@@ -52,7 +52,7 @@ void CopyComputation::performComputation(std::shared_ptr<wrench::ActionExecutor>
         double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
 
         data_size += fs.first->getSize();
-        if (read_end_time > read_start_time) {
+        if (read_end_time >= read_start_time) {
             infile_transfer_time += read_end_time - read_start_time;
         } else {
             throw std::runtime_error(

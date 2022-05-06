@@ -71,7 +71,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             exec->wait();
             data_to_process -= num_bytes;
             double exec_end_time = exec->get_finish_time();
-            if (exec_end_time > exec_start_time) {
+            if (exec_end_time >= exec_start_time) {
                 compute_time += exec_end_time - exec_start_time;
             } else {
                 throw std::runtime_error(
