@@ -92,9 +92,18 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         // Process last block
         double num_flops = determineFlops(std::min<double>(SimpleSimulator::xrd_block_size, data_to_process), total_data_size);
         simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
+        double exec_start_time = wrench::Simulation::getCurrentSimulatedDate();
         exec->start();
         exec->wait();
-
+        double exec_end_time = wrench::Simulation::getCurrentSimulatedDate();
+        if (exec_end_time > exec_start_time) {
+            compute_time += exec_end_time - exec_start_time;
+        } else {
+            throw std::runtime_error(
+                "Executing block " + std::to_string(num_blocks-1) + 
+                " of job " + the_action->getJob()->getName() + " finished before it started!"
+            );
+        }
     }
 
     // Fill monitoring information
