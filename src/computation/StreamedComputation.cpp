@@ -61,8 +61,8 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             // WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
             // Start the computation asynchronously
             simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
-            double exec_start_time = wrench::Simulation::getCurrentSimulatedDate();
             exec->start();
+            double exec_start_time = exec->get_start_time();
             // Read data from the file
             double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
             fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
@@ -70,7 +70,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             // Wait for the computation to be done
             exec->wait();
             data_to_process -= num_bytes;
-            double exec_end_time = wrench::Simulation::getCurrentSimulatedDate();
+            double exec_end_time = exec->get_finish_time();
             if (exec_end_time > exec_start_time) {
                 compute_time += exec_end_time - exec_start_time;
             } else {
@@ -92,10 +92,10 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         // Process last block
         double num_flops = determineFlops(std::min<double>(SimpleSimulator::xrd_block_size, data_to_process), total_data_size);
         simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
-        double exec_start_time = wrench::Simulation::getCurrentSimulatedDate();
         exec->start();
+        double exec_start_time = exec->get_start_time();
         exec->wait();
-        double exec_end_time = wrench::Simulation::getCurrentSimulatedDate();
+        double exec_end_time = exec->get_finish_time();
         if (exec_end_time > exec_start_time) {
             compute_time += exec_end_time - exec_start_time;
         } else {
