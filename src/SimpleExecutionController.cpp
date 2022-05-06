@@ -288,7 +288,16 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
                 );
             }
         } else if (auto file_write_action = std::dynamic_pointer_cast<wrench::FileWriteAction>(action)) {
-            incr_outfile_transfertime += elapsed;
+            double start_date = file_write_action->getStartDate();
+            double end_date = file_write_action->getEndDate();
+            if (end_date >= start_date) {
+                incr_outfile_transfertime += end_date - start_date;
+            } else {
+                throw std::runtime_error(
+                    "Writing outputfile " + this->workload_spec[event->job->getName()].outfile->getID() + 
+                    " for job " + event->job->getName() + " finished before start!"
+                );
+            }
         }
     }
 
