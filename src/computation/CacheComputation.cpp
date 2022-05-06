@@ -5,8 +5,6 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputati
 #include "CacheComputation.h"
 #include "../MonitorAction.h"
 
-#define EPSILON 0.000001
-
 /**
  * @brief Construct a new CacheComputation::CacheComputation object
  * to be used as a lambda within a compute action, which shall take caching of input-files into account.
@@ -128,13 +126,13 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
 
         this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
-
-        // Fill monitoring information
-        if (std::abs(cached_data_size + remote_data_size - total_data_size) > EPSILON) {
-            throw std::runtime_error("There is more data read from cache plus remote than the job's input-data size!");
-        }
-        the_action->set_hitrate(cached_data_size/this->total_data_size);
     }
+
+    // Fill monitoring information
+    if (std::abs(cached_data_size + remote_data_size - this->total_data_size) > 1.) {
+        throw std::runtime_error("There is more or less data read from cache plus remote than the job's input-data size!");
+    }
+    the_action->set_hitrate(cached_data_size/this->total_data_size);
 }
 
 //? Question for Henri: put this into determineFileSources function to prevent two times the same loop?
