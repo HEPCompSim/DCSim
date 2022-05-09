@@ -143,7 +143,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
  * @return double
  */
 double CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
-    double incr_file_size;
+    double incr_file_size = 0.0;
     for (auto const &f : this->files) {
         incr_file_size += f->getSize();
     }

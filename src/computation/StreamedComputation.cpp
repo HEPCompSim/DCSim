@@ -52,7 +52,19 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         int num_blocks = int(std::ceil(data_to_process / (double) SimpleSimulator::xrd_block_size));
 
         // Read the first block
+        double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
         fs.second->getStorageService()->readFile(fs.first, fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
+        double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
+        if (read_end_time > read_start_time) {
+            std::cerr << "UPDATE: infile_transfer_time = " << infile_transfer_time << " + (" << read_end_time  << " - " << read_start_time << ")\n";
+            infile_transfer_time += read_end_time - read_start_time;
+        } else {
+            throw std::runtime_error(
+                    "Reading block " + std::to_string(0) +
+                    " of file " + fs.first->getID() + " finished before it started!"
+            );
+        }
+
 
         // Process next blocks: compute block i while reading block i+i
         for (int i=0; i < num_blocks - 1; i++) {
@@ -64,9 +76,9 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             exec->start();
             double exec_start_time = exec->get_start_time();
             // Read data from the file
-            double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
+            read_start_time = wrench::Simulation::getCurrentSimulatedDate();
             fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
-            double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
+            read_end_time = wrench::Simulation::getCurrentSimulatedDate();
             // Wait for the computation to be done
             exec->wait();
             data_to_process -= num_bytes;
@@ -80,11 +92,12 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 );
             }
             if (read_end_time > read_start_time) {
+                std::cerr << "UPDATE: infile_transfer_time = " << infile_transfer_time << " + (" << read_end_time  << " - " << read_start_time << ")\n";
                 infile_transfer_time += read_end_time - read_start_time;
             } else {
                 throw std::runtime_error(
                     "Reading block " + std::to_string(i) + 
-                    " of file " + fs.first->getID() + " finished before it startet!"
+                    " of file " + fs.first->getID() + " finished before it started!"
                 );
             }
         }
