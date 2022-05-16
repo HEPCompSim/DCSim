@@ -56,7 +56,6 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         fs.second->getStorageService()->readFile(fs.first, fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
         double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
         if (read_end_time > read_start_time) {
-            std::cerr << "UPDATE: infile_transfer_time = " << infile_transfer_time << " + (" << read_end_time  << " - " << read_start_time << ")\n";
             infile_transfer_time += read_end_time - read_start_time;
         } else {
             throw std::runtime_error(
@@ -64,7 +63,6 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                     " of file " + fs.first->getID() + " finished before it started!"
             );
         }
-
 
         // Process next blocks: compute block i while reading block i+i
         for (int i=0; i < num_blocks - 1; i++) {
@@ -92,7 +90,6 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 );
             }
             if (read_end_time > read_start_time) {
-                std::cerr << "UPDATE: infile_transfer_time = " << infile_transfer_time << " + (" << read_end_time  << " - " << read_start_time << ")\n";
                 infile_transfer_time += read_end_time - read_start_time;
             } else {
                 throw std::runtime_error(
