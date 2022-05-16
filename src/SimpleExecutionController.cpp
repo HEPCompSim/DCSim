@@ -269,7 +269,6 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
         double elapsed = end_date - start_date;
         WRENCH_DEBUG("Analyzing action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
 
-        // TODO: Better: Check for action type rather than doing string matching
         if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
             incr_infile_transfertime += elapsed;
         } else if (auto monitor_action = std::dynamic_pointer_cast<MonitorAction>(action)) {
