@@ -19,13 +19,13 @@ public:
 
     virtual ~CacheComputation() = default;
 
-    void determineFileSources(std::string hostname);
+    void determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor);
 
     void operator () (std::shared_ptr<wrench::ActionExecutor> action_executor);
 
     double determineFlops(double data_size, double total_data_size);
 
-    virtual void performComputation(std::string &hostname) = 0;
+    virtual void performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) = 0;
 
 protected:
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;

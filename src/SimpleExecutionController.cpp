@@ -8,13 +8,16 @@
  * (at your option) any later version.
  */
 #include <iostream>
+#include "util/DefaultValues.h"
 
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
 #include "computation/StreamedComputation.h"
 #include "computation/CopyComputation.h"
+#include "MonitorAction.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
+
 
 /**
  *  @brief A simple ExecutionController building jobs from job-specifications, 
@@ -58,10 +61,11 @@ int SimpleExecutionController::main() {
     /* initialize output-dump file */
     this->filedump.open(this->filename, ios::out | ios::trunc);
     if (this->filedump.is_open()) {
-        this->filedump << "job.tag" << ",\t"; // << "job.ncpu" << ",\t" << "job.memory" << ",\t" << "job.disk" << ",\t";
-        this->filedump << "machine.name" << ",\t";
-        this->filedump << "job.start" << ",\t" << "job.end" << ",\t" << "job.computetime" << ",\t";
-        this->filedump << "infiles.transfertime" << ",\t" << "infiles.size" << ",\t" << "outfiles.transfertime" << ",\t" << "outfiles.size" << std::endl;
+        this->filedump << "job.tag" << ", "; // << "job.ncpu" << ", " << "job.memory" << ", " << "job.disk" << ", ";
+        this->filedump << "machine.name" << ", ";
+        this->filedump << "hitrate" << ", ";
+        this->filedump << "job.start" << ", " << "job.end" << ", " << "job.computetime" << ", ";
+        this->filedump << "infiles.transfertime" << ", " << "infiles.size" << ", " << "outfiles.transfertime" << ", " << "outfiles.size" << std::endl;
         this->filedump.close();
 
         WRENCH_INFO("Wrote header of the output dump into file %s", this->filename.c_str());
@@ -107,35 +111,37 @@ int SimpleExecutionController::main() {
         auto job = job_manager->createCompoundJob(job_name);
 
         // Combined read-input-file-and-run-computation actions
-        std::shared_ptr<wrench::CustomAction> run_action;
+        std::shared_ptr<MonitorAction> run_action;
         if (! SimpleSimulator::use_blockstreaming) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
             //? Split this into a caching file read and a standard compute action?
-            run_action = job->addCustomAction(
+            run_action = std::make_shared<MonitorAction>(
                 "copycompute_" + job_name,
                 job_spec->total_mem, 1,
                 *copy_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                    WRENCH_INFO("Copy computation done")
+                    WRENCH_INFO("Copy computation terminating")
                 }
             );
+            job->addCustomAction(run_action);
         } else {
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
                 new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
 
-            run_action = job->addCustomAction(
+            run_action = std::make_shared<MonitorAction>(
                 "streaming_" + job_name,
                 job_spec->total_mem, 1,
                 *streamed_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                    WRENCH_INFO("Streaming computation done");
+                    WRENCH_INFO("Streaming computation terminating");
                     // Do nothing
                 }
             );
+            job->addCustomAction(run_action);
         }
 
         // Create the file write action
@@ -177,7 +183,7 @@ int SimpleExecutionController::main() {
 
 
     this->num_completed_jobs = 0;
-    while (this->num_completed_jobs != this->workload_spec.size()) {
+    while (this->workload_spec.size() > 0) {
         // Wait for a workflow execution event, and process it
         try {
             this->waitForAndProcessNextEvent();
@@ -186,7 +192,7 @@ int SimpleExecutionController::main() {
             continue;
         }
 
-        if (this->abort || this->num_completed_jobs == this->workload_spec.size()) {
+        if (this->abort || this->workload_spec.size() == 0) {
             break;
         }
     }
@@ -194,7 +200,7 @@ int SimpleExecutionController::main() {
     wrench::Simulation::sleep(10);
 
     WRENCH_INFO("--------------------------------------------------------")
-    if (this->num_completed_jobs == this->workload_spec.size()){
+    if (this->workload_spec.size() == 0){
         WRENCH_INFO("Workload execution on %s is complete!", this->getHostname().c_str());
     } else{
         WRENCH_INFO("Workload execution on %s is incomplete!", this->getHostname().c_str());
@@ -239,27 +245,59 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
 
     /* Remove all actions from memory and compute incremental output values in one loop */
-    double incr_compute_time = 0.;
+    double incr_compute_time = DefaultValues::UndefinedDouble;
     double incr_infile_transfertime = 0.;
     double incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
     double incr_outfile_size = 0.;
     double start_date = DBL_MAX;
-    double end_date = 0;
+    double end_date = DBL_MIN;
+    double hitrate = DefaultValues::UndefinedDouble;
+
+    bool found_computation_action = false;
 
     // Figure out timings
     for (auto const &action : event->job->getActions()) {
-        double elapsed = action->getEndDate() - action->getStartDate();
-        WRENCH_DEBUG("Running action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
         start_date = std::min<double>(start_date, action->getStartDate());
         end_date = std::max<double>(end_date, action->getEndDate());
-        // TODO: Better: Check for action type rather than doing string matching
-        if (action->getName().find("file_read_") != std::string::npos) {
+        if (start_date < 0. || end_date < 0.) {
+            throw std::runtime_error(
+                "Start date " + std::to_string(start_date) +
+                " or end date " + std::to_string(end_date) + 
+                " of action " + action->getName() + " out of scope!"
+            );
+        }
+        double elapsed = end_date - start_date;
+        WRENCH_DEBUG("Analyzing action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
+
+        if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
             incr_infile_transfertime += elapsed;
-        } else if (action->getName().find("copycompute_") != std::string::npos || action->getName().find("streaming_") != std::string::npos) {
-            incr_compute_time += elapsed;
-        } else if (action->getName().find("file_write_") != std::string::npos) {
-            incr_outfile_transfertime += elapsed;
+        } else if (auto monitor_action = std::dynamic_pointer_cast<MonitorAction>(action)) {
+            if (found_computation_action) {
+                throw std::runtime_error("There was more than one computation action in job " + event->job->getName());
+            }
+            found_computation_action = true;
+            if (incr_infile_transfertime <= 0. && incr_compute_time < 0. && hitrate < 0.) {
+                incr_infile_transfertime = monitor_action->get_infile_transfer_time();
+                incr_compute_time = monitor_action->get_calculation_time();
+                hitrate = monitor_action->get_hitrate();
+            } else {
+                throw std::runtime_error(
+                    "Some of the job information for action " + monitor_action->getName() +
+                    " has already been filled. Abort!"
+                );
+            }
+        } else if (auto file_write_action = std::dynamic_pointer_cast<wrench::FileWriteAction>(action)) {
+            double start_date = file_write_action->getStartDate();
+            double end_date = file_write_action->getEndDate();
+            if (end_date >= start_date) {
+                incr_outfile_transfertime += end_date - start_date;
+            } else {
+                throw std::runtime_error(
+                    "Writing outputfile " + this->workload_spec[event->job->getName()].outfile->getID() + 
+                    " for job " + event->job->getName() + " finished before start!"
+                );
+            }
         }
     }
 
@@ -276,10 +314,15 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     this->filedump.open(this->filename, ios::out | ios::app);
     if (this->filedump.is_open()) {
 
-        this->filedump << event->job->getName() << ",\t"; //<< std::to_string(job->getMinimumRequiredNumCores()) << ",\t" << std::to_string(job->getMinimumRequiredMemory()) << ",\t" << /*TODO: find a way to get disk usage on scratch space */ << ",\t" ;
-        this->filedump << execution_host << ",\t";
-        this->filedump << std::to_string(start_date) << ",\t" << std::to_string(end_date) << ",\t" << std::to_string(incr_compute_time) << ",\t" << std::to_string(incr_infile_transfertime) << ",\t" ;
-        this->filedump << std::to_string(incr_infile_size) << ",\t" << std::to_string(incr_outfile_transfertime) << ",\t" << std::to_string(incr_outfile_size) << std::endl;
+        this->filedump << event->job->getName() << ", "; 
+        // << std::to_string(job->getMinimumRequiredNumCores()) << ", " 
+        // << std::to_string(job->getMinimumRequiredMemory()) << ", " 
+        // << /*TODO: find a way to get disk usage on scratch space */ << ", ";
+        this->filedump << execution_host << ", " << hitrate << ", ";
+        this->filedump << std::to_string(start_date) << ", " << std::to_string(end_date) << ", "; 
+        this->filedump << std::to_string(incr_compute_time) << ", ";
+        this->filedump << std::to_string(incr_infile_transfertime) << ", " << std::to_string(incr_infile_size) << ", " ;
+        this->filedump << std::to_string(incr_outfile_transfertime) << ", " << std::to_string(incr_outfile_size) << std::endl;
 
         this->filedump.close();
 

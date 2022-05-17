@@ -20,21 +20,24 @@ include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/
 set(SOURCE_FILES
         src/SimpleExecutionController.h
         src/SimpleExecutionController.cpp
+        src/SimpleSimulator.h
         src/SimpleSimulator.cpp
         src/JobSpecification.h
+        src/LRU_FileList.h
+        src/MonitorAction.h
+        src/MonitorAction.cpp
         src/computation/CacheComputation.h
         src/computation/CacheComputation.cpp
         src/computation/StreamedComputation.h
         src/computation/StreamedComputation.cpp
         src/computation/CopyComputation.h
         src/computation/CopyComputation.cpp
-        src/SimpleSimulator.h
-        src/LRU_FileList.h
         )
 
 # test files
 set(TEST_FILES
         src/JobSpecification.h
+        src/MonitorAction.h
         src/computation/CacheComputation.h
         src/computation/StreamedComputation.h
         src/computation/CopyComputation.h

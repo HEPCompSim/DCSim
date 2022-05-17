@@ -3,10 +3,11 @@
 XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputation");
 
 #include "CacheComputation.h"
+#include "../MonitorAction.h"
 
 /**
  * @brief Construct a new CacheComputation::CacheComputation object
- * to be used within a compute action, which shall take caching of input-files into account.
+ * to be used as a lambda within a compute action, which shall take caching of input-files into account.
  * 
  * @param cache_storage_services Storage services reachable to retrieve and cache input files
  * @param grid_storage_services Storage services reachable to retrieve input files
@@ -34,7 +35,14 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  * 
  * @param hostname Name of the host, where the job runs
  */
-void CacheComputation::determineFileSources(std::string hostname) {
+void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+
+    std::string hostname = action_executor->getHostname(); // host where action is executed
+    auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
+
+    double cached_data_size = 0.;
+    double remote_data_size = 0.;
+
     // Identify all cache storage services that can be reached from 
     // this host, which runs the streaming action
     //TODO: Think of a better definition of "reachable" other than local
@@ -61,6 +69,7 @@ void CacheComputation::determineFileSources(std::string hostname) {
         for (auto const &ss : matched_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
+                cached_data_size += f->getSize();
                 break;
             }
         }
@@ -75,6 +84,7 @@ void CacheComputation::determineFileSources(std::string hostname) {
         for (auto const &ss : this->grid_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
+                remote_data_size += f->getSize();
                 break;
             }
         }
@@ -108,7 +118,7 @@ void CacheComputation::determineFileSources(std::string hostname) {
             // TODO: condition variable, which is signaled by the first job each time it
             // TODO: reads a block).
             // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
-            wrench::StorageService::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
+            wrench::Simulation::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
 
             SimpleSimulator::global_file_map[destination_ss].touchFile(f);
             
@@ -117,6 +127,12 @@ void CacheComputation::determineFileSources(std::string hostname) {
 
         this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
     }
+
+    // Fill monitoring information
+    if (std::abs(cached_data_size + remote_data_size - this->total_data_size) > 1.) {
+        throw std::runtime_error("There is more or less data read from cache plus remote than the job's input-data size!");
+    }
+    the_action->set_hitrate(cached_data_size/this->total_data_size);
 }
 
 //? Question for Henri: put this into determineFileSources function to prevent two times the same loop?
@@ -127,7 +143,7 @@ void CacheComputation::determineFileSources(std::string hostname) {
  * @return double
  */
 double CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
-    double incr_file_size;
+    double incr_file_size = 0.0;
     for (auto const &f : this->files) {
         incr_file_size += f->getSize();
     }
@@ -144,9 +160,10 @@ void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> acti
 
     // Identify all file sources (and deal with caching, evictions, etc.
     WRENCH_INFO("Determining file sources for cache computation");
-    this->determineFileSources(hostname);
+    this->determineFileSourcesAndCache(action_executor);
+    // Perform computation
     WRENCH_INFO("Performing the computation action");
-    this->performComputation(hostname);
+    this->performComputation(action_executor);
 
 }
 
@@ -166,11 +183,12 @@ double CacheComputation::determineFlops(double data_size, double total_data_size
 /**
  * @brief Perform the computation within the simulation of the job
  * 
- * @param hostname DEPRECATED: Actually not needed anymore
+ * @param action_executor Handle to access the action this computation belongs to
  */
-void CacheComputation::performComputation(std::string &hostname) {
+void CacheComputation::performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) {
     throw std::runtime_error(
         "Base class CacheComputation has no performComputation implemented! \
-        It is meant only as an placeholder. Use one of the derived classes for the compute action!"
+        It is meant only as a purely virtual placeholder. \
+        Use one of the derived classes for the compute action!"
     );
 }
