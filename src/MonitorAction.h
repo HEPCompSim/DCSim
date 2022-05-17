@@ -4,6 +4,7 @@
 #define MY_CACHE_COMPUTE_ACTION_H
 
 #include <wrench-dev.h>
+#include "util/DefaultValues.h"
 
 /**
  * @brief Extension of CustomAction to monitor job execution

@@ -14,8 +14,8 @@ MonitorAction::MonitorAction(
     std::move(lambda_execute), 
     std::move(lambda_terminate)
 ) {
-    this->calculation_time = -9999.;
-    this->infile_transfer_time = -9999.;
+    this->calculation_time = DefaultValues::UndefinedDouble;
+    this->infile_transfer_time = DefaultValues::UndefinedDouble;
     // this->outfile_transfer_time = 0.;
-    this->hitrate = -9999.;
+    this->hitrate = DefaultValues::UndefinedDouble;
 }

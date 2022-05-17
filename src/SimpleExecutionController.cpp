@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include <iostream>
+#include "util/DefaultValues.h"
 
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
@@ -244,14 +245,14 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
 
     /* Remove all actions from memory and compute incremental output values in one loop */
-    double incr_compute_time = -9999.;
+    double incr_compute_time = DefaultValues::UndefinedDouble;
     double incr_infile_transfertime = 0.;
     double incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
     double incr_outfile_size = 0.;
     double start_date = DBL_MAX;
     double end_date = DBL_MIN;
-    double hitrate = -9999.;
+    double hitrate = DefaultValues::UndefinedDouble;
 
     bool found_computation_action = false;
 
