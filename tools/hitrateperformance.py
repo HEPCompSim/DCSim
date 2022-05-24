@@ -67,18 +67,13 @@ for outputfile in outputfiles:
     assert(os.path.exists(outputfile))
 
 print("Found {0} output-files! Produce a hitrate scan for {0} hitrate values...".format(len(outputfiles)))
-hitrates = [float(outfile.split("_")[-1].strip(".csv").strip("hitrate")) for outfile in outputfiles]
-
-outputfiles_dict = dict(zip(hitrates,outputfiles))
-print(outputfiles_dict)
 
 
 # create a dataframe for each CSV file and add hitrate information
 dfs = []
-for hitrate, outputfile in outputfiles_dict.items():
+for outputfile in outputfiles:
     with open(outputfile) as f:
-        df_tmp = pd.read_csv(f, sep=',\t')
-        df_tmp['hitrate'] = hitrate
+        df_tmp = pd.read_csv(f, sep=",\s")
         dfs.append(df_tmp)
 
 
