@@ -62,8 +62,12 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "codecvt": "cpp",
+        "iomanip": "cpp",
+        "strstream": "cpp",
+        "cfenv": "cpp"
     },
     "cmake.configureOnOpen": false,
-    "cmake.sourceDirectory": "${workspaceFolder}/sgbatch"
+    "cmake.sourceDirectory": "${workspaceFolder}"
 }
