@@ -16,16 +16,20 @@ action() {
     local parent="$( dirname "$base" )"
 
     local PLATFORM_DIR="$parent/data/platform-files"
-    local PLATFORM="sgbatch.xml"
+    local PLATFORM="sgbatch_validation.xml"
 
-    local NJOBS=60
-    local NINFILES=10
-    local AVGINSIZE=3600000000
-    local FLOPS=216442800000
+    local NJOBS=48
+    local NINFILES=20 #10
+    local AVGINSIZE=$(bc -l <<< "855437900 / 4") #1460017780.65 #2920035561.3
+    local AVGOUTSIZE=16000000
+    local FLOPS=2750000000000
+    local MEM=2400000000
     local SIGMA_FLOPS=0
     local SIGMA_MEM=0
     local SIGMA_INSIZE=0
     local SIGMA_OUTSIZE=0
+
+    local XRD_BLOCKSIZE=200000000
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
@@ -43,7 +47,9 @@ action() {
             --hitrate ${hitrate} \
             --flops $FLOPS \
             --sigma-flops $SIGMA_FLOPS \
+            --mem $MEM \
             --sigma-mem $SIGMA_MEM \
+            --outsize $AVGOUTSIZE \
             --sigma-outsize $SIGMA_OUTSIZE \
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv
     done

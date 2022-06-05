@@ -57,7 +57,7 @@ scenario_plotlabel_dict = {
 }
 
 
-machines = ['sg01', 'sg02', 'sg03']
+machines = ['sg01', 'sg03', 'sg04']
 
 
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
@@ -98,7 +98,7 @@ ax1.set_title(scenario_plotlabel_dict[scenario])
 ax1.set_xlabel('hitrate', loc='right')
 ax1.set_ylabel('jobtime / min', color='black')
 ax1.set_xlim([-0.05,1.05])
-# ax1.set_ylim([20,80])
+# ax1.set_ylim([20,35])
 
 # ax1 = df.plot.scatter(x='hitrate', y='walltime', c=)
 
