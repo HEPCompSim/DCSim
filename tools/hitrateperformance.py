@@ -96,14 +96,14 @@ fig, ax1 = plt.subplots()
 ax1.set_title(scenario_plotlabel_dict[scenario])
 
 ax1.set_xlabel('hitrate', loc='right')
-ax1.set_ylabel('jobtime / min', color='black')
+ax1.set_ylabel('jobtime / s', color='black')
 ax1.set_xlim([-0.05,1.05])
 # ax1.set_ylim([20,35])
 
 # ax1 = df.plot.scatter(x='hitrate', y='walltime', c=)
 
 scatter = ax1.scatter(
-    df['hitrate'], (df['job.end']-df['job.start'])/60., 
+    df['hitrate'], (df['job.end']-df['job.start']), 
     c=df['machine.name'].astype('category').cat.codes, 
     marker='x'
 )
@@ -122,11 +122,11 @@ fig2, ax2 = plt.subplots()
 ax2.set_title(scenario_plotlabel_dict[scenario])
 
 ax2.set_xlabel('hitrate', loc='right')
-ax2.set_ylabel('transfer time / min', color='black')
+ax2.set_ylabel('transfer time / s', color='black')
 ax2.set_xlim([-0.05,1.05])
 
 scatter = ax2.scatter(
-    df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime']))/60., 
+    df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime'])), 
     c=df['machine.name'].astype('category').cat.codes, 
     marker='x'
 )
