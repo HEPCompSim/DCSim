@@ -16,7 +16,7 @@ action() {
     local parent="$( dirname "$base" )"
 
     local PLATFORM_DIR="$parent/data/platform-files"
-    local PLATFORM="sgbatch_validation.xml"
+    local PLATFORM="sgbatch_weirdness.xml"
 
     local NJOBS=48
     local NINFILES=10 #10
