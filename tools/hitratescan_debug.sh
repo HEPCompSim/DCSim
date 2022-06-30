@@ -20,7 +20,7 @@ action() {
 
     local NJOBS=1
     local NINFILES=10 #10
-    local AVGINSIZE=$(bc -l <<< "1000*1000*1000")
+    local AVGINSIZE=$(bc -l <<< "100*1000*1000")
     local AVGOUTSIZE=0
     local FLOPS=1000
     local MEM=2400000000
@@ -51,7 +51,7 @@ action() {
             --sigma-mem $SIGMA_MEM \
             --outsize $AVGOUTSIZE \
             --sigma-outsize $SIGMA_OUTSIZE \
-            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv
+            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_debugjobs_hitrate${hitrate}.csv
     done
 }
 
