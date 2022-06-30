@@ -18,10 +18,10 @@ action() {
     local PLATFORM_DIR="$parent/data/platform-files"
     local PLATFORM="sgbatch_weirdness.xml"
 
-    local NJOBS=48
+    local NJOBS=1
     local NINFILES=10 #10
-    local AVGINSIZE=10
-    local AVGOUTSIZE=1
+    local AVGINSIZE=$(bc -l <<< "1000*1000*1000")
+    local AVGOUTSIZE=0
     local FLOPS=1000
     local MEM=2400000000
     local SIGMA_FLOPS=0
