@@ -6,7 +6,7 @@
             <host id="sg01.etp.kit.edu" speed="1000f" core="24">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="64GiB"/>
-                <disk id="ssd_cache1" read_bw="10Bps" write_bw="10Bps">
+                <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
@@ -14,7 +14,7 @@
             <host id="sg02.etp.kit.edu" speed="1000f" core="24">
                 <prop id="type" value="networkmonitor"/>
                 <prop id="ram" value="64GiB"/>
-                <disk id="ssd_cache1" read_bw="10Bps" write_bw="10Bps">
+                <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
@@ -22,7 +22,7 @@
             <host id="sg03.etp.kit.edu" speed="1000f" core="12">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="32GiB"/>
-                <disk id="ssd_cache1" read_bw="10Bps" write_bw="10Bps">
+                <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
@@ -30,7 +30,7 @@
             <host id="sg04.etp.kit.edu" speed="1000f" core="12">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="32GiB"/>
-                <disk id="ssd_cache1" read_bw="10Bps" write_bw="10Bps">
+                <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
@@ -44,12 +44,12 @@
             <router id="etpswitch"/>
 
             <link id="loopback" bandwidth="5000GBps" latency="0us"/>
-            <link id="etp_link0" bandwidth="10Bps" latency="0us"/>
-            <link id="etp_link1" bandwidth="10Bps" latency="0us"/>
-            <link id="etp_link2" bandwidth="10Bps" latency="0us"/>
-            <link id="etp_link2gw" bandwidth="10Bps" latency="0us"/>
-            <link id="etp_link3" bandwidth="10Bps" latency="0us"/>
-            <link id="etp_link4" bandwidth="10Bps" latency="0us"/>
+            <link id="etp_link0" bandwidth="10GBps" latency="0us"/>
+            <link id="etp_link1" bandwidth="10GBps" latency="0us"/>
+            <link id="etp_link2" bandwidth="10GBps" latency="0us"/>
+            <link id="etp_link2gw" bandwidth="10GBps" latency="0us"/>
+            <link id="etp_link3" bandwidth="10GBps" latency="0us"/>
+            <link id="etp_link4" bandwidth="10GBps" latency="0us"/>
 
             <route src="etpswitch" dst="WMSHost">
                 <link_ctn id="etp_link0"/>
@@ -90,7 +90,7 @@
                 </disk>
             </host>
 
-            <link id="etp_to_remote" bandwidth="100Bps" latency="0us"/>
+            <link id="etp_to_remote" bandwidth="100GBps" latency="0us"/>
         </zone>  
 
         <zoneRoute src="ETP" dst="Remote" gw_src="etpgateway" gw_dst="RemoteStorage">
