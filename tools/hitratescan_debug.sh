@@ -20,7 +20,7 @@ action() {
 
     local NJOBS=1
     local NINFILES=10 #10
-    local AVGINSIZE=$(bc -l <<< "100*1000*1000")
+    local AVGINSIZE=$(bc -l <<< "1000*1000*1000")
     local AVGOUTSIZE=0
     local FLOPS=1000
     local MEM=2400000000
@@ -29,7 +29,7 @@ action() {
     local SIGMA_INSIZE=0
     local SIGMA_OUTSIZE=0
 
-    local XRD_BLOCKSIZE=10
+    local XRD_BLOCKSIZE=1000000
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
@@ -51,6 +51,7 @@ action() {
             --sigma-mem $SIGMA_MEM \
             --outsize $AVGOUTSIZE \
             --sigma-outsize $SIGMA_OUTSIZE \
+            --xrd-blocksize $XRD_BLOCKSIZE \
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_debugjobs_hitrate${hitrate}.csv
     done
 }
