@@ -47,7 +47,6 @@
             <link id="etp_link0" bandwidth="10GBps" latency="0us"/>
             <link id="etp_link1" bandwidth="10GBps" latency="0us"/>
             <link id="etp_link2" bandwidth="10GBps" latency="0us"/>
-            <link id="etp_link2gw" bandwidth="10GBps" latency="0us"/>
             <link id="etp_link3" bandwidth="10GBps" latency="0us"/>
             <link id="etp_link4" bandwidth="10GBps" latency="0us"/>
 
@@ -67,8 +66,7 @@
                 <link_ctn id="etp_link2"/>
             </route>
             <route src="etpgateway" dst="sg02.etp.kit.edu">
-                <!-- <link_ctn id="etp_link2"/> -->
-                <link_ctn id="etp_link2gw"/>
+                <link_ctn id="etp_link2"/>
             </route>
             <!-- <route src="sg01.etp.kit.edu" dst="sg01.etp.kit.edu">
                 <link_ctn id="loopback"/>
