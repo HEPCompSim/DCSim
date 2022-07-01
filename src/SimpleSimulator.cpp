@@ -463,7 +463,6 @@ int main(int argc, char **argv) {
     std::cerr << "Simulation done!" << std::endl;
 
     // Check routes from workers to remote storages
-    std::cerr << SimpleSimulator::worker_hosts.size() << " " << SimpleSimulator::storage_hosts.size() << "\n";
     for (auto worker_host_name: SimpleSimulator::worker_hosts) {
         for(auto remote_host_name: SimpleSimulator::storage_hosts) {
             std::vector<simgrid::s4u::Link*> links;
