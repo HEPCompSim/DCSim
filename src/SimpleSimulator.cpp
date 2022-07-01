@@ -400,7 +400,7 @@ int main(int argc, char **argv) {
         );
         execution_controllers.insert(wms);
     }
-    
+
 
     /* Instantiate inputfiles and set outfile destinations*/
     auto wms = *execution_controllers.begin();
@@ -461,6 +461,22 @@ int main(int argc, char **argv) {
         return 0;
     }
     std::cerr << "Simulation done!" << std::endl;
+
+    // Check routes from workers to remote storages
+    std::cerr << SimpleSimulator::worker_hosts.size() << " " << SimpleSimulator::storage_hosts.size() << "\n";
+    for (auto worker_host_name: SimpleSimulator::worker_hosts) {
+        for(auto remote_host_name: SimpleSimulator::storage_hosts) {
+            std::vector<simgrid::s4u::Link*> links;
+            double latency;
+            auto worker_host = simgrid::s4u::Host::by_name(worker_host_name);
+            auto remote_host = simgrid::s4u::Host::by_name(remote_host_name);
+            worker_host->route_to(remote_host, links, &latency);
+            std::cerr << "ROUTE FROM " << worker_host->get_name() << " TO " << remote_host->get_name() << ":\n";
+            for (const auto l: links) {
+                std::cerr << " - " << l->get_name() << "\n";
+            }
+        }
+    }
 
 
     return 0;
