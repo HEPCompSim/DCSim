@@ -193,7 +193,7 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
 
         for (size_t d=0; d < duplications; d++) {
-            workload["job_" + std::to_string(j+d)] = job_specification;
+            workload["job_" + std::to_string(j + num_jobs * d)] = job_specification;
         }
     }
     return workload;
@@ -297,7 +297,7 @@ int main(int argc, char **argv) {
         duplications
     );
 
-    std::cerr << "The workflow has " << std::to_string(num_jobs) << " jobs" << std::endl;
+    std::cerr << "The workflow has " << std::to_string(num_jobs * duplications) << " jobs" << std::endl;
 
 
     /* Read and parse the platform description file to instantiate a simulation platform */
