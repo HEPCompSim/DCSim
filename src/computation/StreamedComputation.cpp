@@ -20,12 +20,12 @@ StreamedComputation::StreamedComputation(
     std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
     std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
     std::vector<std::shared_ptr<wrench::DataFile>> &files,
-    double total_flops) : CacheComputation::CacheComputation(
+    double total_flops, bool prefetch_on) : CacheComputation::CacheComputation(
         cache_storage_services,
         grid_storage_services,
         files,
         total_flops
-    ) {}
+    ) {prefetching_on = prefetch_on;}
 
 /**
  * @brief Perform the computation within the simulation of the job.
@@ -71,16 +71,29 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             // WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
             // Start the computation asynchronously
             simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
-            exec->start();
-            double exec_start_time = exec->get_start_time();
-            // Read data from the file
-            read_start_time = wrench::Simulation::getCurrentSimulatedDate();
-            fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
-            read_end_time = wrench::Simulation::getCurrentSimulatedDate();
-            // Wait for the computation to be done
-            exec->wait();
+            double exec_start_time = 0.0;
+            double exec_end_time = 0.0;
+            if(this->prefetching_on){
+                exec->start();
+                exec_start_time = exec->get_start_time();
+                // Read data from the file
+                read_start_time = wrench::Simulation::getCurrentSimulatedDate();
+                fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
+                read_end_time = wrench::Simulation::getCurrentSimulatedDate();
+                // Wait for the computation to be done
+                exec->wait();
+                exec_end_time = exec->get_finish_time();
+            }
+            else {
+                exec->start();
+                exec_start_time = exec->get_start_time();
+                exec->wait();
+                exec_end_time = exec->get_finish_time();
+                read_start_time = wrench::Simulation::getCurrentSimulatedDate();
+                fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
+                read_end_time = wrench::Simulation::getCurrentSimulatedDate();
+            }
             data_to_process -= num_bytes;
-            double exec_end_time = exec->get_finish_time();
             if (exec_end_time >= exec_start_time) {
                 compute_time += exec_end_time - exec_start_time;
             } else {
