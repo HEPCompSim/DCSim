@@ -268,7 +268,7 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
             );
         }
         double elapsed = end_date - start_date;
-        WRENCH_DEBUG("Analyzing action: %s, elapsed in s: %.2f", action->getName().c_str(), elapsed);
+        WRENCH_DEBUG("Analyzing action: %s, started in s: %.2f, ended in s: %.2f, elapsed in s: %.2f", action->getName().c_str(), start_date, end_date, elapsed);
 
         if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
             incr_infile_transfertime += elapsed;
