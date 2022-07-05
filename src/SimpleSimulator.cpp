@@ -41,7 +41,7 @@ std::set<std::string> SimpleSimulator::scheduler_hosts;
 std::set<std::string> SimpleSimulator::executors;
 std::set<std::string> SimpleSimulator::file_registries;
 std::set<std::string> SimpleSimulator::network_monitors;
-
+std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_rec_zones;
 
 
 
@@ -245,6 +245,28 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
     }
 }
 
+/**
+ * @brief  Method to be executed once at simulation start,
+ * which finds all hosts in zone and all subzones
+ * and fills them into static map.
+ */
+void SimpleSimulator::fillHostsInRecZonesMap() {
+    std::map<std::string, std::vector<std::string>> zones_in_zones = wrench::S4U_Simulation::getAllSubZoneIDsByZone();
+    std::map<std::string, std::vector< std::string>> hostnames_in_zones = wrench::S4U_Simulation::getAllHostnamesByZone();
+    for (const auto& zones_in_zone: zones_in_zones) {
+        // std::cerr << "Zone: " << zones_in_zone.first << std::endl;
+        for (const auto& zone: zones_in_zone.second) {
+            // std::cerr << "\tSubzone: " << zone << std::endl;
+            for (const auto& host: hostnames_in_zones[zone]) {
+                // std::cerr << "\t\tHost: " << host << std::endl;
+                hosts_in_rec_zones[zones_in_zone.first].insert(host);
+                hosts_in_rec_zones[zone].insert(host);
+            }
+        }
+
+    }
+}
+
 
 int main(int argc, char **argv) {
 
@@ -307,6 +329,7 @@ int main(int argc, char **argv) {
 
     /* Identify demanded and create storage and compute services and add them to the simulation */
     SimpleSimulator::identifyHostTypes(simulation);
+    SimpleSimulator::fillHostsInRecZonesMap();
 
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
