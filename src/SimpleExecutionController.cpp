@@ -250,16 +250,18 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
     double incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
     double incr_outfile_size = 0.;
-    double start_date = DBL_MAX;
-    double end_date = DBL_MIN;
+    double global_start_date = DBL_MAX;
+    double global_end_date = DBL_MIN;
     double hitrate = DefaultValues::UndefinedDouble;
 
     bool found_computation_action = false;
 
     // Figure out timings
     for (auto const &action : event->job->getActions()) {
-        start_date = std::min<double>(start_date, action->getStartDate());
-        end_date = std::max<double>(end_date, action->getEndDate());
+        double start_date = action->getStartDate();
+        double end_date = action->getEndDate();
+        global_start_date = std::min<double>(global_start_date, start_date);
+        global_end_date = std::max<double>(global_end_date, end_date);
         if (start_date < 0. || end_date < 0.) {
             throw std::runtime_error(
                 "Start date " + std::to_string(start_date) +
@@ -288,8 +290,6 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
                 );
             }
         } else if (auto file_write_action = std::dynamic_pointer_cast<wrench::FileWriteAction>(action)) {
-            double start_date = file_write_action->getStartDate();
-            double end_date = file_write_action->getEndDate();
             if (end_date >= start_date) {
                 incr_outfile_transfertime += end_date - start_date;
             } else {
@@ -319,7 +319,7 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
         // << std::to_string(job->getMinimumRequiredMemory()) << ", " 
         // << /*TODO: find a way to get disk usage on scratch space */ << ", ";
         this->filedump << execution_host << ", " << hitrate << ", ";
-        this->filedump << std::to_string(start_date) << ", " << std::to_string(end_date) << ", "; 
+        this->filedump << std::to_string(global_start_date) << ", " << std::to_string(global_end_date) << ", ";
         this->filedump << std::to_string(incr_compute_time) << ", ";
         this->filedump << std::to_string(incr_infile_transfertime) << ", " << std::to_string(incr_infile_size) << ", " ;
         this->filedump << std::to_string(incr_outfile_transfertime) << ", " << std::to_string(incr_outfile_size) << std::endl;
