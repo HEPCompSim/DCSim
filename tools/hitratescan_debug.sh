@@ -28,8 +28,9 @@ action() {
     local SIGMA_MEM=0
     local SIGMA_INSIZE=0
     local SIGMA_OUTSIZE=0
+    local DUPLICATIONS=1
 
-    local XRD_BLOCKSIZE=1000000
+    local XRD_BLOCKSIZE=1000000000
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
@@ -51,6 +52,7 @@ action() {
             --sigma-mem $SIGMA_MEM \
             --outsize $AVGOUTSIZE \
             --sigma-outsize $SIGMA_OUTSIZE \
+            --duplications $DUPLICATIONS \
             --xrd-blocksize $XRD_BLOCKSIZE \
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_debugjobs_hitrate${hitrate}.csv
     done
