@@ -20,6 +20,7 @@ public:
     static std::set<std::string> network_monitors;  // hosts configured to monitor network
 
     static void fillHostsInRecZonesMap();
+    static bool local_cache_scope;
 
     static std::map<std::string, std::set<std::string>> hosts_in_rec_zones; // map holding information of all hosts present in network zones
 

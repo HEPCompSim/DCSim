@@ -42,6 +42,7 @@ std::set<std::string> SimpleSimulator::executors;
 std::set<std::string> SimpleSimulator::file_registries;
 std::set<std::string> SimpleSimulator::network_monitors;
 std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_rec_zones;
+bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
 
 
 
@@ -98,6 +99,8 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
 
         ("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")
+
+        ("cache-scope", po::value<std::string>()->default_value("local"), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n recnetwork: also include caches in subzones")
     ;
 
     po::variables_map vm;
@@ -306,6 +309,17 @@ int main(int argc, char **argv) {
     // Set XRootD block size
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
 
+    // Choice of cache locality scope
+    std::string scope_caches = vm["cache-scope"].as<std::string>();
+    bool rec_netzone_caches;
+    if (scope_caches.find("network") == std::string::npos) {
+        SimpleSimulator::local_cache_scope = true;
+    } else {
+        if (scope_caches.find("rec") != std::string::npos) {
+            rec_netzone_caches = true;
+        }
+    }
+
 
     /* Create a workload */
     std::cerr << "Constructing workload specification..." << std::endl;
@@ -329,7 +343,17 @@ int main(int argc, char **argv) {
 
     /* Identify demanded and create storage and compute services and add them to the simulation */
     SimpleSimulator::identifyHostTypes(simulation);
-    SimpleSimulator::fillHostsInRecZonesMap();
+
+    // Fill reachable caches map
+    if (rec_netzone_caches) {
+        SimpleSimulator::fillHostsInRecZonesMap();
+    } else {
+        for (const auto& hostnamesByZone: wrench::S4U_Simulation::getAllHostnamesByZone()) {
+            std::vector<std::string> hostnamesVec = hostnamesByZone.second;
+            std::set<std::string> hostnamesSet(hostnamesVec.begin(), hostnamesVec.end());
+            SimpleSimulator::hosts_in_rec_zones[hostnamesByZone.first] = hostnamesSet;
+        }
+    }
 
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
