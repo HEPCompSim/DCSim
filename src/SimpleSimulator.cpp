@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
     SimpleSimulator::use_blockstreaming = !(vm["no-streaming"].as<bool>());
 
     // Flags to turn refetching for streaming of input-files
-    std::cerr << "Prefetching switch: " << vm["prefetch-off"].as<bool>() << std::endl;
+    std::cerr << "Prefetching switch off?: " << vm["prefetch-off"].as<bool>() << std::endl;
     SimpleSimulator::prefetching_on = !(vm["prefetch-off"].as<bool>());
 
     // Set XRootD block size
