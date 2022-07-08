@@ -28,7 +28,7 @@ namespace po = boost::program_options;
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
 std::mt19937 SimpleSimulator::gen(42);  // random number generator
 bool SimpleSimulator::use_blockstreaming = true;   // flag to chose between simulated job types: streaming or copy jobs
-bool SimpleSimulator::prefetching_on = true;   // flag to enable prefetching during streaming
+size_t SimpleSimulator::n_prefetch_blocks = 0;   // number of prefetch blocks for prefetching during streaming
 double SimpleSimulator::xrd_block_size = 1.*1000*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 // TODO: The initialized below is likely bogus (at compile time?)
 std::normal_distribution<double>* SimpleSimulator::flops_dist;
@@ -71,7 +71,7 @@ po::variables_map process_program_options(int argc, char** argv) {
     size_t duplications = 1;
 
     bool no_blockstreaming = false;
-    bool prefetch_off = false;
+    size_t n_prefetch = 0;
 
     double xrd_block_size = 1000.*1000*1000;
 
@@ -96,7 +96,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workflow to feed into the simulation")
 
         ("no-streaming", po::bool_switch()->default_value(no_blockstreaming), "switch to turn on/off block-wise streaming of input-files")
-        ("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")
+        ("n-prefetch-blocks", po::value<size_t>()->default_value(n_prefetch), "Number of blocks for prefetching for streaming of input-files")
 
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
 
@@ -284,9 +284,8 @@ int main(int argc, char **argv) {
     // Flags to turn on/off blockwise streaming of input-files
     SimpleSimulator::use_blockstreaming = !(vm["no-streaming"].as<bool>());
 
-    // Flags to turn refetching for streaming of input-files
-    std::cerr << "Prefetching switch off?: " << vm["prefetch-off"].as<bool>() << std::endl;
-    SimpleSimulator::prefetching_on = !(vm["prefetch-off"].as<bool>());
+    // Number of blocks to be prefetched for streaming of input-files
+    SimpleSimulator::n_prefetch_blocks = vm["n-prefetch-blocks"].as<size_t>();
 
     // Set XRootD block size
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();

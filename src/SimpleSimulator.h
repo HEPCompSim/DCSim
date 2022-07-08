@@ -20,7 +20,7 @@ public:
     static std::set<std::string> network_monitors;  // hosts configured to monitor network
 
     static bool use_blockstreaming;
-    static bool prefetching_on;
+    static size_t n_prefetch_blocks;
     static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;
     static double xrd_block_size;
     static std::mt19937 gen;

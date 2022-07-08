@@ -20,12 +20,12 @@ StreamedComputation::StreamedComputation(
     std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
     std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
     std::vector<std::shared_ptr<wrench::DataFile>> &files,
-    double total_flops, bool prefetch_on) : CacheComputation::CacheComputation(
+    double total_flops, size_t n_prefetch) : CacheComputation::CacheComputation(
         cache_storage_services,
         grid_storage_services,
         files,
         total_flops
-    ) {prefetching_on = prefetch_on;}
+    ) {n_prefetch_blocks = n_prefetch;}
 
 /**
  * @brief Perform the computation within the simulation of the job.
@@ -65,6 +65,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         }
 
         // Process next blocks: compute block i while reading block i+i
+        size_t n_prefetch_blocks_counter = 0;
         for (int i=0; i < num_blocks - 1; i++) {
             double num_bytes = std::min<double>(SimpleSimulator::xrd_block_size, data_to_process);
             double num_flops = determineFlops(num_bytes, total_data_size);
@@ -73,7 +74,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
             double exec_start_time = 0.0;
             double exec_end_time = 0.0;
-            if(this->prefetching_on){
+            if(n_prefetch_blocks_counter < this->n_prefetch_blocks){
                 exec->start();
                 exec_start_time = exec->get_start_time();
                 // Read data from the file
@@ -83,6 +84,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 // Wait for the computation to be done
                 exec->wait();
                 exec_end_time = exec->get_finish_time();
+                ++n_prefetch_blocks_counter;
             }
             else {
                 exec->start();
@@ -92,6 +94,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 read_start_time = wrench::Simulation::getCurrentSimulatedDate();
                 fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
                 read_end_time = wrench::Simulation::getCurrentSimulatedDate();
+                n_prefetch_blocks_counter = 0;
             }
             data_to_process -= num_bytes;
             if (exec_end_time >= exec_start_time) {

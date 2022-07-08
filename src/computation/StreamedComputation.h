@@ -16,14 +16,14 @@ public:
         std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
         std::vector<std::shared_ptr<wrench::DataFile>> &files,
         double total_flops,
-        bool prefetch_on
+        size_t n_prefetch
     );
 
     void performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) override;
 
 private:
 
-    bool prefetching_on;
+    size_t n_prefetch_blocks;
 
 };
 
