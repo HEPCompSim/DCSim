@@ -54,7 +54,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         if (SimpleSimulator::local_cache_scope) {
             host_in_scope = (ss->getHostname() == hostname);
         } else {
-            host_in_scope = (SimpleSimulator::hosts_in_rec_zones[netzone].find(ss->getHostname()) != SimpleSimulator::hosts_in_rec_zones[netzone].end());
+            host_in_scope = (SimpleSimulator::hosts_in_zones[netzone].find(ss->getHostname()) != SimpleSimulator::hosts_in_zones[netzone].end());
         }
         if (host_in_scope) {
             matched_storage_services.push_back(ss);
