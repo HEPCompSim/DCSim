@@ -129,7 +129,7 @@ int SimpleExecutionController::main() {
             job->addCustomAction(run_action);
         } else {
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
-                new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
+                new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops, SimpleSimulator::prefetching_on)
             );
 
             run_action = std::make_shared<MonitorAction>(
