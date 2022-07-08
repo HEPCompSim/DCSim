@@ -41,7 +41,7 @@ std::set<std::string> SimpleSimulator::scheduler_hosts;
 std::set<std::string> SimpleSimulator::executors;
 std::set<std::string> SimpleSimulator::file_registries;
 std::set<std::string> SimpleSimulator::network_monitors;
-std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_rec_zones;
+std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_zones;
 bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
 
 
@@ -253,7 +253,7 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
  * which finds all hosts in zone and all subzones
  * and fills them into static map.
  */
-void SimpleSimulator::fillHostsInRecZonesMap() {
+void SimpleSimulator::fillHostsInSameLevelZonesMap() {
     std::map<std::string, std::vector<std::string>> zones_in_zones = wrench::S4U_Simulation::getAllSubZoneIDsByZone();
     std::map<std::string, std::vector< std::string>> hostnames_in_zones = wrench::S4U_Simulation::getAllHostnamesByZone();
     for (const auto& zones_in_zone: zones_in_zones) {
@@ -262,8 +262,8 @@ void SimpleSimulator::fillHostsInRecZonesMap() {
             // std::cerr << "\tSubzone: " << zone << std::endl;
             for (const auto& host: hostnames_in_zones[zone]) {
                 // std::cerr << "\t\tHost: " << host << std::endl;
-                hosts_in_rec_zones[zones_in_zone.first].insert(host);
-                hosts_in_rec_zones[zone].insert(host);
+                hosts_in_zones[zones_in_zone.first].insert(host);
+                hosts_in_zones[zone].insert(host);
             }
         }
 
@@ -346,12 +346,12 @@ int main(int argc, char **argv) {
 
     // Fill reachable caches map
     if (rec_netzone_caches) {
-        SimpleSimulator::fillHostsInRecZonesMap();
+        SimpleSimulator::fillHostsInSameLevelZonesMap();
     } else {
         for (const auto& hostnamesByZone: wrench::S4U_Simulation::getAllHostnamesByZone()) {
             std::vector<std::string> hostnamesVec = hostnamesByZone.second;
             std::set<std::string> hostnamesSet(hostnamesVec.begin(), hostnamesVec.end());
-            SimpleSimulator::hosts_in_rec_zones[hostnamesByZone.first] = hostnamesSet;
+            SimpleSimulator::hosts_in_zones[hostnamesByZone.first] = hostnamesSet;
         }
     }
 
