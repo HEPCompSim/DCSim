@@ -38,6 +38,8 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
 void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor) {
 
     std::string hostname = action_executor->getHostname(); // host where action is executed
+    auto host = simgrid::s4u::Host::by_name(hostname); 
+    std::string netzone = host->get_englobing_zone()->get_name(); // network zone executing host belongs to
     auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
 
     double cached_data_size = 0.;
@@ -45,10 +47,16 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
 
     // Identify all cache storage services that can be reached from 
     // this host, which runs the streaming action
-    //TODO: Think of a better definition of "reachable" other than local
     std::vector<std::shared_ptr<wrench::StorageService>> matched_storage_services;
+
     for (auto const &ss : this->cache_storage_services) {
-        if (ss->getHostname() == hostname) {
+        bool host_in_scope = false;
+        if (SimpleSimulator::local_cache_scope) {
+            host_in_scope = (ss->getHostname() == hostname);
+        } else {
+            host_in_scope = (SimpleSimulator::hosts_in_zones[netzone].find(ss->getHostname()) != SimpleSimulator::hosts_in_zones[netzone].end());
+        }
+        if (host_in_scope) {
             matched_storage_services.push_back(ss);
             WRENCH_DEBUG("Found a reachable cache on host %s", ss->getHostname().c_str());
         }

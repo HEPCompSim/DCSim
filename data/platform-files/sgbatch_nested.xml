@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
+<platform version="4.1">
+    <config>
+        <prop id="network/loopback-bw" value="100000000000000"/>
+    </config>
+
+    <zone id="global" routing="Full">
+        <zone id="ETP" routing="Floyd">
+            <zone id="ETPSub1" routing="Floyd">
+                <host id="sg01" speed="1117Mf" core="24">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="64GiB"/>
+                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+                        <prop id="size" value="2.5TB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+                <host id="sg02" speed="1117Mf" core="24">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="64GiB"/>
+                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+                        <prop id="size" value="2.5TB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <host id="WMSHost" speed="10Gf" core="10">
+                    <prop id="type" value="scheduler,executor"/>
+                    <prop id="ram" value="16GB"/>
+                </host>
+
+                <router id="etpgateway"/>
+
+                <link id="loopback" bandwidth="5000GBps" latency="0us"/>
+                <link id="etp_link" bandwidth="6Gbps" latency="0us"/>
+
+                <route src="etpgateway" dst="WMSHost">
+                    <link_ctn id="etp_link"/>
+                </route>
+                <route src="etpgateway" dst="sg01">
+                    <link_ctn id="etp_link"/>
+                </route>
+                <route src="etpgateway" dst="sg02">
+                    <link_ctn id="etp_link"/>
+                </route>
+                <!-- <route src="etpgateway" dst="sg03">
+                    <link_ctn id="etp_link"/>
+                </route> -->
+                <!-- <route src="sg01" dst="sg01">
+                    <link_ctn id="loopback"/>
+                </route>
+                <route src="sg02" dst="sg02">
+                    <link_ctn id="loopback"/>
+                </route>
+                <route src="sg03" dst="sg03">
+                    <link_ctn id="loopback"/>
+                </route> -->
+            </zone>
+
+            <zone id="ETPSub3" routing="Floyd">
+                <host id="sg03" speed="1258Mf" core="12">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="32GiB"/>
+                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+                        <prop id="size" value="2.5TB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host> 
+            </zone>
+
+            <zoneRoute src="ETPSub1" dst="ETPSub3" gw_src="etpgateway" gw_dst="sg03">
+                <link_ctn id="etp_link"/>
+            </zoneRoute>
+        </zone>
+
+        <zone id="Remote" routing="Full">
+            <host id="RemoteStorage" speed="1000Gf" core="10">
+                <prop id="type" value="storage"/>
+                <disk id="hard_drive" read_bw="40Gbps" write_bw="40Gbps">
+                    <prop id="size" value="1PB"/>
+                    <prop id="mount" value="/"/>
+                </disk>
+            </host>
+
+            <link id="etp_to_remote" bandwidth="10Gbps" latency="0us"/>
+        </zone>
+
+        <zoneRoute src="ETP" dst="Remote" gw_src="etpgateway" gw_dst="RemoteStorage">
+            <link_ctn id="etp_to_remote"/>
+        </zoneRoute>
+    </zone>  
+</platform>
