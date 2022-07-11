@@ -42,7 +42,50 @@ std::set<std::string> SimpleSimulator::scheduler_hosts;
 std::set<std::string> SimpleSimulator::executors;
 std::set<std::string> SimpleSimulator::file_registries;
 std::set<std::string> SimpleSimulator::network_monitors;
+std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_zones;
+bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
 
+
+/**
+ * @brief Simple Choices class for cache scope program option
+ * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
+ */
+struct cacheScope {
+    cacheScope(std::string const& val): value(val) {}
+    std::string value;
+};
+/**
+ * @brief Operator<< for the cacheScope class
+ * 
+ * @param os 
+ * @param val 
+ * @return std::ostream& 
+ */
+std::ostream& operator<<(std::ostream &os, const cacheScope &val) {
+    os << val.value << " ";
+    return os; 
+}
+
+/**
+ * @brief Overload of boost::program_options validate method
+ * to check for custom validator classes
+ */
+void validate(boost::any& v, std::vector<std::string> const& values, cacheScope* /* target_type */, int) {
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'v' was made.
+    validators::check_first_occurrence(v);
+
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    std::string const& s = validators::get_single_string(values);
+
+    if (s == "local" || s == "network" || s == "siblingnetwork") {
+        v = boost::any(cacheScope(s));
+    } else {
+        throw validation_error(validation_error::invalid_option_value);
+    }
+}
 
 
 
@@ -101,6 +144,8 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
 
         ("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")
+
+        ("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks")
     ;
 
     po::variables_map vm;
@@ -248,6 +293,48 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
     }
 }
 
+/**
+ * @brief  Method to be executed once at simulation start,
+ * which finds all hosts in zone and all same level accopanying zones (siblings)
+ * and fills them into static map.
+ * @param include_subzones Flag to alse include all hosts in sibling subzones. Default: false
+ */
+void SimpleSimulator::fillHostsInSiblingZonesMap(bool include_subzones = false) {
+    std::map<std::string, std::vector<std::string>> zones_in_zones = wrench::S4U_Simulation::getAllSubZoneIDsByZone();
+    std::map<std::string, std::vector< std::string>> hostnames_in_zones = wrench::S4U_Simulation::getAllHostnamesByZone();
+    std::map<std::string, std::set<std::string>> tmp_hosts_in_zones;
+
+    if (include_subzones) { // include all hosts in child-zones into a hostname set
+        for (const auto& zones_in_zone: zones_in_zones) {
+            std::cerr << "Zone: " << zones_in_zone.first << std::endl;
+            for (const auto& zone: zones_in_zone.second) {
+                std::cerr << "\tSubzone: " << zone << std::endl;
+                for (const auto& host: hostnames_in_zones[zone]) {
+                    std::cerr << "\t\tHost: " << host << std::endl;
+                    tmp_hosts_in_zones[zones_in_zone.first].insert(host);
+                    tmp_hosts_in_zones[zone].insert(host);
+                }
+            }
+        }
+    } else { // just convert the vector of hostnames to set in map
+        for (const auto& hostnamesByZone: hostnames_in_zones) {
+            std::vector<std::string> hostnamesVec = hostnamesByZone.second;
+            std::set<std::string> hostnamesSet(hostnamesVec.begin(), hostnamesVec.end());
+            tmp_hosts_in_zones[hostnamesByZone.first] = hostnamesSet;
+        }
+    }
+    // identify all sibling zones and append their hosts
+    for (const auto& hosts_in_zone: tmp_hosts_in_zones) {
+        std::string zone = hosts_in_zone.first;
+        auto parent_zone = simgrid::s4u::Engine::get_instance()->netzone_by_name_or_null(zone)->get_parent();
+        auto hosts = hosts_in_zone.second;
+        for (const auto& sibling: parent_zone->get_children()) {
+            auto hosts = tmp_hosts_in_zones[sibling->get_name()];
+            SimpleSimulator::hosts_in_zones[zone].insert(hosts.begin(), hosts.end());
+        }
+    }
+}
+
 
 int main(int argc, char **argv) {
 
@@ -291,6 +378,17 @@ int main(int argc, char **argv) {
     // Set XRootD block size
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
 
+    // Choice of cache locality scope
+    std::string scope_caches = vm["cache-scope"].as<cacheScope>().value;
+    bool rec_netzone_caches;
+    if (scope_caches.find("network") == std::string::npos) {
+        SimpleSimulator::local_cache_scope = true;
+    } else {
+        if (scope_caches.find("sibling") != std::string::npos) {
+            rec_netzone_caches = true;
+        }
+    }
+
 
     /* Create a workload */
     std::cerr << "Constructing workload specification..." << std::endl;
@@ -314,6 +412,17 @@ int main(int argc, char **argv) {
 
     /* Identify demanded and create storage and compute services and add them to the simulation */
     SimpleSimulator::identifyHostTypes(simulation);
+
+    // Fill reachable caches map
+    if (rec_netzone_caches) {
+        SimpleSimulator::fillHostsInSiblingZonesMap();
+    } else {
+        for (const auto& hostnamesByZone: wrench::S4U_Simulation::getAllHostnamesByZone()) {
+            std::vector<std::string> hostnamesVec = hostnamesByZone.second;
+            std::set<std::string> hostnamesSet(hostnamesVec.begin(), hostnamesVec.end());
+            SimpleSimulator::hosts_in_zones[hostnamesByZone.first] = hostnamesSet;
+        }
+    }
 
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;

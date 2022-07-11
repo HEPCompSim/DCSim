@@ -19,6 +19,11 @@ public:
     static std::set<std::string> file_registries;   // hosts configured to manage a file registry
     static std::set<std::string> network_monitors;  // hosts configured to monitor network
 
+    static void fillHostsInSiblingZonesMap(bool include_subzones);
+    static bool local_cache_scope;
+
+    static std::map<std::string, std::set<std::string>> hosts_in_zones; // map holding information of all hosts present in network zones
+
     static bool use_blockstreaming;
     static bool prefetching_on;
     static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;
