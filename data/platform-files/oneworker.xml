@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
 <platform version="4.1">
+    <config>
+        <prop id="network/loopback-bw" value="1000000000000"/>
+    </config>
+
     <zone id="global" routing="Full">
         <zone id="ETP" routing="Floyd">
             <host id="sg03" speed="125Mf" core="12">
@@ -18,13 +22,14 @@
 
             <router id="etpgateway"/>
 
-            <link id="etp_link" bandwidth="6Gbps" latency="0us"/>
+            <link id="etp_link0" bandwidth="6Gbps" latency="0us"/>
+            <link id="etp_link3" bandwidth="6Gbps" latency="0us"/>
 
             <route src="etpgateway" dst="WMSHost">
-                <link_ctn id="etp_link"/>
+                <link_ctn id="etp_link0"/>
             </route>
             <route src="etpgateway" dst="sg03">
-                <link_ctn id="etp_link"/>
+                <link_ctn id="etp_link3"/>
             </route>
         </zone>
 
