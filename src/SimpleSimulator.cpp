@@ -45,6 +45,48 @@ std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_zones;
 bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
 
 
+/**
+ * @brief Simple Choices class for cache scope program option
+ * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
+ */
+struct cacheScope {
+    cacheScope(std::string const& val): value(val) {}
+    std::string value;
+};
+/**
+ * @brief Operator<< for the cacheScope class
+ * 
+ * @param os 
+ * @param val 
+ * @return std::ostream& 
+ */
+std::ostream& operator<<(std::ostream &os, const cacheScope &val) {
+    os << val.value << " ";
+    return os; 
+}
+
+/**
+ * @brief Overload of boost::program_options validate method
+ * to check for custom validator classes
+ */
+void validate(boost::any& v, std::vector<std::string> const& values, cacheScope* /* target_type */, int) {
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'v' was made.
+    validators::check_first_occurrence(v);
+
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    std::string const& s = validators::get_single_string(values);
+
+    if (s == "local" || s == "network" || s == "siblingnetwork") {
+        v = boost::any(cacheScope(s));
+    } else {
+        throw validation_error(validation_error::invalid_option_value);
+    }
+}
+
+
 
 /**
  * @brief helper function to process simulation options and parameters
@@ -100,7 +142,7 @@ po::variables_map process_program_options(int argc, char** argv) {
 
         ("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")
 
-        ("cache-scope", po::value<std::string>()->default_value("local"), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n recnetwork: also include caches in subzones")
+        ("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks")
     ;
 
     po::variables_map vm;
@@ -330,12 +372,12 @@ int main(int argc, char **argv) {
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
 
     // Choice of cache locality scope
-    std::string scope_caches = vm["cache-scope"].as<std::string>();
+    std::string scope_caches = vm["cache-scope"].as<cacheScope>().value;
     bool rec_netzone_caches;
     if (scope_caches.find("network") == std::string::npos) {
         SimpleSimulator::local_cache_scope = true;
     } else {
-        if (scope_caches.find("rec") != std::string::npos) {
+        if (scope_caches.find("sibling") != std::string::npos) {
             rec_netzone_caches = true;
         }
     }
