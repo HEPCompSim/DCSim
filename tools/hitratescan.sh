@@ -28,6 +28,7 @@ action() {
     local SIGMA_MEM=0
     local SIGMA_INSIZE=0
     local SIGMA_OUTSIZE=0
+    local DUPLICATIONS=1
 
     local XRD_BLOCKSIZE=200000000
 
@@ -51,7 +52,10 @@ action() {
             --sigma-mem $SIGMA_MEM \
             --outsize $AVGOUTSIZE \
             --sigma-outsize $SIGMA_OUTSIZE \
-            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv
+            --duplications $DUPLICATIONS \
+            --xrd-blocksize $XRD_BLOCKSIZE \
+            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv \
+            --cfg=network/loopback-bw:100000000000000
     done
 }
 
