@@ -250,23 +250,43 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
 
 /**
  * @brief  Method to be executed once at simulation start,
- * which finds all hosts in zone and all subzones
+ * which finds all hosts in zone and all same level accopanying zones (siblings)
  * and fills them into static map.
+ * @param include_subzones Flag to alse include all hosts in sibling subzones. Default: false
  */
-void SimpleSimulator::fillHostsInSameLevelZonesMap() {
+void SimpleSimulator::fillHostsInSiblingZonesMap(bool include_subzones = false) {
     std::map<std::string, std::vector<std::string>> zones_in_zones = wrench::S4U_Simulation::getAllSubZoneIDsByZone();
     std::map<std::string, std::vector< std::string>> hostnames_in_zones = wrench::S4U_Simulation::getAllHostnamesByZone();
-    for (const auto& zones_in_zone: zones_in_zones) {
-        // std::cerr << "Zone: " << zones_in_zone.first << std::endl;
-        for (const auto& zone: zones_in_zone.second) {
-            // std::cerr << "\tSubzone: " << zone << std::endl;
-            for (const auto& host: hostnames_in_zones[zone]) {
-                // std::cerr << "\t\tHost: " << host << std::endl;
-                hosts_in_zones[zones_in_zone.first].insert(host);
-                hosts_in_zones[zone].insert(host);
+    std::map<std::string, std::set<std::string>> tmp_hosts_in_zones;
+
+    if (include_subzones) { // include all hosts in child-zones into a hostname set
+        for (const auto& zones_in_zone: zones_in_zones) {
+            std::cerr << "Zone: " << zones_in_zone.first << std::endl;
+            for (const auto& zone: zones_in_zone.second) {
+                std::cerr << "\tSubzone: " << zone << std::endl;
+                for (const auto& host: hostnames_in_zones[zone]) {
+                    std::cerr << "\t\tHost: " << host << std::endl;
+                    tmp_hosts_in_zones[zones_in_zone.first].insert(host);
+                    tmp_hosts_in_zones[zone].insert(host);
+                }
             }
         }
-
+    } else { // just convert the vector of hostnames to set in map
+        for (const auto& hostnamesByZone: hostnames_in_zones) {
+            std::vector<std::string> hostnamesVec = hostnamesByZone.second;
+            std::set<std::string> hostnamesSet(hostnamesVec.begin(), hostnamesVec.end());
+            tmp_hosts_in_zones[hostnamesByZone.first] = hostnamesSet;
+        }
+    }
+    // identify all sibling zones and append their hosts
+    for (const auto& hosts_in_zone: tmp_hosts_in_zones) {
+        std::string zone = hosts_in_zone.first;
+        auto parent_zone = simgrid::s4u::Engine::get_instance()->netzone_by_name_or_null(zone)->get_parent();
+        auto hosts = hosts_in_zone.second;
+        for (const auto& sibling: parent_zone->get_children()) {
+            auto hosts = tmp_hosts_in_zones[sibling->get_name()];
+            SimpleSimulator::hosts_in_zones[zone].insert(hosts.begin(), hosts.end());
+        }
     }
 }
 
@@ -346,7 +366,7 @@ int main(int argc, char **argv) {
 
     // Fill reachable caches map
     if (rec_netzone_caches) {
-        SimpleSimulator::fillHostsInSameLevelZonesMap();
+        SimpleSimulator::fillHostsInSiblingZonesMap();
     } else {
         for (const auto& hostnamesByZone: wrench::S4U_Simulation::getAllHostnamesByZone()) {
             std::vector<std::string> hostnamesVec = hostnamesByZone.second;
