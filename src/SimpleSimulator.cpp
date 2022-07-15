@@ -11,6 +11,7 @@
 #include "SimpleSimulator.h"
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
+#include "CalibrationPlatformCreator.h"
 
 #include <iostream>
 #include <fstream>
@@ -46,6 +47,15 @@ std::set<std::string> SimpleSimulator::network_monitors;
 std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_zones;
 bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
 
+/**
+ * @brief Helper function to see whether a string ends with a particular suffix
+ * @param str the string
+ * @param suffix the suffix
+ * @return true if the string ends with the suffix, false otherwise
+ */
+static bool ends_with(const std::string &str, const std::string &suffix) {
+    return str.size() >= suffix.size() && 0 == str.compare(str.size() - suffix.size(), suffix.size(), suffix);
+}
 
 /**
  * @brief Simple Choices class for cache scope program option
@@ -376,7 +386,8 @@ int main(int argc, char **argv) {
     /* Parsing of the command-line arguments for this WRENCH simulation */
     auto vm = process_program_options(argc, argv);
 
-    // The first argument is the platform description file, written in XML following the SimGrid-defined DTD
+    // The platform description file, written in XML following the SimGrid-defined DTD,
+    // OR a JSON file that describes an instantiation of the hard-code calibration platform
     std::string platform_file = vm["platform"].as<std::string>();
 
     // output-file name containing simulation information
@@ -421,7 +432,6 @@ int main(int argc, char **argv) {
         }
     }
 
-
     /* Create a workload */
     std::cerr << "Constructing workload specification..." << std::endl;
 
@@ -438,7 +448,24 @@ int main(int argc, char **argv) {
 
     /* Read and parse the platform description file to instantiate a simulation platform */
     std::cerr << "Instantiating SimGrid platform..." << std::endl;
-    simulation->instantiatePlatform(platform_file);
+    if (ends_with(platform_file,".xml")) {
+        simulation->instantiatePlatform(platform_file);
+    } else if (ends_with(platform_file,".json")) {
+        // Open and parse the JSON file
+        nlohmann::json json_spec;
+        std::ifstream file;
+        file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        try {
+            file.open(platform_file);
+            file >> json_spec;
+        } catch (const std::ifstream::failure &e) {
+            throw std::invalid_argument("Invalid JSON calibration platform specification: " + std::string(e.what()));
+        }
+        CalibrationPlatformCreator platform_creator(json_spec);
+        simulation->instantiatePlatform(platform_creator);
+    } else {
+        throw std::invalid_argument("Invalid platform file " + platform_file +" (should end in .xml or .json)");
+    }
 
 
     /* Identify demanded and create storage and compute services and add them to the simulation */
