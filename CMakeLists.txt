@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 message(STATUS "Cmake version ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
-project(%s)
+project(DistCacheSim)
 
 add_definitions("-Wall -Wno-unused-variable -Wno-unused-private-field")
 
@@ -26,6 +26,8 @@ set(SOURCE_FILES
         src/LRU_FileList.h
         src/MonitorAction.h
         src/MonitorAction.cpp
+        src/CalibrationPlatformCreator.cpp
+        src/CalibrationPlatformCreator.h
         src/util/DefaultValues.h
         src/computation/CacheComputation.h
         src/computation/CacheComputation.cpp
