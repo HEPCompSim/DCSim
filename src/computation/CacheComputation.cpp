@@ -35,7 +35,7 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  * 
  * @param hostname Name of the host, where the job runs
  */
-void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor, bool cache_files = true) {
 
     std::string hostname = action_executor->getHostname(); // host where action is executed
     auto host = simgrid::s4u::Host::by_name(hostname); 
@@ -77,6 +77,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         for (auto const &ss : matched_storage_services) {
             if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
                 source_ss = ss;
+                WRENCH_DEBUG("Found file %s with size %.2f in cache %s", f->getID().c_str(), f->getSize(), source_ss->getHostname().c_str());
                 cached_data_size += f->getSize();
                 break;
             }
@@ -119,18 +120,22 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
             }
 
             // Instead of doing this file copy right here, instantly create the file locally for next jobs
-            //? Alternative: Wait for computation to finish and copy file then
-            // TODO: Better idea perhaps: have the first job that streams the file update a counter
-            // TODO: of file blocks available at the storage service, and subsequent jobs
-            // TODO: can read a block only if it's available (e.g., by waiting on some
-            // TODO: condition variable, which is signaled by the first job each time it
-            // TODO: reads a block).
-            // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
-            wrench::Simulation::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
+            if (cache_files) {
+                //? Alternative: Wait for computation to finish and copy file then
+                // TODO: Better idea perhaps: have the first job that streams the file update a counter
+                // TODO: of file blocks available at the storage service, and subsequent jobs
+                // TODO: can read a block only if it's available (e.g., by waiting on some
+                // TODO: condition variable, which is signaled by the first job each time it
+                // TODO: reads a block).
+                WRENCH_DEBUG("Caching file %s on storage %s", f->getID().c_str(), destination_ss->getHostname().c_str());
+                // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
+                wrench::Simulation::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
 
-            SimpleSimulator::global_file_map[destination_ss].touchFile(f);
-            
-            // this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
+                SimpleSimulator::global_file_map[destination_ss].touchFile(f);
+
+                // this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
+            }
+
         }
 
         this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
@@ -140,6 +145,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
     if (std::abs(cached_data_size + remote_data_size - this->total_data_size) > 1.) {
         throw std::runtime_error("There is more or less data read from cache plus remote than the job's input-data size!");
     }
+    WRENCH_DEBUG("Hitrate: %.2f (Cached data: %.2f, total data: %.2f)", cached_data_size/this->total_data_size, cached_data_size, this->total_data_size);
     the_action->set_hitrate(cached_data_size/this->total_data_size);
 }
 
@@ -168,7 +174,7 @@ void CacheComputation::operator () (std::shared_ptr<wrench::ActionExecutor> acti
 
     // Identify all file sources (and deal with caching, evictions, etc.
     WRENCH_INFO("Determining file sources for cache computation");
-    this->determineFileSourcesAndCache(action_executor);
+    this->determineFileSourcesAndCache(action_executor, SimpleSimulator::infile_caching_on);
     // Perform computation
     WRENCH_INFO("Performing the computation action");
     this->performComputation(action_executor);
