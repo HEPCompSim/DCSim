@@ -253,13 +253,22 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
  * @param duplications Number of duplications each job is duplicated
  * @return std::map<std::string, JobSpecification> 
  */
-std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications) {
+std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
     size_t num_jobs = workload.size();
     std::map<std::string, JobSpecification> dupl_workload;
     for (size_t j = 0; j < num_jobs; j++) {
         for (size_t d=0; d < duplications; d++) {
             std::string dupl_job_id = "job_" + std::to_string(j + num_jobs * d);
-            auto dupl_job_specs = workload["job_" + std::to_string(j)];
+            JobSpecification dupl_job_specs = workload["job_" + std::to_string(j)];
+            if (d > 0) {
+                // TODO: Check if this works as intended
+                dupl_job_specs.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j + num_jobs * d), dupl_job_specs.outfile->getSize());
+                // TODO: Think of a better way to copy the outfile destination
+                for (auto ss : grid_storage_services) {
+                    dupl_job_specs.outfile_destination = wrench::FileLocation::LOCATION(ss);
+                    break;
+                }
+            }
             dupl_workload.insert(std::make_pair(dupl_job_id, dupl_job_specs));
         }
     }
@@ -591,8 +600,8 @@ int main(int argc, char **argv) {
 
     /* Duplicate the workload */
     std::cerr << "Duplicating workflow..." << std::endl;
-    workload_spec = duplicateJobs(wms->get_workload_spec(), duplications);
-    wms->set_workload_spec(workload_spec);
+    auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
+    wms->set_workload_spec(new_workload_spec);
     std::cerr << "The workflow now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
 
 
