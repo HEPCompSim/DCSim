@@ -240,6 +240,8 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         double doutsize = outsize_dist(SimpleSimulator::gen);
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
+
+        workload["job_" + std::to_string(j)] = job_specification;
     }
     return workload;
 }
@@ -251,13 +253,17 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
  * @param duplications Number of duplications each job is duplicated
  * @return std::map<std::string, JobSpecification> 
  */
-void duplicateJobs(std::map<std::string, JobSpecification>& workload, size_t duplications) {
+std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications) {
     size_t num_jobs = workload.size();
+    std::map<std::string, JobSpecification> dupl_workload;
     for (size_t j = 0; j < num_jobs; j++) {
         for (size_t d=0; d < duplications; d++) {
-            workload["job_" + std::to_string(j + num_jobs * d)] = workload["job_" + std::to_string(j)];
+            std::string dupl_job_id = "job_" + std::to_string(j + num_jobs * d);
+            auto dupl_job_specs = workload["job_" + std::to_string(j)];
+            dupl_workload.insert(std::make_pair(dupl_job_id, dupl_job_specs));
         }
     }
+    return dupl_workload;
 }
 
 
@@ -583,9 +589,11 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    std::cerr << "Duplicating workflow...";
-    duplicateJobs(wms->get_workload_spec(), duplications);
-    std::cerr << "The workflow has " << std::to_string(num_jobs * duplications) << " jobs in total " << wms->get_workload_spec().size() << std::endl;
+    /* Duplicate the workload */
+    std::cerr << "Duplicating workflow..." << std::endl;
+    workload_spec = duplicateJobs(wms->get_workload_spec(), duplications);
+    wms->set_workload_spec(workload_spec);
+    std::cerr << "The workflow now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
 
 
     /* Launch the simulation */

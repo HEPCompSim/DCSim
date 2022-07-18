@@ -33,8 +33,12 @@ public:
               //const double& hitrate,
               const std::string& outputdump_name);
 
-    std::map<std::string, JobSpecification>& get_workload_spec() {
-        return workload_spec;
+    std::map<std::string, JobSpecification> get_workload_spec() {
+        return this->workload_spec;
+    }
+
+    void set_workload_spec(std::map<std::string, JobSpecification> w) {
+        this->workload_spec = w;
     }
 
 
