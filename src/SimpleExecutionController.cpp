@@ -145,29 +145,29 @@ int SimpleExecutionController::main() {
         }
 
         // Create the file write action
-        auto fw_action = job->addFileWriteAction(
-            "file_write_" + job_name,
-            job_spec->outfile,
-            job_spec->outfile_destination
-        );
-        //TODO: Think of a determination of storage_service to hold output data
-        // auto fw_action = job->addCustomAction(
+        // auto fw_action = job->addFileWriteAction(
         //     "file_write_" + job_name,
-        //     job_spec->total_mem, 0,
-        //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-        //         // TODO: Which storage service should we write output on?
-        //         // TODO: Probably random selection is fine, or just a fixed
-        //         // TODO: one that's picked by the "user"?
-        //         // TODO: Write the file at once
-        //     },
-        //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-        //         WRENCH_INFO("Output file was successfully written!")
-        //         // Do nothing
-        //     }
+        //     job_spec->outfile,
+        //     job_spec->outfile_destination
         // );
+        // //TODO: Think of a determination of storage_service to hold output data
+        // // auto fw_action = job->addCustomAction(
+        // //     "file_write_" + job_name,
+        // //     job_spec->total_mem, 0,
+        // //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+        // //         // TODO: Which storage service should we write output on?
+        // //         // TODO: Probably random selection is fine, or just a fixed
+        // //         // TODO: one that's picked by the "user"?
+        // //         // TODO: Write the file at once
+        // //     },
+        // //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+        // //         WRENCH_INFO("Output file was successfully written!")
+        // //         // Do nothing
+        // //     }
+        // // );
 
-        // Add necessary dependencies
-        job->addActionDependency(run_action, fw_action);
+        // // Add necessary dependencies
+        // job->addActionDependency(run_action, fw_action);
 
         // Submit the job for execution!
         //TODO: generalize to arbitrary numbers of htcondor services
