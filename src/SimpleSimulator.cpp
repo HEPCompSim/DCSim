@@ -193,7 +193,6 @@ po::variables_map process_program_options(int argc, char** argv) {
  * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
  * @param average_outfile_size: expectation value of the output-file size (truncated gaussian) distribution
  * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
- * @param duplications: number of duplications of the workflow to feed into the simulation
  * 
  * @throw std::runtime_error
  */
@@ -203,8 +202,7 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         double average_flops, double sigma_flops,
         double average_memory, double sigma_memory,
         double average_infile_size, double sigma_infile_size,
-        double average_outfile_size, double sigma_outfile_size,
-        size_t duplications
+        double average_outfile_size, double sigma_outfile_size
 ) {
 
     // Map to store the workload specification
@@ -242,13 +240,26 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         double doutsize = outsize_dist(SimpleSimulator::gen);
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
-
-        for (size_t d=0; d < duplications; d++) {
-            workload["job_" + std::to_string(j + num_jobs * d)] = job_specification;
-        }
     }
     return workload;
 }
+
+/**
+ * @brief Method to duplicate the jobs of a workload
+ * 
+ * @param workload Workload containing jobs to duplicate
+ * @param duplications Number of duplications each job is duplicated
+ * @return std::map<std::string, JobSpecification> 
+ */
+void duplicateJobs(std::map<std::string, JobSpecification>& workload, size_t duplications) {
+    size_t num_jobs = workload.size();
+    for (size_t j = 0; j < num_jobs; j++) {
+        for (size_t d=0; d < duplications; d++) {
+            workload["job_" + std::to_string(j + num_jobs * d)] = workload["job_" + std::to_string(j)];
+        }
+    }
+}
+
 
 /**
  * @brief Identify demanded services on hosts to run based on configured "type" property tag
@@ -404,11 +415,10 @@ int main(int argc, char **argv) {
         average_flops, sigma_flops,
         average_memory,sigma_memory,
         average_infile_size, sigma_infile_size,
-        average_outfile_size, sigma_outfile_size,
-        duplications
+        average_outfile_size, sigma_outfile_size
     );
 
-    std::cerr << "The workflow has " << std::to_string(num_jobs * duplications) << " jobs" << std::endl;
+    std::cerr << "The workflow has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
 
 
     /* Read and parse the platform description file to instantiate a simulation platform */
@@ -572,6 +582,10 @@ int main(int argc, char **argv) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 0;
     }
+
+    std::cerr << "Duplicating workflow...";
+    duplicateJobs(wms->get_workload_spec(), duplications);
+    std::cerr << "The workflow has " << std::to_string(num_jobs * duplications) << " jobs in total " << wms->get_workload_spec().size() << std::endl;
 
 
     /* Launch the simulation */
