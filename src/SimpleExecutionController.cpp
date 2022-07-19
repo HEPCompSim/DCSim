@@ -145,11 +145,11 @@ int SimpleExecutionController::main() {
         }
 
         // Create the file write action
-        // auto fw_action = job->addFileWriteAction(
-        //     "file_write_" + job_name,
-        //     job_spec->outfile,
-        //     job_spec->outfile_destination
-        // );
+        auto fw_action = job->addFileWriteAction(
+            "file_write_" + job_name,
+            job_spec->outfile,
+            job_spec->outfile_destination
+        );
         // //TODO: Think of a determination of storage_service to hold output data
         // // auto fw_action = job->addCustomAction(
         // //     "file_write_" + job_name,
@@ -167,7 +167,7 @@ int SimpleExecutionController::main() {
         // // );
 
         // // Add necessary dependencies
-        // job->addActionDependency(run_action, fw_action);
+        job->addActionDependency(run_action, fw_action);
 
         // Submit the job for execution!
         //TODO: generalize to arbitrary numbers of htcondor services
