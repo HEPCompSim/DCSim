@@ -49,7 +49,6 @@ set(TEST_FILES
 
 # wrench library and dependencies
 find_library(WRENCH_LIBRARY NAMES wrench)
-find_library(PUGIXML_LIBRARY NAMES pugixml)
 find_library(GTEST_LIBRARY NAMES gtest)
 find_library(SimGrid_LIBRARY NAMES simgrid)
 
@@ -61,14 +60,12 @@ target_link_libraries(sgbatch-sim
                        ${WRENCH_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
-                       ${PUGIXML_LIBRARY}
                       -lzmq )
 else()
 target_link_libraries(sgbatch-sim
                        ${WRENCH_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
-                       ${PUGIXML_LIBRARY}
                       )
 endif()
 
