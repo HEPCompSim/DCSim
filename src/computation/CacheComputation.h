@@ -19,7 +19,7 @@ public:
 
     virtual ~CacheComputation() = default;
 
-    void determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor);
+    void determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor, bool cache_files);
 
     void operator () (std::shared_ptr<wrench::ActionExecutor> action_executor);
 

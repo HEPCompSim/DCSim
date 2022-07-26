@@ -28,6 +28,7 @@ namespace po = boost::program_options;
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
 std::mt19937 SimpleSimulator::gen(42);  // random number generator
 bool SimpleSimulator::use_blockstreaming = true;   // flag to chose between simulated job types: streaming or copy jobs
+bool SimpleSimulator::infile_caching_on = true; // flag to turn off/on the caching of job input-files
 bool SimpleSimulator::prefetching_on = true;   // flag to enable prefetching during streaming
 double SimpleSimulator::xrd_block_size = 1.*1000*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 // TODO: The initialized below is likely bogus (at compile time?)
@@ -114,6 +115,7 @@ po::variables_map process_program_options(int argc, char** argv) {
     size_t duplications = 1;
 
     bool no_blockstreaming = false;
+    bool no_caching = false;
     bool prefetch_off = false;
 
     double xrd_block_size = 1000.*1000*1000;
@@ -139,6 +141,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workflow to feed into the simulation")
 
         ("no-streaming", po::bool_switch()->default_value(no_blockstreaming), "switch to turn on/off block-wise streaming of input-files")
+        ("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")
         ("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")
 
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
@@ -190,7 +193,6 @@ po::variables_map process_program_options(int argc, char** argv) {
  * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
  * @param average_outfile_size: expectation value of the output-file size (truncated gaussian) distribution
  * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
- * @param duplications: number of duplications of the workflow to feed into the simulation
  * 
  * @throw std::runtime_error
  */
@@ -200,8 +202,7 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         double average_flops, double sigma_flops,
         double average_memory, double sigma_memory,
         double average_infile_size, double sigma_infile_size,
-        double average_outfile_size, double sigma_outfile_size,
-        size_t duplications
+        double average_outfile_size, double sigma_outfile_size
 ) {
 
     // Map to store the workload specification
@@ -240,12 +241,40 @@ std::map<std::string, JobSpecification> fill_streaming_workflow (
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
 
-        for (size_t d=0; d < duplications; d++) {
-            workload["job_" + std::to_string(j + num_jobs * d)] = job_specification;
-        }
+        workload["job_" + std::to_string(j)] = job_specification;
     }
     return workload;
 }
+
+/**
+ * @brief Method to duplicate the jobs of a workload
+ * 
+ * @param workload Workload containing jobs to duplicate
+ * @param duplications Number of duplications each job is duplicated
+ * @return std::map<std::string, JobSpecification> 
+ */
+std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
+    size_t num_jobs = workload.size();
+    std::map<std::string, JobSpecification> dupl_workload;
+    for (size_t j = 0; j < num_jobs; j++) {
+        for (size_t d=0; d < duplications; d++) {
+            std::string dupl_job_id = "job_" + std::to_string(j + num_jobs * d);
+            JobSpecification dupl_job_specs = workload["job_" + std::to_string(j)];
+            if (d > 0) {
+                // TODO: Check if this works as intended
+                dupl_job_specs.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j + num_jobs * d), dupl_job_specs.outfile->getSize());
+                // TODO: Think of a better way to copy the outfile destination
+                for (auto ss : grid_storage_services) {
+                    dupl_job_specs.outfile_destination = wrench::FileLocation::LOCATION(ss);
+                    break;
+                }
+            }
+            dupl_workload.insert(std::make_pair(dupl_job_id, dupl_job_specs));
+        }
+    }
+    return dupl_workload;
+}
+
 
 /**
  * @brief Identify demanded services on hosts to run based on configured "type" property tag
@@ -371,7 +400,10 @@ int main(int argc, char **argv) {
     // Flags to turn on/off blockwise streaming of input-files
     SimpleSimulator::use_blockstreaming = !(vm["no-streaming"].as<bool>());
 
-    // Flags to turn refetching for streaming of input-files
+    // Flags to turn on/off the caching of jobs' input-files
+    SimpleSimulator::infile_caching_on = !(vm["no-caching"].as<bool>());
+
+    // Flags to turn prefetching for streaming of input-files
     std::cerr << "Prefetching switch off?: " << vm["prefetch-off"].as<bool>() << std::endl;
     SimpleSimulator::prefetching_on = !(vm["prefetch-off"].as<bool>());
 
@@ -380,7 +412,7 @@ int main(int argc, char **argv) {
 
     // Choice of cache locality scope
     std::string scope_caches = vm["cache-scope"].as<cacheScope>().value;
-    bool rec_netzone_caches;
+    bool rec_netzone_caches = false;
     if (scope_caches.find("network") == std::string::npos) {
         SimpleSimulator::local_cache_scope = true;
     } else {
@@ -398,11 +430,10 @@ int main(int argc, char **argv) {
         average_flops, sigma_flops,
         average_memory,sigma_memory,
         average_infile_size, sigma_infile_size,
-        average_outfile_size, sigma_outfile_size,
-        duplications
+        average_outfile_size, sigma_outfile_size
     );
 
-    std::cerr << "The workflow has " << std::to_string(num_jobs * duplications) << " jobs" << std::endl;
+    std::cerr << "The workflow has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
 
 
     /* Read and parse the platform description file to instantiate a simulation platform */
@@ -566,6 +597,12 @@ int main(int argc, char **argv) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 0;
     }
+
+    /* Duplicate the workload */
+    std::cerr << "Duplicating workflow..." << std::endl;
+    auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
+    wms->set_workload_spec(new_workload_spec);
+    std::cerr << "The workflow now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
 
 
     /* Launch the simulation */
