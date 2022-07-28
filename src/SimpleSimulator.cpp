@@ -412,7 +412,7 @@ int main(int argc, char **argv) {
 
     // Choice of cache locality scope
     std::string scope_caches = vm["cache-scope"].as<cacheScope>().value;
-    bool rec_netzone_caches;
+    bool rec_netzone_caches = false;
     if (scope_caches.find("network") == std::string::npos) {
         SimpleSimulator::local_cache_scope = true;
     } else {
