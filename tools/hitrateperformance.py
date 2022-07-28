@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--scenario", 
     type=str,
-    choices=("copy", "simplifiedstream", "fullstream"),
+    choices=("copy", "simplifiedstream", "fullstream", "SGBatch_fullstream_1G", "SGBatch_fullstream_10G"),
     required=True,
     help="Choose a scenario, which is used in the according plotting label and file-name of the plot."
 )
@@ -53,7 +53,9 @@ suffix=args.suffix
 
 scenario_plotlabel_dict = {
     "copy": "Input-files copied",
-    "fullstream": "Block-streaming"
+    "fullstream": "Block-streaming",
+    "SGBatch_fullstream_10G": "SG-Batch 10G gateway",
+    "SGBatch_fullstream_1G": "SG-Batch 1G gateway",
 }
 
 
@@ -91,19 +93,20 @@ else:
     print("Couldn't find any files")
     exit(1)
 
+
 # plot the job-runtime dependence on hitrate
 fig, ax1 = plt.subplots()
 ax1.set_title(scenario_plotlabel_dict[scenario])
 
 ax1.set_xlabel('hitrate', loc='right')
-ax1.set_ylabel('jobtime / s', color='black')
+ax1.set_ylabel('jobtime / min', color='black')
 ax1.set_xlim([-0.05,1.05])
-# ax1.set_ylim([20,35])
+# ax1.set_ylim([20,65])
 
 # ax1 = df.plot.scatter(x='hitrate', y='walltime', c=)
 
 scatter = ax1.scatter(
-    df['hitrate'], (df['job.end']-df['job.start']), 
+    df['hitrate'], ((df['job.end']-df['job.start'])/60), 
     c=df['machine.name'].astype('category').cat.codes, 
     marker='x'
 )
@@ -112,21 +115,22 @@ scatter = ax1.scatter(
 ax1.legend(
     handles=scatter.legend_elements()[0], 
     labels=machines,
-    title="machines"
+    title="host"
 )
 
-fig.savefig(f"hitratescaling_{scenario}jobs{suffix}.pdf")
+fig.savefig(f"hitrateWalltime_{scenario}jobs{suffix}.pdf")
+fig.savefig(f"hitrateWalltime_{scenario}jobs{suffix}.png")
 
 
 fig2, ax2 = plt.subplots()
 ax2.set_title(scenario_plotlabel_dict[scenario])
 
 ax2.set_xlabel('hitrate', loc='right')
-ax2.set_ylabel('transfer time / s', color='black')
+ax2.set_ylabel('transfer time / min', color='black')
 ax2.set_xlim([-0.05,1.05])
 
 scatter = ax2.scatter(
-    df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime'])), 
+    df['hitrate'], ((df['infiles.transfertime']+df['outfiles.transfertime'])/60), 
     c=df['machine.name'].astype('category').cat.codes, 
     marker='x'
 )
@@ -134,7 +138,32 @@ scatter = ax2.scatter(
 ax2.legend(
     handles=scatter.legend_elements()[0], 
     labels=machines,
-    title="machines"
+    title="host"
 )
 
-fig2.savefig(f"hitratetransfer_{scenario}jobs{suffix}.pdf")
+fig2.savefig(f"hitrateIOtime_{scenario}jobs{suffix}.pdf")
+fig2.savefig(f"hitrateIOtime_{scenario}jobs{suffix}.png")
+
+
+fig3, ax3 = plt.subplots()
+ax3.set_title(scenario_plotlabel_dict[scenario])
+
+ax3.set_xlabel('hitrate', loc='right')
+ax3.set_ylabel('CPU eff.', color='black')
+ax3.set_xlim([-0.05,1.05])
+ax3.set_ylim([0,1.05])
+
+scatter = ax3.scatter(
+    df['hitrate'], (df['job.computetime']/(df['job.end']-df['job.start'])), 
+    c=df['machine.name'].astype('category').cat.codes, 
+    marker='x'
+)
+
+ax3.legend(
+    handles=scatter.legend_elements()[0], 
+    labels=machines,
+    title="host"
+)
+
+fig3.savefig(f"hitrateCPUeff_{scenario}jobs{suffix}.pdf")
+fig3.savefig(f"hitrateCPUeff_{scenario}jobs{suffix}.png")

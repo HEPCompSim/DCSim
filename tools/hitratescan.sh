@@ -18,19 +18,19 @@ action() {
     local PLATFORM_DIR="$parent/data/platform-files"
     local PLATFORM="sgbatch_validation.xml"
 
-    local NJOBS=48
+    local NJOBS=1
     local NINFILES=20 #10
-    local AVGINSIZE=$(bc -l <<< "855437900 / 4") #1460017780.65 #2920035561.3
-    local AVGOUTSIZE=16000000
-    local FLOPS=2750000000000
-    local MEM=2400000000
+    local AVGINSIZE=$(bc -l <<< "8554379000 / ${NINFILES}")
+    local AVGOUTSIZE=0
+    local FLOPS=1480000
+    local MEM=2400
     local SIGMA_FLOPS=0
     local SIGMA_MEM=0
     local SIGMA_INSIZE=0
     local SIGMA_OUTSIZE=0
-    local DUPLICATIONS=1
+    local DUPLICATIONS=48
 
-    local XRD_BLOCKSIZE=200000000
+    local XRD_BLOCKSIZE=100000000
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
@@ -55,7 +55,12 @@ action() {
             --duplications $DUPLICATIONS \
             --xrd-blocksize $XRD_BLOCKSIZE \
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv \
-            --cfg=network/loopback-bw:100000000000000
+            --cfg=network/loopback-bw:100000000000000 \
+            --no-caching #\
+            # --no-streaming \
+            # --wrench-full-log
+            # --log=simple_wms.threshold=debug \
+            # --log=cache_computation.threshold=debug
     done
 }
 
