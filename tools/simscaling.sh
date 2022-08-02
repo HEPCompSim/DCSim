@@ -20,7 +20,6 @@ do
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} \
         --hitrate 0.0 \
         --output-file /dev/null \
-        --no-streaming \
     & TEST_PID=$!
     echo $TEST_PID
 
@@ -33,4 +32,6 @@ do
 
     wait $TEST_PID
     kill -9 ${MONITOR_PID}
+
+    sysctl vm.drop_caches=3
 done
