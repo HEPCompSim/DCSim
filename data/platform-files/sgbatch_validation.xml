@@ -7,7 +7,7 @@
 
     <zone id="global" routing="Full">
         <zone id="ETP" routing="Floyd">
-            <host id="sg01.etp.kit.edu" speed="1010f" core="24">
+            <host id="sg01.etp.kit.edu" speed="1970Mf" core="24">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="64GiB"/>
                 <disk id="ssd_cache1" read_bw="1.0GBps" write_bw="1.0GBps">
@@ -23,7 +23,7 @@
                     <prop id="mount" value="/"/>
                 </disk>
             </host>
-            <host id="sg03.etp.kit.edu" speed="1020f" core="12">
+            <host id="sg03.etp.kit.edu" speed="1990Mf" core="12">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="32GiB"/>
                 <disk id="ssd_cache1" read_bw="1.0GBps" write_bw="1.0GBps">
@@ -31,7 +31,7 @@
                     <prop id="mount" value="/"/>
                 </disk>
             </host>
-            <host id="sg04.etp.kit.edu" speed="1000f" core="12">
+            <host id="sg04.etp.kit.edu" speed="1950Mf" core="12">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="32GiB"/>
                 <disk id="ssd_cache1" read_bw="1.0GBps" write_bw="1.0GBps">
