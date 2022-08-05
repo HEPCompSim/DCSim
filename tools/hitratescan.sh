@@ -22,7 +22,7 @@ action() {
     local NINFILES=20 #10
     local AVGINSIZE=$(bc -l <<< "8554379000 / ${NINFILES}")
     local AVGOUTSIZE=0
-    local FLOPS=$(bc -l <<< "1.95*1480*1000*1000")
+    local FLOPS=$(bc -l <<< "1.95*1480*1000*1000*1000")
     local MEM=2400
     local SIGMA_FLOPS=0
     local SIGMA_MEM=0
