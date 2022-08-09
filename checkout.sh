@@ -29,7 +29,8 @@ fi
 pushd pugixml-1.11
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake ..
+# cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 popd
 
@@ -43,7 +44,8 @@ fi
 pushd json-3.10.4
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake ..
+# cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 popd
 
@@ -57,7 +59,8 @@ fi
 pushd googletest-release-1.11.0
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake ..
+# cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 popd
 
@@ -71,7 +74,8 @@ fi
 pushd simgrid-v3.31
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake ..
+# cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 popd
 
@@ -79,9 +83,11 @@ popd
 echo "Installing WRENCH..."
 git clone git@github.com:wrench-project/wrench.git
 pushd wrench
+git checkout d8d4b45e8b41fadc6270a1a0bc7f2a6dbc97e1bf
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake ..
+# cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 # make -j 6 examples; sudo make install examples # needed additionally, since not done by default
 popd
@@ -91,6 +97,7 @@ echo "Installing the DistCacheSim simulator..."
 pushd $this_dir
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake ..
+# cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j 6; sudo make install
 popd
