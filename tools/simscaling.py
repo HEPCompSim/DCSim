@@ -25,7 +25,9 @@ scenario_plotlabel_dict = {
     'nodump': "without JSON dump",
     'private': "private improvements",
     "hacky": "final hacky-WRENCH",
-    "wrench2": "WRENCH 2.0"
+    "wrench2": "WRENCH 2.0",
+    "SGbatch": "SG-batch",
+    "ETPbatch": "ETP-batch"
 }
 
 
@@ -52,7 +54,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--scenario", 
     type=str,
-    choices=("withdump", "nodump", "private", "hacky", "wrench2"),
+    choices=scenario_plotlabel_dict.keys(),
     required=True,
     help="Choose a scenario, which sets the according plotting label and filename of the plot."
 )

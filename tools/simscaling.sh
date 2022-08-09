@@ -8,7 +8,7 @@ NJOBS=60
 NINFILES=10
 AVGINSIZE=3600000000
 
-SCENARIO="test"
+SCENARIO="ETPbatch"
 
 if [ ! -d "tmp/monitor/$SCENARIO" ]; then
     mkdir -p tmp/monitor/$SCENARIO
@@ -16,7 +16,7 @@ fi
 
 for NJOBS in 10 20 50 100 200 500 1000 1200 1500 2000 2500 3000 
 do
-    sgbatch-sim --platform data/platform-files/host_scaletest.xml \
+    sgbatch-sim --platform data/platform-files/ETPbatch.xml \
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} \
         --hitrate 0.0 \
         --output-file /dev/null \
