@@ -21,6 +21,8 @@ public:
     double total_flops;
     // Memory consumption of the job
     double total_mem;
+    // Usage of block streaming
+    bool use_blockstreaming;
 
 };
 #endif //S_JOB_SPECIFICATION_H

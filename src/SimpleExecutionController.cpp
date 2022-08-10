@@ -112,7 +112,7 @@ int SimpleExecutionController::main() {
 
         // Combined read-input-file-and-run-computation actions
         std::shared_ptr<MonitorAction> run_action;
-        if (! SimpleSimulator::use_blockstreaming) {
+        if (! job_spec->use_blockstreaming) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
