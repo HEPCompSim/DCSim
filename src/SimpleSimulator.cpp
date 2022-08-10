@@ -478,7 +478,7 @@ int main(int argc, char **argv) {
                 wf_json["use_blockstreaming"], std::string(wf_json["name"]) + "_"
             );
             workload_spec.insert(workflow_spec.begin(), workflow_spec.end());
-            std::cerr << "The workflow " << std::string(wf_json["name"]) << " has " << std::string(wf_json["num_jobs"]) << " unique jobs" << std::endl;
+            std::cerr << "The workflow " << std::string(wf_json["name"]) << " has " << wf_json["num_jobs"] << " unique jobs" << std::endl;
         }
     }
 
