@@ -459,7 +459,9 @@ int main(int argc, char **argv) {
 
             // Checking json syntax to match workflow spec
             for (auto &wf_key : workflow_keys){
-                assert((wf_confpath + " must contain " + wf_key + " as information.", wf_json.contains(wf_key)));
+                if(!wf_json.contains(wf_key)){
+                    throw std::invalid_argument(wf_confpath + " must contain " + wf_key + " as information.");
+                }
             }
             auto workflow_spec = fill_workflow(
                 wf_json["num_jobs"], wf_json["infiles_per_job"],
