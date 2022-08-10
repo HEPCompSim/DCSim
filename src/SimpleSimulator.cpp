@@ -135,7 +135,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("platform,p", po::value<std::string>()->value_name("<platform>")->required(), "platform description file, written in XML following the SimGrid-defined DTD")
         ("hitrate,H", po::value<double>()->default_value(hitrate), "initial fraction of staged input-files on caches at simulation start")
 
-        ("workflow-configurations", po::value<std::vector<std::string>>()->multitoken(), "List of paths to .json files with workflow configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")
+        ("workflow-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with workflow configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")
 
         ("njobs,n", po::value<size_t>()->required(), "number of jobs to simulate")
         ("flops", po::value<double>()->default_value(average_flops), "amount of floating point operations jobs need to process")
