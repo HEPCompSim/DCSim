@@ -12,12 +12,15 @@
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
 
+#include "util/Enums.h"
+
 #include <iostream>
 #include <fstream>
 
 #include <boost/program_options.hpp>
-#include <boost/algorithm/string/replace.hpp>
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 
 namespace po = boost::program_options;
 
@@ -34,7 +37,7 @@ const std::vector<std::string> workflow_keys = {
         "average_memory", "sigma_memory",
         "average_infile_size", "sigma_infile_size",
         "average_outfile_size", "sigma_outfile_size",
-        "use_blockstreaming"
+        "workflow_type"
     };
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
 std::mt19937 SimpleSimulator::gen(42);  // random number generator
@@ -124,7 +127,6 @@ po::variables_map process_program_options(int argc, char** argv) {
 
     size_t duplications = 1;
 
-    bool no_blockstreaming = false;
     bool no_caching = false;
     bool prefetch_off = false;
 
@@ -152,7 +154,7 @@ po::variables_map process_program_options(int argc, char** argv) {
 
         ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workflow to feed into the simulation")
 
-        ("no-streaming", po::bool_switch()->default_value(no_blockstreaming), "switch to turn on/off block-wise streaming of input-files")
+        ("workflow-type", po::value<std::string>()->default_value("streaming"), "switch to define the type of the workflow. Please choose from 'calculation', 'streaming', or 'copy'")
         ("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")
         ("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")
 
@@ -205,7 +207,7 @@ po::variables_map process_program_options(int argc, char** argv) {
  * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
  * @param average_outfile_size: expectation value of the output-file size (truncated gaussian) distribution
  * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
- * @param use_blockstreaming: flag to specifiy, whether the job should run with streaming or not
+ * @param workflow_type: flag to specifiy, whether the job should run with streaming or not
  * @param jobname_suffix: part of job name to distinguish between different workflows
  * 
  * @throw std::runtime_error
@@ -217,7 +219,7 @@ std::map<std::string, JobSpecification> fill_workflow (
         double average_memory, double sigma_memory,
         double average_infile_size, double sigma_infile_size,
         double average_outfile_size, double sigma_outfile_size,
-        bool use_blockstreaming, std::string jobname_suffix
+        WorkflowType workflow_type, std::string jobname_suffix
 ) {
 
     // Map to store the workload specification
@@ -260,7 +262,7 @@ std::map<std::string, JobSpecification> fill_workflow (
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + jobname_suffix + potential_separator + std::to_string(j), doutsize);
 
-        job_specification.use_blockstreaming = use_blockstreaming;
+        job_specification.workflow_type = workflow_type;
 
         workload["job_" + jobname_suffix + potential_separator + std::to_string(j)] = job_specification;
     }
@@ -454,14 +456,16 @@ int main(int argc, char **argv) {
 
     std::map<std::string, JobSpecification> workload_spec = {};
 
+
     if(workflow_configurations.size() == 0){
+        std::string workflow_type_lower = boost::to_lower_copy(vm["workflow-type"].as<std::string>());
         workload_spec = fill_workflow(
             num_jobs, infiles_per_job,
             average_flops, sigma_flops,
             average_memory,sigma_memory,
             average_infile_size, sigma_infile_size,
             average_outfile_size, sigma_outfile_size,
-            !(vm["no-streaming"].as<bool>()), ""
+            get_workflow_type(workflow_type_lower), ""
         );
 
         std::cerr << "The workflow has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
@@ -483,13 +487,14 @@ int main(int argc, char **argv) {
                     return -1;
                 }
             }
+            std::string workflow_type_lower = boost::to_lower_copy(std::string(wf_json["workflow_type"]));
             auto workflow_spec = fill_workflow(
                 wf_json["num_jobs"], wf_json["infiles_per_job"],
                 wf_json["average_flops"], wf_json["sigma_flops"],
                 wf_json["average_memory"], wf_json["sigma_memory"],
                 wf_json["average_infile_size"], wf_json["sigma_infile_size"],
                 wf_json["average_outfile_size"], wf_json["sigma_outfile_size"],
-                wf_json["use_blockstreaming"], wf_json["name"]
+                get_workflow_type(workflow_type_lower), wf_json["name"]
             );
             workload_spec.insert(workflow_spec.begin(), workflow_spec.end());
             std::cerr << "The workflow " << std::string(wf_json["name"]) << " has " << wf_json["num_jobs"] << " unique jobs" << std::endl;

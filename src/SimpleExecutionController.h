@@ -17,6 +17,8 @@
 #include "JobSpecification.h"
 #include "LRU_FileList.h"
 
+#include "util/Enums.h"
+
 class Simulation;
 
 class SimpleExecutionController : public wrench::ExecutionController {

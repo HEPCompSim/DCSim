@@ -112,7 +112,7 @@ int SimpleExecutionController::main() {
 
         // Combined read-input-file-and-run-computation actions
         std::shared_ptr<MonitorAction> run_action;
-        if (! job_spec->use_blockstreaming) {
+        if (job_spec->workflow_type == WorkflowType::Copy) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
@@ -127,7 +127,8 @@ int SimpleExecutionController::main() {
                 }
             );
             job->addCustomAction(run_action);
-        } else {
+        }
+        else if (job_spec->workflow_type == WorkflowType::Streaming){
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
                 new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops, SimpleSimulator::prefetching_on)
             );
