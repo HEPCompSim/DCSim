@@ -112,6 +112,7 @@ int SimpleExecutionController::main() {
 
         // Combined read-input-file-and-run-computation actions
         std::shared_ptr<MonitorAction> run_action;
+        std::shared_ptr<wrench::ComputeAction> compute_action;
         if (job_spec->workflow_type == WorkflowType::Copy) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
@@ -144,6 +145,10 @@ int SimpleExecutionController::main() {
             );
             job->addCustomAction(run_action);
         }
+        else if (job_spec->workflow_type == WorkflowType::Calculation) {
+            // TODO: figure out what is the best value for the ability tp parallelize HEP workflows on a CPU. Setting currently to 1.0.
+            compute_action = job->addComputeAction("calculation_" + job_name,job_spec->total_flops, job_spec->total_mem, 1, 1, wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
+        }
 
         // Create the file write action
         auto fw_action = job->addFileWriteAction(
@@ -168,7 +173,12 @@ int SimpleExecutionController::main() {
         // // );
 
         // // Add necessary dependencies
-        job->addActionDependency(run_action, fw_action);
+        if (job_spec->workflow_type == WorkflowType::Streaming || job_spec->workflow_type == WorkflowType::Copy) {
+            job->addActionDependency(run_action, fw_action);
+        }
+        else if (job_spec->workflow_type == WorkflowType::Calculation) {
+            job->addActionDependency(compute_action, fw_action);
+        }
 
         // Submit the job for execution!
         //TODO: generalize to arbitrary numbers of htcondor services
