@@ -6,6 +6,7 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(streamed_computation, "Log category for StreamedCom
 #include "MonitorAction.h"
 
 
+
 /**
  * @brief Construct a new StreamedComputation::StreamedComputation object
  * to be used as a lambda within a compute action, which shall take caching of input-files into account.
