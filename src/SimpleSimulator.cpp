@@ -605,9 +605,14 @@ int main(int argc, char **argv) {
         execution_controllers.insert(wms);
     }
 
+    /* Duplicate the workload */
+    auto wms = *execution_controllers.begin();
+    std::cerr << "Duplicating workload..." << std::endl;
+    auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
+    wms->set_workload_spec(new_workload_spec);
+    std::cerr << "The workload now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
 
     /* Instantiate inputfiles and set outfile destinations*/
-    auto wms = *execution_controllers.begin();
     std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
     try {
         for (auto &job_name_spec: wms->get_workload_spec()) {
@@ -654,13 +659,6 @@ int main(int argc, char **argv) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 0;
     }
-
-    /* Duplicate the workload */
-    std::cerr << "Duplicating workload..." << std::endl;
-    auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
-    wms->set_workload_spec(new_workload_spec);
-    std::cerr << "The workload now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
-
 
     /* Launch the simulation */
     std::cerr << "Launching the Simulation..." << std::endl;
