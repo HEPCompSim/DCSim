@@ -310,6 +310,21 @@ void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_pt
                 );
             }
         }
+        else if (auto compute_action = std::dynamic_pointer_cast<wrench::ComputeAction>(action)) {
+            if (end_date >= start_date) {
+                if(incr_compute_time == DefaultValues::UndefinedDouble){
+                    incr_compute_time = end_date - start_date;
+                }
+                else {
+                    incr_compute_time += end_date - start_date;
+                }
+            }
+            else {
+                throw std::runtime_error(
+                    "Computation for job " + event->job->getName() + " finished before start!"
+                );
+            }
+        }
     }
 
     // Figure out file sizes
