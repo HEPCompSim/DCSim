@@ -222,6 +222,10 @@ std::map<std::string, JobSpecification> fill_workflow (
 
     // Map to store the workload specification
     std::map<std::string, JobSpecification> workload;
+    std::string potential_separator = "_";
+    if(jobname_suffix == ""){
+        potential_separator = "";
+    }
 
     // Initialize random number generators
     std::normal_distribution<> flops_dist(average_flops, sigma_flops);
@@ -248,17 +252,17 @@ std::map<std::string, JobSpecification> fill_workflow (
             // Sample inputfile sizes
             double dinsize = insize_dist(SimpleSimulator::gen);
             while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(SimpleSimulator::gen);
-            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + jobname_suffix + "_" + std::to_string(j) + "_" + std::to_string(f), dinsize));
+            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + jobname_suffix + potential_separator + std::to_string(j) + "_" + std::to_string(f), dinsize));
         }
 
         // Sample outfile sizes
         double doutsize = outsize_dist(SimpleSimulator::gen);
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
-        job_specification.outfile = wrench::Simulation::addFile("outfile_" + jobname_suffix + "_" + std::to_string(j), doutsize);
+        job_specification.outfile = wrench::Simulation::addFile("outfile_" + jobname_suffix + potential_separator + std::to_string(j), doutsize);
 
         job_specification.use_blockstreaming = use_blockstreaming;
 
-        workload["job_" + jobname_suffix + "_" + std::to_string(j)] = job_specification;
+        workload["job_" + jobname_suffix + potential_separator + std::to_string(j)] = job_specification;
     }
     return workload;
 }
