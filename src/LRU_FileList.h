@@ -41,6 +41,16 @@ public:
         return file;
     }
 
+    /**
+     * @brief Checks whether a file is in the LRU list
+     * @param file : a data file
+     * @return true if the file is there, false otherwise
+     */
+    bool hasFile(std::shared_ptr<wrench::DataFile> file) {
+        return (this->indexed_files.find(file) != this->indexed_files.end());
+    }
+
+
 private:
     // File collection mapped to index
     std::map<std::shared_ptr<wrench::DataFile>, ssize_t> indexed_files;

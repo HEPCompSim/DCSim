@@ -5,6 +5,9 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputati
 #include "CacheComputation.h"
 #include "../MonitorAction.h"
 
+//#define SIMULATE_FILE_LOOKUP_OPERATION 1
+
+
 /**
  * @brief Construct a new CacheComputation::CacheComputation object
  * to be used as a lambda within a compute action, which shall take caching of input-files into account.
@@ -65,17 +68,19 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         WRENCH_DEBUG("Couldn't find a reachable cache");
     }
     
-
-    // TODO: right now, there are loopkupFile() calls, which simulate overhead. Could be replaced
-    // TODO: by a lookup of the SimpleExecutionController::global_file_map data structure in case
-    // TODO: simulating that overhead is not desired/necessary.Perhaps an option of the simulator?
+    
     // For each file, identify where to read it from and/or deal with cache updates, etc.
     for (auto const &f : this->files) {
         // find a source providing the required file
         std::shared_ptr<wrench::StorageService> source_ss;
         // See whether the file is already available in a "reachable" cache storage service
         for (auto const &ss : matched_storage_services) {
-            if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
+#ifdef SIMULATE_FILE_LOOKUP_OPERATION
+            bool has_file = ss->lookupFile(f, wrench::FileLocation::LOCATION(ss));
+#else
+            bool has_file = SimpleSimulator::global_file_map[ss].hasFile(f);
+#endif
+            if (has_file) {
                 source_ss = ss;
                 WRENCH_DEBUG("Found file %s with size %.2f in cache %s", f->getID().c_str(), f->getSize(), source_ss->getHostname().c_str());
                 cached_data_size += f->getSize();
@@ -91,7 +96,12 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         // If not, then we have to copy the file from some GRID source to some reachable cache storage service
         // TODO: Find the optimal GRID source, whatever that means (right now it's whichever one works first)
         for (auto const &ss : this->grid_storage_services) {
-            if (ss->lookupFile(f, wrench::FileLocation::LOCATION(ss))) {
+#ifdef SIMULATE_FILE_LOOKUP_OPERATION
+            bool has_file = ss->lookupFile(f, wrench::FileLocation::LOCATION(ss));
+#else
+            bool has_file = SimpleSimulator::global_file_map[ss].hasFile(f);
+#endif
+            if (has_file) {
                 source_ss = ss;
                 remote_data_size += f->getSize();
                 break;
