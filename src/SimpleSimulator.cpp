@@ -16,6 +16,8 @@
 #include <fstream>
 
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/regex.hpp>
 
 namespace po = boost::program_options;
 
@@ -246,17 +248,17 @@ std::map<std::string, JobSpecification> fill_workflow (
             // Sample inputfile sizes
             double dinsize = insize_dist(SimpleSimulator::gen);
             while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(SimpleSimulator::gen);
-            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + std::to_string(j) + "_" + std::to_string(f), dinsize));
+            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + jobname_suffix + "_" + std::to_string(j) + "_" + std::to_string(f), dinsize));
         }
 
         // Sample outfile sizes
         double doutsize = outsize_dist(SimpleSimulator::gen);
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
-        job_specification.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j), doutsize);
+        job_specification.outfile = wrench::Simulation::addFile("outfile_" + jobname_suffix + "_" + std::to_string(j), doutsize);
 
         job_specification.use_blockstreaming = use_blockstreaming;
 
-        workload["job_" + jobname_suffix + std::to_string(j)] = job_specification;
+        workload["job_" + jobname_suffix + "_" + std::to_string(j)] = job_specification;
     }
     return workload;
 }
@@ -271,13 +273,21 @@ std::map<std::string, JobSpecification> fill_workflow (
 std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
     size_t num_jobs = workload.size();
     std::map<std::string, JobSpecification> dupl_workload;
-    for (size_t j = 0; j < num_jobs; j++) {
+    for (auto & job_spec: workload) {
+
+        boost::smatch job_index_matches;
+        boost::regex job_index_expression{"\\d+"};
+        boost::regex_search(job_spec.first, job_index_matches,  job_index_expression);
         for (size_t d=0; d < duplications; d++) {
-            std::string dupl_job_id = "job_" + std::to_string(j + num_jobs * d);
-            JobSpecification dupl_job_specs = workload["job_" + std::to_string(j)];
+            size_t dup_index;
+            std::stringstream job_index_sstream(job_index_matches[job_index_matches.size()-1]);
+            job_index_sstream >> dup_index;
+            dup_index += num_jobs * d;
+            std::string dupl_job_id = boost::replace_last_copy(job_spec.first, job_index_matches[job_index_matches.size()-1], std::to_string(dup_index));
+            JobSpecification dupl_job_specs = job_spec.second;
             if (d > 0) {
                 // TODO: Check if this works as intended
-                dupl_job_specs.outfile = wrench::Simulation::addFile("outfile_" + std::to_string(j + num_jobs * d), dupl_job_specs.outfile->getSize());
+                dupl_job_specs.outfile = wrench::Simulation::addFile(boost::replace_last_copy(dupl_job_specs.outfile->getID(), job_index_matches[job_index_matches.size()-1], std::to_string(dup_index)), dupl_job_specs.outfile->getSize());
                 // TODO: Think of a better way to copy the outfile destination
                 for (auto ss : grid_storage_services) {
                     dupl_job_specs.outfile_destination = wrench::FileLocation::LOCATION(ss);
@@ -475,7 +485,7 @@ int main(int argc, char **argv) {
                 wf_json["average_memory"], wf_json["sigma_memory"],
                 wf_json["average_infile_size"], wf_json["sigma_infile_size"],
                 wf_json["average_outfile_size"], wf_json["sigma_outfile_size"],
-                wf_json["use_blockstreaming"], std::string(wf_json["name"]) + "_"
+                wf_json["use_blockstreaming"], wf_json["name"]
             );
             workload_spec.insert(workflow_spec.begin(), workflow_spec.end());
             std::cerr << "The workflow " << std::string(wf_json["name"]) << " has " << wf_json["num_jobs"] << " unique jobs" << std::endl;
@@ -646,10 +656,10 @@ int main(int argc, char **argv) {
     }
 
     /* Duplicate the workload */
-    std::cerr << "Duplicating workflow..." << std::endl;
+    std::cerr << "Duplicating workload..." << std::endl;
     auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
     wms->set_workload_spec(new_workload_spec);
-    std::cerr << "The workflow now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
+    std::cerr << "The workload now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
 
 
     /* Launch the simulation */
