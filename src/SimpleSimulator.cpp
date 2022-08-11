@@ -139,7 +139,7 @@ po::variables_map process_program_options(int argc, char** argv) {
 
         ("workflow-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with workflow configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")
 
-        ("njobs,n", po::value<size_t>()->required(), "number of jobs to simulate")
+        ("njobs,n", po::value<size_t>()->default_value(60), "number of jobs to simulate")
         ("flops", po::value<double>()->default_value(average_flops), "amount of floating point operations jobs need to process")
         ("sigma-flops", po::value<double>()->default_value(sigma_flops), "jobs' distribution spread in FLOPS")
         ("mem,m", po::value<double>()->default_value(average_memory), "average size of memory needed for jobs to run")
