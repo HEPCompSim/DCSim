@@ -27,6 +27,7 @@ set(SOURCE_FILES
         src/MonitorAction.h
         src/MonitorAction.cpp
         src/util/DefaultValues.h
+        src/util/Enums.h
         src/computation/CacheComputation.h
         src/computation/CacheComputation.cpp
         src/computation/StreamedComputation.h
@@ -40,6 +41,7 @@ set(TEST_FILES
         src/JobSpecification.h
         src/MonitorAction.h
         src/util/DefaultValues.h
+        src/util/Enums.h
         src/computation/CacheComputation.h
         src/computation/StreamedComputation.h
         src/computation/CopyComputation.h
