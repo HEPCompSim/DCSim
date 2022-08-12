@@ -35,7 +35,7 @@ def converttime(df: pd.DataFrame, a: str, b: str):
     return df[a].astype(int)*60 + df[b].astype(int)
 
 def timeexp(x, m, t, b, c):
-    return m * np.exp(- t * x + c) + b
+    return m * np.exp(t * x + c) + b
 
 def timep1(x, m, b):
     return m * x + b
@@ -63,6 +63,11 @@ parser.add_argument(
     nargs='+',
     help="Files containing monitoring information about the simulation run, produced by `ps -aux`.\
         Each file produces a single point in the plot for memory and runtime respectively."
+)
+parser.add_argument(
+    "--extrapolate",
+    action='store_true',
+    help="Flag to enable exponential, linear, and quadratic extapolations for runtime & memory."
 )
 
 
@@ -136,62 +141,74 @@ ax.legend(h1+h2, l1+l2, loc=2)
 
 njobs = np.linspace(runtimesdf['NJobs'].iloc[0], runtimesdf['NJobs'].iloc[-1], 1000)
 
-print("RUNTIME EXTRAPOLATIONS for 100k jobs:")
-start_params = (0.01, 0.01, 0.01, 0.01)
-params, cv = scipy.optimize.curve_fit(timeexp, runtimesdf['NJobs'], runtimesdf['TIME']/60, start_params)
-m, t, b, c = params
-if np.all(np.isfinite(cv)):
-    #ax.plot(njobs, timeexp(njobs, m, t, b, c), linestyle='-', color='black', label='runtime extrapolation')
-    print(f"\tExponential: {timeexp(100000, m, t, b, c)} min = {timeexp(100000, m, t, b, c)/60.} h = {timeexp(100000, m, t, b, c)/60./24.} d")
-    print(f"\tfunction: m * exp(- t * x + c) + b;    m, t, b, c = {params}")
-else:
-    print(f"\tExponential fit failed. Please check initial parameters.")
-print("")
 
-start_params = (0.01, 0.01)
-params, cv = scipy.optimize.curve_fit(timep1, runtimesdf['NJobs'], runtimesdf['TIME']/60, start_params)
-m, b = params
-if np.all(np.isfinite(cv)):
-    #ax.plot(njobs, timep1(njobs, m, b), linestyle='-', color='black', label='runtime extrapolation')
-    print(f"\tLinear: {timep1(100000, m, b)} min = {timep1(100000, m, b)/60.} h = {timep1(100000, m, b)/60./24.} d")
-    print(f"\tfunction: m * x + b;    m, b = {params}")
-else:
-    print(f"\tLinear fit failed. Please check initial parameters.")
-print("")
+if args.extrapolate:
+    print("RUNTIME EXTRAPOLATIONS for 100k jobs:")
+    start_params = (0.0, 0.0, 0.0, 0.0)
+    params, cv = scipy.optimize.curve_fit(timeexp, runtimesdf['NJobs'], runtimesdf['TIME']/60, start_params)
+    m, t, b, c = params
+    if np.all(np.isfinite(cv)):
+        ax.plot(njobs, timeexp(njobs, m, t, b, c), linestyle='-', color='blue', label='runtime extrapolation')
+        print(f"\tExponential: {timeexp(100000, m, t, b, c)} min = {timeexp(100000, m, t, b, c)/60.} h = {timeexp(100000, m, t, b, c)/60./24.} d")
+        print(f"\tfunction: m * exp(t * x + c) + b;    m, t, b, c = {params}")
+    else:
+        print(f"\tExponential fit failed. Please check initial parameters.")
+    print("")
 
-start_params = (0.01, 0.01, 0.01)
-params, cv = scipy.optimize.curve_fit(timep2, runtimesdf['NJobs'], runtimesdf['TIME']/60, start_params)
-m, m2, b = params
-if np.all(np.isfinite(cv)):
-    #ax.plot(njobs, timep2(njobs, m, m2, b), linestyle='-', color='black', label='runtime extrapolation')
-    print(f"\tQuadratic: {timep2(100000, m, m2, b)} min = {timep2(100000, m, m2, b)/60.} h = {timep2(100000, m, m2, b)/60./24.} d")
-    print(f"\tfunction: m * x + m2 * x**2 + b;    m, m2, b = {params}")
-else:
-    print(f"\tQuadratic fit failed. Please check initial parameters.")
-print("")
+    start_params = (0.01, 0.01)
+    params, cv = scipy.optimize.curve_fit(timep1, runtimesdf['NJobs'], runtimesdf['TIME']/60, start_params)
+    m, b = params
+    if np.all(np.isfinite(cv)):
+        ax.plot(njobs, timep1(njobs, m, b), linestyle='-', color='green', label='runtime extrapolation')
+        print(f"\tLinear: {timep1(100000, m, b)} min = {timep1(100000, m, b)/60.} h = {timep1(100000, m, b)/60./24.} d")
+        print(f"\tfunction: m * x + b;    m, b = {params}")
+    else:
+        print(f"\tLinear fit failed. Please check initial parameters.")
+    print("")
 
-print("MEMORY EXTRAPOLATION for 100k jobs:")
-start_params = (0.01, 0.01)
-params, cv = scipy.optimize.curve_fit(timep1, memorydf['NJobs'], memorydf['RSS'], start_params)
-m, b = params
-if np.all(np.isfinite(cv)):
-    #ax.plot(njobs, timep1(njobs, m, b), linestyle='-', color='black', label='runtime extrapolation')
-    print(f"\tLinear: {timep1(100000, m, b)} GB")
-    print(f"\tfunction: m * x + b;    m, b = {params}")
-else:
-    print(f"\tLinear fit failed. Please check initial parameters.")
-print("")
+    start_params = (0.01, 0.01, 0.01)
+    params, cv = scipy.optimize.curve_fit(timep2, runtimesdf['NJobs'], runtimesdf['TIME']/60, start_params)
+    m, m2, b = params
+    if np.all(np.isfinite(cv)):
+        ax.plot(njobs, timep2(njobs, m, m2, b), linestyle='-', color='red', label='runtime extrapolation')
+        print(f"\tQuadratic: {timep2(100000, m, m2, b)} min = {timep2(100000, m, m2, b)/60.} h = {timep2(100000, m, m2, b)/60./24.} d")
+        print(f"\tfunction: m * x + m2 * x**2 + b;    m, m2, b = {params}")
+    else:
+        print(f"\tQuadratic fit failed. Please check initial parameters.")
+    print("")
 
-start_params = (0.01, 0.01, 0.01)
-params, cv = scipy.optimize.curve_fit(timep2, memorydf['NJobs'], memorydf['RSS'], start_params)
-m, m2, b = params
-if np.all(np.isfinite(cv)):
-    #ax.plot(njobs, timep2(njobs, m, m2, b), linestyle='-', color='black', label='runtime extrapolation')
-    print(f"\tQuadratic: {timep2(100000, m, m2, b)} GB")
-    print(f"\tfunction: m * x + m2 * x**2 + b;    m, m2, b = {params}")
-else:
-    print(f"\tQuadratic fit failed. Please check initial parameters.")
-print("")
+    print("MEMORY EXTRAPOLATION for 100k jobs:")
+    start_params = (0.0, 0.0, 0.0, 0.0)
+    params, cv = scipy.optimize.curve_fit(timeexp, memorydf['NJobs'], memorydf['RSS'], start_params)
+    m, t, b, c = params
+    if np.all(np.isfinite(cv)):
+        ax.plot(njobs, timeexp(njobs, m, t, b, c), linestyle='--', color='blue', label='runtime extrapolation')
+        print(f"\tExponential: {timeexp(100000, m, t, b, c)} GB")
+        print(f"\tfunction: m * exp(t * x + c) + b;    m, t, b, c = {params}")
+    else:
+        print(f"\tExponential fit failed. Please check initial parameters.")
+    print("")
+    start_params = (0.0, 0.0)
+    params, cv = scipy.optimize.curve_fit(timep1, memorydf['NJobs'], memorydf['RSS'], start_params)
+    m, b = params
+    if np.all(np.isfinite(cv)):
+        ax.plot(njobs, timep1(njobs, m, b), linestyle='--', color='green', label='runtime extrapolation')
+        print(f"\tLinear: {timep1(100000, m, b)} GB")
+        print(f"\tfunction: m * x + b;    m, b = {params}")
+    else:
+        print(f"\tLinear fit failed. Please check initial parameters.")
+    print("")
+
+    start_params = (0.0, 0.0, 0.0)
+    params, cv = scipy.optimize.curve_fit(timep2, memorydf['NJobs'], memorydf['RSS'], start_params)
+    m, m2, b = params
+    if np.all(np.isfinite(cv)):
+        ax.plot(njobs, timep2(njobs, m, m2, b), linestyle='--', color='red', label='runtime extrapolation')
+        print(f"\tQuadratic: {timep2(100000, m, m2, b)} GB")
+        print(f"\tfunction: m * x + m2 * x**2 + b;    m, m2, b = {params}")
+    else:
+        print(f"\tQuadratic fit failed. Please check initial parameters.")
+    print("")
 
 fig.savefig("scalingtest_"+ scenario +".pdf")
 
