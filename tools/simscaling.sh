@@ -33,5 +33,4 @@ do
     wait $TEST_PID
     kill -9 ${MONITOR_PID}
 
-    sysctl vm.drop_caches=3
 done
