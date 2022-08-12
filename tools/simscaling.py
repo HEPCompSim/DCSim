@@ -89,7 +89,6 @@ if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
                     "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", "COMMAND",
                     "platform option", "Platform file", "njobs option", "NJobs", "ninfiles option", "NFilesPerJob",
                     "insize option", "FileSize", "hitrate option", "Hitrate", "output option", "OutputName",
-                    "blockstreaming option"
                     ],
                 )
             for f in monitorfiles
