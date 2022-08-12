@@ -182,6 +182,17 @@ else:
     print(f"\tLinear fit failed. Please check initial parameters.")
 print("")
 
+start_params = (0.01, 0.01, 0.01)
+params, cv = scipy.optimize.curve_fit(timep2, memorydf['NJobs'], memorydf['RSS'], start_params)
+m, m2, b = params
+if np.all(np.isfinite(cv)):
+    #ax.plot(njobs, timep2(njobs, m, m2, b), linestyle='-', color='black', label='runtime extrapolation')
+    print(f"\tQuadratic: {timep2(100000, m, m2, b)} GB")
+    print(f"\tfunction: m * x + m2 * x**2 + b;    m, m2, b = {params}")
+else:
+    print(f"\tQuadratic fit failed. Please check initial parameters.")
+print("")
+
 fig.savefig("scalingtest_"+ scenario +".pdf")
 
 # plt.show()
