@@ -484,7 +484,7 @@ int main(int argc, char **argv) {
                 }
                 catch(std::invalid_argument& e){
                     std::cerr << e.what() << std::endl;
-                    return -1;
+                    exit(EXIT_FAILURE);
                 }
             }
             std::string workflow_type_lower = boost::to_lower_copy(std::string(wf_json["workflow_type"]));
