@@ -29,3 +29,4 @@ inline WorkflowType get_workflow_type(std::string wfname) {
 
 
 #endif //S_ENUMS_H
+
