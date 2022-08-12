@@ -24,7 +24,6 @@ public:
 
     static std::map<std::string, std::set<std::string>> hosts_in_zones; // map holding information of all hosts present in network zones
 
-    static bool use_blockstreaming;
     static bool infile_caching_on;
     static bool prefetching_on;
     static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;

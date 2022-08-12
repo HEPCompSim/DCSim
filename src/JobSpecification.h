@@ -5,6 +5,8 @@
 
 #include <wrench-dev.h>
 
+#include "util/Enums.h"
+
 /**
  * @brief Container to hold all job specific information
  * 
@@ -21,6 +23,8 @@ public:
     double total_flops;
     // Memory consumption of the job
     double total_mem;
+    // Usage of block streaming
+    WorkflowType workflow_type;
 
 };
 #endif //S_JOB_SPECIFICATION_H
