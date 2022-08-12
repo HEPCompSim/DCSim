@@ -13,7 +13,7 @@ public:
      * 
      * @param file 
      */
-    void touchFile(std::shared_ptr<wrench::DataFile> file) {
+    void touchFile(wrench::DataFile  *file) {
         // If the file is new, then it's easy
         if (this->indexed_files.find(file) == this->indexed_files.end()) {
             this->indexed_files[file] = 0;
@@ -38,7 +38,7 @@ public:
         auto file = this->lru_list.back();
         this->lru_list.pop_back();
         this->indexed_files.erase(file);
-        return file;
+        return wrench::Simulation::getFileByID(file->getID());
     }
 
     /**
@@ -47,15 +47,15 @@ public:
      * @return true if the file is there, false otherwise
      */
     bool hasFile(std::shared_ptr<wrench::DataFile> file) {
-        return (this->indexed_files.find(file) != this->indexed_files.end());
+        return (this->indexed_files.find(file.get()) != this->indexed_files.end());
     }
 
 
 private:
     // File collection mapped to index
-    std::map<std::shared_ptr<wrench::DataFile>, ssize_t> indexed_files;
+    std::map<wrench::DataFile *, ssize_t> indexed_files;
     // Ordered list of files in file collection -- front is most recently used.
-    std::vector<std::shared_ptr<wrench::DataFile>> lru_list;
+    std::vector<wrench::DataFile *> lru_list;
 
 };
 

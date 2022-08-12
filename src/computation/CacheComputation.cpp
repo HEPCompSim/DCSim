@@ -68,7 +68,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         WRENCH_DEBUG("Couldn't find a reachable cache");
     }
     
-    
+
     // For each file, identify where to read it from and/or deal with cache updates, etc.
     for (auto const &f : this->files) {
         // find a source providing the required file
@@ -89,7 +89,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
         // If yes, we're done
         if (source_ss) {
-            SimpleSimulator::global_file_map[source_ss].touchFile(f);
+            SimpleSimulator::global_file_map[source_ss].touchFile(f.get());
             this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
             continue;
         }
@@ -110,7 +110,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         if (!source_ss) {
             throw std::runtime_error("CacheComputation(): Couldn't find file " + f->getID() + " on any storage service!");
         } else {
-            SimpleSimulator::global_file_map[source_ss].touchFile(f);
+            SimpleSimulator::global_file_map[source_ss].touchFile(f.get());
         }
 
         // When there is a reachable cache, cache the file and evict others when needed
@@ -141,7 +141,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
                 // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
                 wrench::Simulation::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
 
-                SimpleSimulator::global_file_map[destination_ss].touchFile(f);
+                SimpleSimulator::global_file_map[destination_ss].touchFile(f.get());
 
                 // this->file_sources[f] = wrench::FileLocation::LOCATION(destination_ss);
             }
