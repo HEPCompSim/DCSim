@@ -101,7 +101,54 @@ void validate(boost::any& v, std::vector<std::string> const& values, cacheScope*
     }
 }
 
+/**
+ * @brief Simple Choices class for workflow type program option
+ * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
+ */
+struct WorkflowTypeStruct {
+    WorkflowTypeStruct(std::string const& val): value(boost::to_lower_copy(val)) {}
+    std::string value;
+    // getter function
+    WorkflowType get() const{
+        return get_workflow_type(value);
+    }
+};
 
+/**
+ * @brief Operator<< for the WorkflowTypeStruct class
+ * 
+ * @param os 
+ * @param val 
+ * @return std::ostream& 
+ */
+std::ostream& operator<<(std::ostream &os, const WorkflowTypeStruct &val) {
+    os << val.value << " ";
+    return os; 
+}
+
+/**
+ * @brief Overload of boost::program_options validate method
+ * to check for custom validator classes
+ */
+void validate(boost::any& v, std::vector<std::string> const& values, WorkflowTypeStruct* /* target_type */, int) {
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'v' was made.
+    validators::check_first_occurrence(v);
+
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    std::string const& s = validators::get_single_string(values);
+
+    auto w = WorkflowTypeStruct(s);
+    try {
+        w.get();
+        v = boost::any(w);
+    }
+    catch(std::runtime_error &e) {
+        throw validation_error(validation_error::invalid_option_value);
+    }
+}
 
 /**
  * @brief helper function to process simulation options and parameters
@@ -154,7 +201,7 @@ po::variables_map process_program_options(int argc, char** argv) {
 
         ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workflow to feed into the simulation")
 
-        ("workflow-type", po::value<std::string>()->default_value("streaming"), "switch to define the type of the workflow. Please choose from 'calculation', 'streaming', or 'copy'")
+        ("workflow-type", po::value<WorkflowTypeStruct>()->default_value(WorkflowTypeStruct("streaming")), "switch to define the type of the workflow. Please choose from 'calculation', 'streaming', or 'copy'")
         ("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")
         ("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")
 
@@ -458,14 +505,13 @@ int main(int argc, char **argv) {
 
 
     if(workflow_configurations.size() == 0){
-        std::string workflow_type_lower = boost::to_lower_copy(vm["workflow-type"].as<std::string>());
         workload_spec = fill_workflow(
             num_jobs, infiles_per_job,
             average_flops, sigma_flops,
             average_memory,sigma_memory,
             average_infile_size, sigma_infile_size,
             average_outfile_size, sigma_outfile_size,
-            get_workflow_type(workflow_type_lower), ""
+            vm["workflow-type"].as<WorkflowTypeStruct>().get(), ""
         );
 
         std::cerr << "The workflow has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
