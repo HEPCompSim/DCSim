@@ -1,0 +1,25 @@
+Universe = docker
+docker_image = mschnepf/slc7-condocker
+
+executable = ./install_conda_environment.sh
+
+request_cpus = 1
+request_memory = 2000+(1000*NumJobStarts)
+periodic_release = (HoldReasonCode == 34)
+request_disk = 8000000
+
++RemoteJob = True
++RequestWalltime = 3600
+
+transfer_output_files = *.csv
+
+# Assuming, that the tarball is already created
+transfer_input_files = DCSim.tar.gz
+
+log = log_install_$(ProcID).log
+stdout = stdout_install_$(ProcID).log
+stderr = stderr_install_$(ProcID).log
+
+accounting_group=cms.production
+
+queue
