@@ -10,19 +10,26 @@ env
 echo "INITIAL ENVIRONMENT END"
 echo ""
 
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-chmod u+x Miniconda3-latest-Linux-x86_64.sh
-./Miniconda3-latest-Linux-x86_64.sh -b -p $(pwd)/miniconda
-source $(pwd)/miniconda/bin/activate
-conda config --set auto_activate_base false
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-conda update -n base conda -y
-conda create -n dcsim-env cmake python=3.10 pip gcc gxx make gfortran boost git conda-pack -y
-conda activate dcsim-env
-python3 -m pip install pip setuptools numpy matplotlib scipy pandas --upgrade --no-input
-conda env config vars set LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}/lib32
-conda deactivate
+conda_bin=$(which conda)
+if [ ! -z $conda_bin ]
+then
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    chmod u+x Miniconda3-latest-Linux-x86_64.sh
+    ./Miniconda3-latest-Linux-x86_64.sh -b -p $(pwd)/miniconda
+    source $(pwd)/miniconda/bin/activate
+    conda config --set auto_activate_base false
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+    conda update -n base conda -y
+    conda create -n dcsim-env cmake python=3.10 pip gcc gxx make gfortran boost git conda-pack -y
+    conda activate dcsim-env
+    python3 -m pip install pip setuptools numpy matplotlib scipy pandas --upgrade --no-input
+    conda env config vars set LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}/lib32
+    conda deactivate
+else
+    source $(pwd)/miniconda/bin/activate
+fi
+
 conda activate dcsim-env
 
 echo "FINAL CONDA ENVIRONMENT START"
