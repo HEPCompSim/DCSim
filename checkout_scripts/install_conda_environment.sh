@@ -1,6 +1,5 @@
 #! /usr/bin/bash
 ulimit -s unlimited
-set -e
 
 NCORES=12
 
@@ -10,9 +9,10 @@ env
 echo "INITIAL ENVIRONMENT END"
 echo ""
 
-conda_bin=$(which conda)
-if [ ! -z $conda_bin ]
+if [ -x "$(command -v conda)" ]
 then
+    source $(pwd)/miniconda/bin/activate
+else
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
     chmod u+x Miniconda3-latest-Linux-x86_64.sh
     ./Miniconda3-latest-Linux-x86_64.sh -b -p $(pwd)/miniconda
@@ -26,8 +26,6 @@ then
     python3 -m pip install pip setuptools numpy matplotlib scipy pandas --upgrade --no-input
     conda env config vars set LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}/lib32
     conda deactivate
-else
-    source $(pwd)/miniconda/bin/activate
 fi
 
 conda activate dcsim-env
