@@ -1,0 +1,26 @@
+Universe = docker
+docker_image = mschnepf/slc7-condocker
+
+executable = ./measure_resource_consumption.sh
+
+request_cpus = 1
+request_memory = 1000+(1000*NumJobStarts)
+periodic_release = (HoldReasonCode == 34)
+request_disk = 4000000
+
++RemoteJob = True
++RequestWalltime = 7200 + (24*3600*NumJobStarts)
+
+x509userproxy = $ENV(X509_USER_PROXY)
+
+arguments = $(NJOBS)
+transfer_output_files = scaling_dump_$(NJOBS)jobs.txt
+transfer_input_files = ../data/platform-files/ETPbatch.xml
+
+log = log_scaling_$(ClusterId).$(ProcId).log
+stdout = stdout_scaling_$(ClusterId).$(ProcId).log
+stderr = stderr_scaling_$(ClusterId).$(ProcId).log
+
+accounting_group=cms.production
+
+queue NJOBS from arguments.txt
