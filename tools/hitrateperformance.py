@@ -11,6 +11,15 @@ plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
 
 
+scenario_plotlabel_dict = {
+    "copy": "Input-files copied",
+    "fullstream": "Block-streaming",
+    "SGBatch_fullstream_10G": "SG-Batch 10G gateway",
+    "SGBatch_fullstream_1G": "SG-Batch 1G gateway",
+    "SGBatch_fullstream_10G_50Mcache": "SG-Batch 10G gateway 50M cache"
+}
+
+
 def valid_file(param):
     base, ext = os.path.splitext(param)
     if ext.lower() not in ('.csv'):
@@ -27,7 +36,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--scenario", 
     type=str,
-    choices=("copy", "simplifiedstream", "fullstream", "SGBatch_fullstream_1G", "SGBatch_fullstream_10G"),
+    choices=scenario_plotlabel_dict.keys(),
     required=True,
     help="Choose a scenario, which is used in the according plotting label and file-name of the plot."
 )
@@ -49,14 +58,6 @@ args = parser.parse_args()
 
 scenario = args.scenario
 suffix=args.suffix
-
-
-scenario_plotlabel_dict = {
-    "copy": "Input-files copied",
-    "fullstream": "Block-streaming",
-    "SGBatch_fullstream_10G": "SG-Batch 10G gateway",
-    "SGBatch_fullstream_1G": "SG-Batch 1G gateway",
-}
 
 
 machines = ['sg01', 'sg03', 'sg04']
