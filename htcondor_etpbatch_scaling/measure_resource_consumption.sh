@@ -28,7 +28,7 @@ echo "UPDATING LIBRARIES"
 echo "Old LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}/lib32:${LD_LIBRARY_PATH}
 
-ldd ${CONDA_PREFIX}/bin/sgbatch-sim
+ldd ${CONDA_PREFIX}/bin/dc-sim
 
 NJOBS=${1}
 NINFILES=10
@@ -36,14 +36,14 @@ AVGINSIZE=3600000000
 
 SCENARIO="ETPbatch"
 
-    sgbatch-sim --platform ETPbatch.xml \
+    dc-sim --platform ETPbatch.xml \
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} \
         --hitrate 0.0 \
         --output-file /dev/null \
     & TEST_PID=$!
 
     (while [[ True ]]; \
-        do ps -aux | grep " ${TEST_PID} " | grep "sgbatch-sim" \
+        do ps -aux | grep " ${TEST_PID} " | grep "dc-sim" \
         >> scaling_dump_${NJOBS}jobs.txt; \
         sleep 10; done;)\
     & MONITOR_PID=$!

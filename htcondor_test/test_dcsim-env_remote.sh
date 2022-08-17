@@ -28,8 +28,8 @@ echo "UPDATING LIBRARIES"
 echo "Old LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}/lib32:${LD_LIBRARY_PATH}
 
-ldd ${CONDA_PREFIX}/bin/sgbatch-sim
+ldd ${CONDA_PREFIX}/bin/dc-sim
 
 echo "RUNNING TEST COMMAND:"
 
-/usr/bin/time -v sgbatch-sim -p sgbatch_scaletest.xml -o test.csv -n 60
+/usr/bin/time -v dc-sim -p dc.xml -o test.csv -n 60

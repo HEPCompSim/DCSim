@@ -41,7 +41,7 @@ action() {
 
     for hitrate in $(LANG=en_US seq 0.0 0.1 1.0)
     do 
-        sgbatch-sim --platform "$PLATFORM_DIR/$PLATFORM" \
+        dc-sim --platform "$PLATFORM_DIR/$PLATFORM" \
             --njobs $NJOBS \
             --ninfiles $NINFILES --insize $AVGINSIZE \
             --sigma-insize $SIGMA_INSIZE \

@@ -107,4 +107,4 @@ popd
 
 echo "RUNNING TEST COMMAND:"
 cd DCSim
-/usr/bin/time -v sgbatch-sim -p data/platform-files/sgbatch_scaletest.xml -o test.csv -n 60
+/usr/bin/time -v dc-sim -p data/platform-files/sgbatch_scaletest.xml -o test.csv -n 60

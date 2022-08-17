@@ -55,23 +55,23 @@ find_library(GTEST_LIBRARY NAMES gtest)
 find_library(SimGrid_LIBRARY NAMES simgrid)
 
 # generating the executable
-add_executable(sgbatch-sim ${SOURCE_FILES})
+add_executable(dc-sim ${SOURCE_FILES})
 
 if (ENABLE_BATSCHED)
-target_link_libraries(sgbatch-sim
+target_link_libraries(dc-sim
                        ${WRENCH_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
                       -lzmq )
 else()
-target_link_libraries(sgbatch-sim
+target_link_libraries(dc-sim
                        ${WRENCH_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
                       )
 endif()
 
-install(TARGETS sgbatch-sim DESTINATION bin)
+install(TARGETS dc-sim DESTINATION bin)
 
 # generating unit tests
 add_executable(unit_tests EXCLUDE_FROM_ALL

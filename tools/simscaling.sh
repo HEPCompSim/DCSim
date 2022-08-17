@@ -16,14 +16,14 @@ fi
 
 for NJOBS in 10 20 50 100 200 500 700 1000 1100 1200 1300 1500 1700 2000 2500 3000 
 do
-    sgbatch-sim --platform data/platform-files/ETPbatch.xml \
+    dc-sim --platform data/platform-files/ETPbatch.xml \
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} \
         --hitrate 0.0 \
         --output-file /dev/null \
     & TEST_PID=$!
 
     (while [[ True ]]; \
-        do ps -aux | grep " ${TEST_PID} " | grep "sgbatch-sim" \
+        do ps -aux | grep " ${TEST_PID} " | grep "dc-sim" \
         >> tmp/monitor/$SCENARIO/test_privatedump_${NJOBS}jobs.txt; \
         sleep 10; done;)\
     & MONITOR_PID=$!
