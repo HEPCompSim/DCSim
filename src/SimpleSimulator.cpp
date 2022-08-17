@@ -713,7 +713,7 @@ int main(int argc, char **argv) {
     std::cerr << "Duplicating workload..." << std::endl;
     auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
     wms->set_workload_spec(new_workload_spec);
-    std::cerr << "The workload now has " << std::to_string(num_jobs * duplications) << " jobs in total " << std::endl;
+    std::cerr << "The workload now has " << std::to_string(new_workload_spec.size()) << " jobs in total " << std::endl;
 
 
     /* Launch the simulation */
