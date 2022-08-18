@@ -14,7 +14,7 @@ request_disk = 4000000
 x509userproxy = $ENV(X509_USER_PROXY)
 
 transfer_output_files = test.csv
-transfer_input_files = ../data/platform-files/sgbatch_scaletest.xml
+transfer_input_files = ../../../data/platform-files/sgbatch_scaletest.xml
 
 log = log_test_$(ClusterId).$(ProcId).log
 stdout = stdout_test_$(ClusterId).$(ProcId).log

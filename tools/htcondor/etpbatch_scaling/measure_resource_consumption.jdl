@@ -15,7 +15,7 @@ x509userproxy = $ENV(X509_USER_PROXY)
 
 arguments = $(NJOBS)
 transfer_output_files = scaling_dump_$(NJOBS)jobs.txt
-transfer_input_files = ../data/platform-files/ETPbatch.xml
+transfer_input_files = ../../../data/platform-files/ETPbatch.xml
 
 log = log_scaling_$(ClusterId).$(ProcId).log
 stdout = stdout_scaling_$(ClusterId).$(ProcId).log
