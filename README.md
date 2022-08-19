@@ -19,14 +19,37 @@ Create a `conda` environment using the provided script
 checkout_scripts/install_conda_environment.sh
 ```
 This will automatically take care of all the dependencies needed and include them into the environment.
+
+To work with this environment interactively, you first have to initialize conda on your system. This can be done via:
+
+```bash
+</path/to/your/conda/installation>/bin/conda init
+```
+
+This would adapt your `~/.bashrc` to be able to call `conda` directly. So please re-open your shell or `source ~/.bashrc`.
+
 To activate the environment, execute
 ```bash
 conda activate dcsim-env
 ```
 and deactivate it accordingly with 
-```
+```bash
 conda deactivate
 ```.
+
+### Tips for Conda
+
+With a `conda` environment, you would be able to install the full software setup without super-user rights.
+More information on how to work with and develop in a `conda` environment can be found in the [Conda Documentation](https://docs.anaconda.com/)
+
+Furthermore, it is possible to put a complete conda environment into a tarball to be able to export it to a different machine, e.g. a batch system node. To do that execute:
+
+```bash
+conda activate dcsim-env # in case you don't have it activated yet
+conda-pack
+```
+
+The created tarball `dcsim-env.tar.gz` can then be uploaded to a storage element and copied from there to a different machine.
 
 
 ## Usage
