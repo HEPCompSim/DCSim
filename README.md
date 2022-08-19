@@ -35,7 +35,7 @@ conda activate dcsim-env
 and deactivate it accordingly with 
 ```bash
 conda deactivate
-```.
+```
 
 ### Tips for Conda
 
