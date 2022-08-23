@@ -60,6 +60,8 @@
 
                 <link id="etp_sched" bandwidth="10Gbps" latency="0us"/>
 
+                <!-- FATPIPE approximation for ETP worker nodes to restrict single network actions -->
+                <link id="etp_worker_FATPIPE" bandwidth="10Gbps" latency="0us"/>
                 <link id="etp_worker" bandwidth="110Gbps" latency="0us"/>
 
                 <!-- <link id="etp_sg0X" bandwidth="30Gbps" latency="0us"/>
@@ -76,6 +78,7 @@
                 </route>
 
                 <route src="etpgateway" dst="ETPworker">
+                    <link_ctn id="etp_worker_FATPIPE"/>
                     <link_ctn id="etp_worker"/>
                 </route>
 
