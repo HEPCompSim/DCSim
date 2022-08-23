@@ -1,11 +1,11 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./measure_and_simulate.sh
-arguments = $(NJOBS)
+arguments = $(PLATFORM),$(NJOBS)
 
 should_transfer_files = YES
 transfer_input_files = ../../../data/platform-files/$(PLATFORM).xml
-transfer_output_files = scaling_dump_$(PLATFORM)$(NJOBS)jobs.txt, $(PLATFORM)$(NJOBS).csv
+transfer_output_files = scaling_dump_$(PLATFORM)$(NJOBS)jobs.txt,$(PLATFORM)$(NJOBS).csv
 when_to_transfer_output = ON_EXIT
 
 log = logs/log.$(ClusterId).$(ProcId)
@@ -28,5 +28,5 @@ RequestDisk = 4000000
 
 x509userproxy = $ENV(X509_USER_PROXY)
 
-
+PLATFORM = ETPbatch
 queue NJOBS from arguments.txt

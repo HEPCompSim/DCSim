@@ -31,7 +31,7 @@ export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}
 
 ldd ${CONDA_PREFIX}/bin/dc-sim
 
-NJOBS=${1}
+NJOBS=${2}
 NINFILES=20
 AVGINSIZE=$(bc -l <<< "8554379000/20")
 SIGMAINSIZE=10000
@@ -44,9 +44,9 @@ DUPLICATIONS=1
 HITRATE=0.05
 XRDBLOCKSIZE=1000000
 
-PLATFORM="ETPbatch"
+PLATFORM=${1}
 
-    dc-sim --platform ETPbatch.xml \
+    dc-sim --platform ${PLATFORM}.xml \
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} --sigma-insize ${SIGMAINSIZE} \
         --flops ${FLOPS} --sigma-flops ${SIGMAFLOPS} --mem ${MEM} \
         --outsize ${OUTSIZE} --sigma-outsize ${SIGMAOUTSIZE} \
