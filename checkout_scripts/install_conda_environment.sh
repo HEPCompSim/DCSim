@@ -3,7 +3,6 @@ ulimit -s unlimited
 
 NCORES=12
 
-export HOME=$(pwd)
 echo "INITIAL ENVIRONMENT START"
 env
 echo "INITIAL ENVIRONMENT END"
