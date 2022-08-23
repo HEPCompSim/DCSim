@@ -134,8 +134,8 @@
 
                 <!-- <link id="gridka_dcache" bandwidth="100Gbps" latency="0us"/> -->
 
-                <link id="gridka_dcmsdcachepool1" bandwidth="40Gbps" latency="0us"/>
-                <link id="gridka_dcmsdcachepool2" bandwidth="40Gbps" latency="0us"/>
+                <link id="gridka_dcmsdcachepool_FATPIPE" bandwidth="40Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                <link id="gridka_dcmsdcachepool" bandwidth="80Gbps" latency="0us"/>
 
 
                 <route src="gridkagateway" dst="TOPAS">
@@ -148,8 +148,8 @@
                 </route> -->
 
                 <route src="gridkagateway" dst="DCMSdCache">
-                    <link_ctn id="gridka_dcmsdcachepool1"/>
-                    <link_ctn id="gridka_dcmsdcachepool2"/>
+                    <link_ctn id="gridka_dcmsdcachepool_FATPIPE"/>
+                    <link_ctn id="gridka_dcmsdcachepool"/>
                 </route>
 
             </zone>
