@@ -14,7 +14,7 @@ error = logs/err.$(ClusterId).$(ProcId)
 
 
 accounting_group=cms.production
-Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="mdm1.etp.kit.edu")
+Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="mdm1.ekp.kit.edu")
 +RemoteJob = True
 
 universe = docker
