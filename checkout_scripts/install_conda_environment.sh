@@ -25,7 +25,6 @@ else
     python3 -m pip install pip setuptools numpy matplotlib scipy pandas --upgrade --no-input
     conda env config vars set LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}/lib32
     conda env config vars set CMAKE_PREFIX_PATH=${CONDA_PREFIX}
-    conda deactivate
 fi
 
 conda activate dcsim-env
