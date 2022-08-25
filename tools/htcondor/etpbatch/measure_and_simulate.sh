@@ -14,15 +14,8 @@ ls $(pwd)
 echo "SETTING GRID ENVIRONMENT"
 source /cvmfs/grid.cern.ch/umd-c7ui-latest/etc/profile.d/setup-c7-ui-example.sh
 
-echo "GETTING CONDA ENVIRONMENT FROM REMOTE STORAGE"
-gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env.tar.gz dcsim-env.tar.gz
-
-echo "EXTRACTING AND SETTING CONDA ENVIRONMENT"
-mkdir -p dcsim-env
-tar -zxvf dcsim-env.tar.gz -C dcsim-env
-
-source dcsim-env/bin/activate
-conda-unpack
+echo "SOURCING CONDA ENVIRONMENT FROM CVMFS"
+source /cvmfs/etp.kit.edu/DCSim/pre_0.2/setup.sh
 
 echo "UPDATING LIBRARIES"
 
@@ -31,7 +24,7 @@ export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}
 
 ldd ${CONDA_PREFIX}/bin/dc-sim
 
-NJOBS=${2}
+NJOBS="${2}"
 NINFILES=20
 AVGINSIZE=$(bc -l <<< "8554379000/20")
 SIGMAINSIZE=$(bc -l <<< "10000")
@@ -44,7 +37,7 @@ DUPLICATIONS=1
 HITRATE=0.05
 XRDBLOCKSIZE=1000000
 
-PLATFORM=${1}
+PLATFORM="${1}"
 
     dc-sim --platform ${PLATFORM}.xml \
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} --sigma-insize ${SIGMAINSIZE} \
