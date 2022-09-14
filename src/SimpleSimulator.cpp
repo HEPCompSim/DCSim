@@ -22,6 +22,8 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 
+//#define STORAGE_SERVICE_BUFFER_SIZE "1000000000"
+
 namespace po = boost::program_options;
 
 /**
@@ -572,7 +574,9 @@ int main(int argc, char **argv) {
     for (auto host: SimpleSimulator::cache_hosts) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
-        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"}));
+        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"},
+                        {},
+//                      {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, STORAGE_SERVICE_BUFFER_SIZE}}, {}));
         cache_storage_services.insert(storage_service);
     }
 
@@ -580,7 +584,9 @@ int main(int argc, char **argv) {
     //TODO: Think of a way to support grid storages serving only some datasets
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     for (auto host: SimpleSimulator::storage_hosts) {
-        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"}));
+        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"},
+                    {},
+//                  {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, STORAGE_SERVICE_BUFFER_SIZE}}, {}));
         grid_storage_services.insert(storage_service);
     }
 
