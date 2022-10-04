@@ -36,6 +36,7 @@ wrench*/*
 data/sgbatch/*
 tmp
 *.pdf
+*.png
 *.csv
 
 # test/profiling outputs
