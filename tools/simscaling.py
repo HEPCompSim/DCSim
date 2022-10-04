@@ -93,7 +93,11 @@ if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
                 names=[
                     "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", "COMMAND",
                     "platform option", "Platform file", "njobs option", "NJobs", "ninfiles option", "NFilesPerJob",
-                    "insize option", "FileSize", "hitrate option", "Hitrate", "output option", "OutputName",
+                    "insize option", "InFileSize", "siginfiles option", "SigInFileSize", 
+                    "flops option", "Flops", "sigflops option", "SigFlops", "mem option", "Memory",
+                    "outsize option", "OutFileSize", "sigoutsize option", "SigOutFileSize",
+                    "duplications option", "Duplications", "hitrate option", "Hitrate",
+                    "xrdblocksize option", "XrdBlockSize", "output option", "OutputName",
                     ],
                 )
             for f in monitorfiles
@@ -211,5 +215,6 @@ if args.extrapolate:
     print("")
 
 fig.savefig("scalingtest_"+ scenario +".pdf")
+fig.savefig("scalingtest_"+ scenario +".png")
 
 # plt.show()
