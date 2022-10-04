@@ -1,3 +1,7 @@
+<!--This is a variation of the ETP-batch platform with reduced I/O and network
+    in order to reduce the total number of subsequent activities on the system
+    during simulation. The core count is kept the same. -->
+
 <?xml version="1.0"?>
 <!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
 <platform version="4.1">

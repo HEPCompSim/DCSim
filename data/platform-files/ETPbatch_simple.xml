@@ -1,3 +1,7 @@
+<!--This is a variation of the ETP-batch platform with condensed inner network zones
+    in order to reduce the network complexity of the system. The total number of cores 
+    and bandwidths are incremented in order to preserve a similar performance. -->
+
 <?xml version="1.0"?>
 <!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
 <platform version="4.1">
