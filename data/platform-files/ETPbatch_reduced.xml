@@ -15,7 +15,7 @@
 
             <zone id="ETP" routing="Floyd">
 
-                <host id="sg01" speed="2726Mf" core="24">
+                <host id="sg01" speed="2726Mf" core="2">
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="64GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
@@ -23,7 +23,7 @@
                         <prop id="mount" value="/"/>
                     </disk>
                 </host>
-                <host id="sg02" speed="1611Mf" core="24">
+                <host id="sg02" speed="1611Mf" core="2">
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="64GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
@@ -31,7 +31,7 @@
                         <prop id="mount" value="/"/>
                     </disk>
                 </host>
-                <host id="sg03" speed="2166Mf" core="12">
+                <host id="sg03" speed="2166Mf" core="1">
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="32GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
@@ -39,7 +39,7 @@
                         <prop id="mount" value="/"/>
                     </disk>
                 </host>
-                <!-- <host id="sm01" speed="1117Mf" core="24">
+                <!-- <host id="sm01" speed="1117Mf" core="2">
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="64GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
@@ -48,24 +48,24 @@
                     </disk>
                 </host> -->
 
-                <host id="ms01" speed="2870Mf" core="48">
+                <host id="ms01" speed="2870Mf" core="5">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="192GiB"/>
                 </host>
-                <host id="ms02" speed="2892Mf" core="48">
+                <host id="ms02" speed="2892Mf" core="5">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="192GiB"/>
                 </host>
-                <host id="ms03" speed="2857Mf" core="48">
+                <host id="ms03" speed="2857Mf" core="5">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="192GiB"/>
                 </host>
-                <host id="ms04" speed="2047Mf" core="48">
+                <host id="ms04" speed="2047Mf" core="5">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="192GiB"/>
                 </host>
 
-                <host id="mdm1" speed="5680Mf" core="256">
+                <host id="mdm1" speed="5680Mf" core="26">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="192GiB"/>
                 </host>
@@ -149,7 +149,7 @@
 
             <zone id="GridKA" routing="Floyd">
 
-                <host id="TOPAS" speed="3194Mf" core="1644">
+                <host id="TOPAS" speed="3194Mf" core="164">
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="9410GiB"/>
                     <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
@@ -227,7 +227,7 @@
 
         <zone id="Freiburg" routing="Floyd">
 
-            <host id="NEMO" speed="2500Mf" core="1000">
+            <host id="NEMO" speed="2500Mf" core="100">
                 <prop id="type" value="worker"/>
                 <prop id="ram" value="5000GiB"/>
             </host>
