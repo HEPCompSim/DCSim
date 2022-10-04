@@ -14,9 +14,9 @@ plt.rcParams["figure.autolayout"] = True
 scenario_plotlabel_dict = {
     "copy": "Input-files copied",
     "fullstream": "Block-streaming",
-    "SGBatch_fullstream_10G": "SG-Batch 10G gateway",
-    "SGBatch_fullstream_1G": "SG-Batch 1G gateway",
-    "SGBatch_fullstream_10G_50Mcache": "SG-Batch 10G gateway 50M cache"
+    "SGBatch_fullstream_10G": "SG-Batch 10Gb/s gateway",
+    "SGBatch_fullstream_1G": "SG-Batch 1Gb/s gateway",
+    "SGBatch_fullstream_10G_70Mcache": "SG-Batch 10Gb/s gateway 70MB/s cache"
 }
 
 
