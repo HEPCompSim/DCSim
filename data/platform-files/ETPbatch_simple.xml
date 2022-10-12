@@ -15,16 +15,12 @@
 
             <zone id="ETP" routing="Floyd">
 
-                <host id="ETPworker" speed="4268Mf" core="508">
-                    <prop id="type" value="worker,cache"/>
-                    <prop id="ram" value="1120GiB"/>
-                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
-                        <prop id="size" value="7.5TB"/>
-                        <prop id="mount" value="/"/>
-                    </disk>
+                <host id="ETPworker" speed="4476Mf" core="448">
+                    <prop id="type" value="worker"/>
+                    <prop id="ram" value="960GiB"/>
                 </host>
 
-                <!-- <host id="sg0X" speed="2726Mf" core="60">
+                <host id="ETPsg0X" speed="2726Mf" core="60">
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="160GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
@@ -33,7 +29,7 @@
                     </disk>
                 </host>
 
-                <host id="ms0X" speed="2870Mf" core="192">
+                <!-- <host id="ms0X" speed="2870Mf" core="192">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="768GiB"/>
                 </host>
@@ -66,11 +62,12 @@
 
                 <!-- FATPIPE approximation for ETP worker nodes to restrict single network actions -->
                 <link id="etp_worker_FATPIPE" bandwidth="10Gbps" latency="0us"/>
-                <link id="etp_worker" bandwidth="110Gbps" latency="0us"/>
+                <link id="etp_worker" bandwidth="80Gbps" latency="0us"/>
 
-                <!-- <link id="etp_sg0X" bandwidth="30Gbps" latency="0us"/>
+                <link id="etp_sg0X_FATPIPE" bandwidth="10Gbps" latency="0us"/>
+                <link id="etp_sg0X" bandwidth="40Gbps" latency="0us"/>
 
-                <link id="etp_ms0X" bandwidth="40Gbps" latency="0us"/>
+                <!-- <link id="etp_ms0X" bandwidth="40Gbps" latency="0us"/>
 
                 <link id="etp_mdm1" bandwidth="40Gbps" latency="0us"/> -->
 
@@ -86,11 +83,12 @@
                     <link_ctn id="etp_worker"/>
                 </route>
 
-                <!-- <route src="etpgateway" dst="sg0X">
+                <route src="etpgateway" dst="sg0X">
+                    <link_ctn id="etp_sg0X_FATPIPE"/>
                     <link_ctn id="etp_sg0X"/>
                 </route>
 
-                <route src="etpgateway" dst="ms0X">
+                <!-- <route src="etpgateway" dst="ms0X">
                     <link_ctn id="etp_ms0X"/>
                 </route>
 
