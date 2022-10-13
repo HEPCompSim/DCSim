@@ -27,7 +27,8 @@ scenario_plotlabel_dict = {
     "hacky": "final hacky-WRENCH",
     "wrench2": "WRENCH 2.0",
     "SGbatch": "SG-batch",
-    "ETPbatch": "ETP-batch"
+    "ETPbatch": "ETP-batch",
+    "ETPbatchreduced": "reduced ETP-batch"
 }
 
 
