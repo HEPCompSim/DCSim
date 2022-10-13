@@ -5,7 +5,7 @@ arguments = $(PLATFORM) $(HITRATE)
 
 should_transfer_files = YES
 transfer_input_files = ../../../data/platform-files/$(PLATFORM).xml
-transfer_output_files = scaling_dump_$(PLATFORM)$(HITRATE)jobs.txt, $(PLATFORM)$(HITRATE).csv
+transfer_output_files = scaling_dump_$(PLATFORM)_h$(HITRATE).txt, $(PLATFORM)_h$(HITRATE).csv
 when_to_transfer_output = ON_EXIT
 
 log = logs/log.$(ClusterId).$(ProcId)
@@ -13,7 +13,7 @@ output = logs/out.$(ClusterId).$(ProcId)
 error = logs/err.$(ClusterId).$(ProcId)
 
 
-accounting_group=cms.production
+accounting_group=cms.jet
 Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="mdm1.ekp.kit.edu")
 +RemoteJob = True
 

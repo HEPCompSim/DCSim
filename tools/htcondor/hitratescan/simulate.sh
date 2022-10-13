@@ -57,12 +57,12 @@ PLATFORM="${1}"
         --duplications ${DUPLICATIONS} \
         --hitrate 0.0 \
         --xrd-blocksize ${XRDBLOCKSIZE} \
-        --output-file ${PLATFORM}${NJOBS}.csv \
+        --output-file ${PLATFORM}_h${HITRATE}.csv \
     & TEST_PID=$!
 
     (while [[ True ]]; \
         do ps -aux | grep " ${TEST_PID} " | grep "dc-sim" \
-        >> scaling_dump_${PLATFORM}${NJOBS}jobs.txt; \
+        >> scaling_dump_${PLATFORM}_h${HITRATE}.txt; \
         sleep 10; done;)\
     & MONITOR_PID=$!
     echo "Simulation process to monitor: $TEST_PID"
