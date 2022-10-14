@@ -55,7 +55,7 @@ PLATFORM="${1}"
         --flops ${FLOPS} --sigma-flops ${SIGMAFLOPS} --mem ${MEM} \
         --outsize ${OUTSIZE} --sigma-outsize ${SIGMAOUTSIZE} \
         --duplications ${DUPLICATIONS} \
-        --hitrate 0.0 \
+        --hitrate ${HITRATE} \
         --xrd-blocksize ${XRDBLOCKSIZE} \
         --output-file ${PLATFORM}_h${HITRATE}.csv \
     & TEST_PID=$!
