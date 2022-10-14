@@ -22,7 +22,6 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 
-//#define STORAGE_SERVICE_BUFFER_SIZE "1000000000"
 
 namespace po = boost::program_options;
 
@@ -153,6 +152,59 @@ void validate(boost::any& v, std::vector<std::string> const& values, WorkflowTyp
 }
 
 /**
+ * @brief Simple Choices class for workflow type program option
+ * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
+ */
+struct StorageServiceBufferValue {
+    StorageServiceBufferValue(std::string const& val): value(boost::to_lower_copy(val)) {}
+    std::string value;
+    StorageServiceBufferType type;
+    // getter function
+    StorageServiceBufferType getType() const{
+        return get_ssbuffer_type(value);
+    }
+    std::string get() const{
+        return value;
+    }
+};
+
+/**
+ * @brief Operator<< for the StorageServiceBufferValue class
+ * 
+ * @param os 
+ * @param val 
+ * @return std::ostream& 
+ */
+std::ostream& operator<<(std::ostream &os, const StorageServiceBufferValue &val) {
+    os << val.value << " ";
+    return os; 
+}
+
+/**
+ * @brief Overload of boost::program_options validate method
+ * to check for custom validator classes
+ */
+void validate(boost::any& v, std::vector<std::string> const& values, StorageServiceBufferValue* /* target_type */, int) {
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'v' was made.
+    validators::check_first_occurrence(v);
+
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    std::string const& s = validators::get_single_string(values);
+
+    auto ssp = StorageServiceBufferValue(s);
+    try {
+        ssp.getType();
+        v = boost::any(ssp);
+    }
+    catch(std::runtime_error &e) {
+        throw validation_error(validation_error::invalid_option_value);
+    }
+}
+
+/**
  * @brief helper function to process simulation options and parameters
  * 
  * @param argc
@@ -180,6 +232,7 @@ po::variables_map process_program_options(int argc, char** argv) {
     bool prefetch_off = false;
 
     double xrd_block_size = 1000.*1000*1000;
+    std::string storage_service_buffer_size = "1048576"; // 1MiB
 
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -210,6 +263,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
 
         ("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")
+        ("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data")
 
         ("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks")
     ;
@@ -488,6 +542,9 @@ int main(int argc, char **argv) {
     // Set XRootD block size
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
 
+    // Set StorageService buffer size/type
+    std::string buffer_size = vm["storage-buffer-size"].as<StorageServiceBufferValue>().get();
+
     // Choice of cache locality scope
     std::string scope_caches = vm["cache-scope"].as<cacheScope>().value;
     bool rec_netzone_caches = false;
@@ -574,9 +631,13 @@ int main(int argc, char **argv) {
     for (auto host: SimpleSimulator::cache_hosts) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
-        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"},
-                        {},
-//                      {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, STORAGE_SERVICE_BUFFER_SIZE}}, {}));
+        auto storage_service = simulation->add(
+            new wrench::SimpleStorageService(
+                host, {"/"},
+                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
+                {}
+            )
+        );
         cache_storage_services.insert(storage_service);
     }
 
@@ -584,9 +645,13 @@ int main(int argc, char **argv) {
     //TODO: Think of a way to support grid storages serving only some datasets
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     for (auto host: SimpleSimulator::storage_hosts) {
-        auto storage_service = simulation->add(new wrench::SimpleStorageService(host, {"/"},
-                    {},
-//                  {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, STORAGE_SERVICE_BUFFER_SIZE}}, {}));
+        auto storage_service = simulation->add(
+            new wrench::SimpleStorageService(
+                host, {"/"},
+                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
+                {}
+            )
+        );
         grid_storage_services.insert(storage_service);
     }
 
