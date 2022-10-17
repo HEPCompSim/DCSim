@@ -25,7 +25,7 @@
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="160GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
-                        <prop id="size" value="7.5TB"/>
+                        <prop id="size" value="9TB"/>
                         <prop id="mount" value="/"/>
                     </disk>
                 </host>

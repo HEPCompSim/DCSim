@@ -19,7 +19,7 @@
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="64GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
-                        <prop id="size" value="2.5TB"/>
+                        <prop id="size" value="3TB"/>
                         <prop id="mount" value="/"/>
                     </disk>
                 </host>
@@ -27,7 +27,7 @@
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="64GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
-                        <prop id="size" value="2.5TB"/>
+                        <prop id="size" value="3TB"/>
                         <prop id="mount" value="/"/>
                     </disk>
                 </host>
@@ -35,7 +35,7 @@
                     <prop id="type" value="worker,cache"/>
                     <prop id="ram" value="32GiB"/>
                     <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
-                        <prop id="size" value="2.5TB"/>
+                        <prop id="size" value="3TB"/>
                         <prop id="mount" value="/"/>
                     </disk>
                 </host>
