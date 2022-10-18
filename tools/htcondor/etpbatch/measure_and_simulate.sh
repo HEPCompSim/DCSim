@@ -46,6 +46,7 @@ SIGMAOUTSIZE=$(bc -l <<< "1000000")
 DUPLICATIONS=1
 HITRATE=0.05
 XRDBLOCKSIZE=1000000
+BUFFERSIZE="${3}"
 
 PLATFORM="${1}"
 
@@ -56,6 +57,7 @@ PLATFORM="${1}"
         --duplications ${DUPLICATIONS} \
         --hitrate 0.0 \
         --xrd-blocksize ${XRDBLOCKSIZE} \
+        --storage-buffer-size ${BUFFERSIZE} \
         --output-file ${PLATFORM}${NJOBS}.csv \
     & TEST_PID=$!
 

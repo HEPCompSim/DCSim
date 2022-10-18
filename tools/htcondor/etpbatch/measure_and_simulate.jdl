@@ -1,7 +1,7 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./measure_and_simulate.sh
-arguments = $(PLATFORM) $(NJOBS)
+arguments = $(PLATFORM) $(NJOBS) $(BUFFERSIZE)
 
 should_transfer_files = YES
 transfer_input_files = ../../../data/platform-files/$(PLATFORM).xml
@@ -29,4 +29,5 @@ RequestDisk = 4000000
 x509userproxy = $ENV(X509_USER_PROXY)
 
 PLATFORM = ETPbatch
+BUFFERSIZE = infinity
 queue NJOBS from arguments.txt
