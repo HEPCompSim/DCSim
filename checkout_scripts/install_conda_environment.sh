@@ -78,7 +78,7 @@ popd
 git clone https://framagit.org/simgrid/simgrid.git
 mkdir -p simgrid/build
 pushd simgrid/build
-git checkout tags/v3.31
+git checkout tags/v3.32
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -88,6 +88,7 @@ popd
 git clone https://github.com/wrench-project/wrench.git
 mkdir -p wrench/build
 pushd wrench/build
+git checkout tags/v.2.1
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
