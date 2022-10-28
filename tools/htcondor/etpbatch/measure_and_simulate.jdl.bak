@@ -1,11 +1,11 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./measure_and_simulate.sh
-arguments = $(PLATFORM) $(NJOBS) $(BUFFERSIZE)
+arguments = $(PLATFORM) $(NJOBS)
 
 should_transfer_files = YES
 transfer_input_files = ../../../data/platform-files/$(PLATFORM).xml
-transfer_output_files = scaling_dump_$(PLATFORM)$(NJOBS)jobs.txt, $(PLATFORM)$(NJOBS).csv
+transfer_output_files = scaling_dump_$(PLATFORM)$(NJOBS)jobs.txt, $(PLATFORM)$(NJOBS).csv, monitor$(PLATFORM)$(NJOBS).txt
 when_to_transfer_output = ON_EXIT
 
 log = logs/log.$(ClusterId).$(ProcId)
@@ -14,20 +14,20 @@ error = logs/err.$(ClusterId).$(ProcId)
 
 
 accounting_group=cms.production
-Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="ms04.etp.kit.edu")
+Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="portal1.etp.kit.edu")
 +RemoteJob = True
+NiceUser = True
 
 universe = docker
 docker_image = mschnepf/slc7-condocker
 
-+RequestWalltime = (15*$(NJOBS)) + 3600 + (24*3600*NumJobStarts)
++RequestWalltime = (60*$(NJOBS)) + (24*3600*NumJobStarts)
 request_cpus = 1
-RequestMemory = (10*15*$(NJOBS))+(2*4000*NumJobStarts)
+RequestMemory = (40*$(NJOBS)) + (10000*NumJobStarts)
 periodic_release = (HoldReasonCode == 34)
 RequestDisk = 4000000
 
 x509userproxy = $ENV(X509_USER_PROXY)
 
-PLATFORM = ETPbatch_reduced_simple
-BUFFERSIZE = 1048576
-queue NJOBS in (850, 900, 950)
+# PLATFORM = ETPbatch
+queue NJOBS, PLATFORM from arguments.txt

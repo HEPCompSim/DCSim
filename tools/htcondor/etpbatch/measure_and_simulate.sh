@@ -18,8 +18,8 @@ source /cvmfs/grid.cern.ch/umd-c7ui-latest/etc/profile.d/setup-c7-ui-example.sh
 # source /cvmfs/etp.kit.edu/DCSim/pre_0.2/setup.sh
 
 echo "GETTING CONDA ENVIRONMENT FROM REMOTE STORAGE"
-gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env.tar.gz dcsim-env.tar.gz
-
+gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env02.tar.gz dcsim-env.tar.gz
+# gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/aakhmets/dcsim-env.tar.gz dcsim-env.tar.gz
 echo "EXTRACTING AND SETTING CONDA ENVIRONMENT"
 mkdir -p dcsim-env
 tar -zxvf dcsim-env.tar.gz -C dcsim-env
@@ -33,6 +33,7 @@ echo "Old LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${CONDA_PREFIX}/lib64:${CONDA_PREFIX}/lib32:${LD_LIBRARY_PATH}
 
 ldd ${CONDA_PREFIX}/bin/dc-sim
+# ldd ${CONDA_PREFIX}/bin/sgbatch-sim
 
 NJOBS="${2}"
 NINFILES=20
@@ -50,6 +51,7 @@ BUFFERSIZE="${3}"
 
 PLATFORM="${1}"
 
+#    sgbatch-sim --platform ${PLATFORM}.xml \
     dc-sim --platform ${PLATFORM}.xml \
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} --sigma-insize ${SIGMAINSIZE} \
         --flops ${FLOPS} --sigma-flops ${SIGMAFLOPS} --mem ${MEM} \
