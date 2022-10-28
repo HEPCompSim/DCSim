@@ -91,14 +91,16 @@ if (all(os.path.exists(f) for f in monitorfiles) and monitorfiles):
             pd.read_table(
                 f,
                 delimiter="\s+",
+                usecols=[0,1,2,3,4,5,6,7,8,9,10,14],
                 names=[
                     "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", "COMMAND",
-                    "platform option", "Platform file", "njobs option", "NJobs", "ninfiles option", "NFilesPerJob",
-                    "insize option", "InFileSize", "siginfiles option", "SigInFileSize", 
-                    "flops option", "Flops", "sigflops option", "SigFlops", "mem option", "Memory",
-                    "outsize option", "OutFileSize", "sigoutsize option", "SigOutFileSize",
-                    "duplications option", "Duplications", "hitrate option", "Hitrate",
-                    "xrdblocksize option", "XrdBlockSize", "output option", "OutputName",
+                    #"platform option", "Platform file", "njobs option", 
+                    "NJobs", #"ninfiles option", "NFilesPerJob",
+                    #"insize option", "InFileSize", "siginfiles option", "SigInFileSize", 
+                    #"flops option", "Flops", "sigflops option", "SigFlops", "mem option", "Memory",
+                    #"outsize option", "OutFileSize", "sigoutsize option", "SigOutFileSize",
+                    #"duplications option", "Duplications", "hitrate option", "Hitrate",
+                    #"buffersize option", "BufferSize", "xrdblocksize option", "XrdBlockSize", "output option", "OutputName",
                     ],
                 )
             for f in monitorfiles
