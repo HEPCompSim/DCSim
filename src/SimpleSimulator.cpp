@@ -632,7 +632,7 @@ int main(int argc, char **argv) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
         auto storage_service = simulation->add(
-            new wrench::SimpleStorageService(
+            wrench::SimpleStorageService::createSimpleStorageService(
                 host, {"/"},
                 {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
                 {}
@@ -646,7 +646,7 @@ int main(int argc, char **argv) {
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     for (auto host: SimpleSimulator::storage_hosts) {
         auto storage_service = simulation->add(
-            new wrench::SimpleStorageService(
+            wrench::SimpleStorageService::createSimpleStorageService(
                 host, {"/"},
                 {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
                 {}
