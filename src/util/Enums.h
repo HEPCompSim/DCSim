@@ -48,10 +48,10 @@ inline StorageServiceBufferType get_ssbuffer_type(std::string ssprop) {
     if(ssprop == "infinity") {
         return StorageServiceBufferType::Infinity;
     }
-    else if (ssprop == "0") {
-        throw std::logic_error("Feature 'continous flow model' for storage buffers not implemented yet");
-        // return StorageServiceBufferType::Zero;
-    }
+//    else if (ssprop == "0") {
+//        throw std::logic_error("Feature 'continous flow model' for storage buffers not implemented yet");
+//        // return StorageServiceBufferType::Zero;
+//    }
     else {
         if ((!ssprop.empty()) && (ssprop.find_first_not_of("0123456789")==std::string::npos) && (std::stoll(ssprop) > 0)) {
             return StorageServiceBufferType::Value;

@@ -634,7 +634,7 @@ int main(int argc, char **argv) {
         auto storage_service = simulation->add(
             wrench::SimpleStorageService::createSimpleStorageService(
                 host, {"/"},
-                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
+                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, "0"}},
                 {}
             )
         );
@@ -648,7 +648,7 @@ int main(int argc, char **argv) {
         auto storage_service = simulation->add(
             wrench::SimpleStorageService::createSimpleStorageService(
                 host, {"/"},
-                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
+                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, "0"}},
                 {}
             )
         );
