@@ -795,7 +795,7 @@ int main(int argc, char **argv) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 0;
     }
-    std::cerr << "Simulation done!" << std::endl;
+    std::cerr << "Simulation done! " << wrench::Simulation::getCurrentSimulatedDate() << std::endl;
 
     // Check routes from workers to remote storages
 #if 0
