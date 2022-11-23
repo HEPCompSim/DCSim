@@ -11,10 +11,10 @@ import argparse
 plt.rcParams['figure.autolayout'] = True
 pd.set_option('display.max_columns',None)
 plt.rcParams['axes.facecolor'] = 'white'
-plt.rcParams['axes.spines.left'] = False
+plt.rcParams['axes.spines.left'] = True
 plt.rcParams['axes.spines.right'] = False
 plt.rcParams['axes.spines.top'] = False
-plt.rcParams['axes.spines.bottom'] = False
+plt.rcParams['axes.spines.bottom'] = True
 plt.rcParams['axes.grid'] = False
 plt.rcParams['axes.grid.axis'] = 'both'
 plt.rcParams['axes.labelcolor'] = '#555555'
@@ -23,6 +23,22 @@ plt.rcParams['figure.figsize'] = 6,4
 plt.rcParams['figure.dpi'] = 100
 plt.rcParams['figure.titleweight'] = 'normal'
 plt.rcParams['font.family'] = 'sans-serif'
+
+
+QUANTITIES = {
+    "Walltime": {
+        "ylabel": "jobtime / min",
+        "ylim": None, # [20,65],
+    },
+    "IOtime": {
+        "ylabel": "transfer time / min",
+        "ylim": None, # [20,65],
+    },
+    "Efficiency": {
+        "ylabel": "CPU eff.",
+        "ylim": [0,1.05],
+    },
+}
 
 
 scenario_plotlabel_dict = {
@@ -55,6 +71,13 @@ parser.add_argument(
     help="Choose a scenario, which is used in the according plotting label and file-name of the plot."
 )
 parser.add_argument(
+    "--style",
+    choices=["scatter", "boxplot","boxenplot", "jointplot"],
+    default="scatter",
+    type=str,
+    help="Plot style for the visualization. Choose between scatterplot, boxplot, boxenplot or jointplot."
+)
+parser.add_argument(
     "--suffix",
     type=str,
     help="Optonal suffix to add to the file-name of the plot."
@@ -71,7 +94,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 scenario = args.scenario
-suffix=args.suffix
+suffix="_"+args.suffix
+plotstyle=args.style
 
 
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
@@ -111,44 +135,86 @@ df["Walltime"] = (df["job.end"]-df["job.start"])/60
 df["IOtime"] = (df["infiles.transfertime"]+df["outfiles.transfertime"])/60
 df["Efficiency"] = df["job.computetime"]/(df["job.end"]-df["job.start"])
 
+
 # plot and save
+machines = sorted(df["machine.name"].unique())
+print(f"Unique machines for hue: {machines}")
 
-fig = plt.figure("hitrate-walltime", figsize=(6,4))
+for quantity, qstyle in QUANTITIES.items():
+    print(f"Plotting for quantity {quantity}")
+    if plotstyle == "scatter":
+        fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
+        ax1 = sns.scatterplot(
+            x="hitrate", y=quantity,
+            hue="machine.name", hue_order=machines,
+            data=df,
+            palette=sns.color_palette("husl", len(machines)),
+            alpha=0.9
+        )
+        ax1.set_title(scenario_plotlabel_dict[scenario])
+        ax1.set_xlabel("hitrate", loc="right")
+        ax1.set_ylabel(qstyle["ylabel"], color="black")
+        ax1.set_xlim([-0.05,1.05])
+        if qstyle["ylim"]:
+            ax1.set_ylim(qstyle["ylim"])
+        ax1.legend(loc='best')
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        plt.close()
 
-ax1 = sns.scatterplot(x="hitrate", y="Walltime", hue="machine.name", data=df, alpha=0.9)
-ax1.set_title(scenario_plotlabel_dict[scenario])
-ax1.set_xlabel("hitrate", loc="right")
-ax1.set_ylabel("jobtime / min", color="black")
-ax1.set_xlim([-0.05,1.05])
-# ax1.set_ylim([20,65])
-ax1.legend(loc='best')
+    elif plotstyle=="boxplot":
+        fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
+        ax1 = sns.boxplot(
+            x="hitrate", y=quantity,
+            hue="machine.name", hue_order=machines,
+            data=df,
+            orient="v",
+            palette=sns.color_palette("husl", len(machines))
+        )
+        ax1.set_title(scenario_plotlabel_dict[scenario])
+        ax1.set_xlabel("hitrate", loc="right")
+        ax1.set_ylabel(qstyle["ylabel"], color="black")
+        if qstyle["ylim"]:
+            ax1.set_ylim(qstyle["ylim"])
+        ax1.legend(loc='best')
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        plt.close()
 
-fig.savefig(f"hitrateWalltime_{scenario}jobs{suffix}.pdf")
-fig.savefig(f"hitrateWalltime_{scenario}jobs{suffix}.png")
+    elif plotstyle =="boxenplot":
+        fig = plt.figure("hitrate-walltime", figsize=(6,4))
+        ax1 = sns.boxenplot(
+            x="hitrate", y=quantity,
+            hue="machine.name", hue_order=machines,
+            data=df,
+            orient="v",
+            palette=sns.color_palette("husl", len(machines))
+        )
+        ax1.set_title(scenario_plotlabel_dict[scenario])
+        ax1.set_xlabel("hitrate", loc="right")
+        ax1.set_ylabel(qstyle["ylabel"], color="black")
+        if qstyle["ylim"]:
+            ax1.set_ylim(qstyle["ylim"])
+        ax1.legend(loc='best')
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        plt.close()
 
+    elif plotstyle == "jointplot":
+        grid = sns.jointplot(
+            x="hitrate", y=quantity,
+            hue="machine.name", hue_order=machines,
+            data=df,
+            xlim=[-0.05,1.05],
+            ylim=qstyle["ylim"] if qstyle["ylim"] else None,
+            kind="kde", marginal_ticks=True,
+            height=7,
+            palette=sns.color_palette("husl", len(machines))
+        )
+        grid.set_axis_labels(xlabel="hitrate", ylabel=qstyle["ylabel"], color="black")
+        grid.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
+        grid.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        plt.close()
 
-fig2 = plt.figure("hitrate-transfertime", figsize=(6,4))
-
-ax2 = sns.scatterplot(x="hitrate", y="IOtime", hue="machine.name", data=df, alpha=0.9)
-ax2.set_title(scenario_plotlabel_dict[scenario])
-ax2.set_xlabel("hitrate", loc="right")
-ax2.set_ylabel("transfer time / min", color="black")
-ax2.set_xlim([-0.05,1.05])
-ax2.legend(loc='best')
-
-fig2.savefig(f"hitrateIOtime_{scenario}jobs{suffix}.pdf")
-fig2.savefig(f"hitrateIOtime_{scenario}jobs{suffix}.png")
-
-
-fig3= plt.figure("hitrate-efficiency", figsize=(6,4))
-
-ax3 = sns.scatterplot(x="hitrate", y="Efficiency", hue="machine.name", data=df, alpha=0.9)
-ax3.set_title(scenario_plotlabel_dict[scenario])
-ax3.set_xlabel("hitrate", loc="right")
-ax3.set_ylabel("CPU eff.", color="black")
-ax3.set_xlim([-0.05,1.05])
-ax3.set_ylim([0,1.05])
-ax3.legend(loc='best')
-
-fig3.savefig(f"hitrateCPUeff_{scenario}jobs{suffix}.pdf")
-fig3.savefig(f"hitrateCPUeff_{scenario}jobs{suffix}.png")
+    else:
+        raise NotImplementedError(f"Plotstyle {plotstyle} not implemented") 
