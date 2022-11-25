@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import os.path
 import argparse
+from collections.abc import Iterable
 
 
 plt.rcParams['figure.autolayout'] = True
@@ -50,11 +51,25 @@ scenario_plotlabel_dict = {
 }
 
 
-def valid_file(param):
+def valid_file(param: str) -> str:
     base, ext = os.path.splitext(param)
     if ext.lower() not in (".csv"):
         raise argparse.ArgumentTypeError("File must have a csv extension")
+    if not os.path.exists(param):
+        raise FileNotFoundError('{}: No such file'.format(param))
     return param
+
+def scale_xticks(ax: plt.Axes, ticks: Iterable):
+    """Helper function which sets the xticks to the according scaled positions
+
+    Args: 
+        ax (matplotlib.Axes): subplot to scale xticks
+        ticks (Iterable): list of expected ticks (at least two values, lowest and highest tick)
+    """
+    scale = (ax1.get_xlim()[-1]-ax1.get_xlim()[0]-1)/(ticks[-1]-ticks[0])
+    print(f"Scale {(ticks[0],ticks[-1])} with {scale} to end up with correct seaborn axis {ax.get_xlim()}")
+    ax.set_xticks([scale*x for x in ticks])
+    ax.set_xticklabels(["{:.1f}".format(x) for x in ticks])
 
 
 parser = argparse.ArgumentParser(
@@ -72,10 +87,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "--style",
-    choices=["scatter", "boxplot","boxenplot", "jointplot"],
-    default="scatter",
+    choices=["scatterplot", "pointplot", "boxplot", "boxenplot", "violinplot", "jointplot"],
+    default="scatterplot",
     type=str,
-    help="Plot style for the visualization. Choose between scatterplot, boxplot, boxenplot or jointplot."
+    help="Plot style for the visualization."
 )
 parser.add_argument(
     "--suffix",
@@ -139,22 +154,50 @@ df["Efficiency"] = df["job.computetime"]/(df["job.end"]-df["job.start"])
 # plot and save
 machines = sorted(df["machine.name"].unique())
 print(f"Unique machines for hue: {machines}")
+hitrateticks = [x*0.1 for x in range(0,11)]
 
 for quantity, qstyle in QUANTITIES.items():
+
     print(f"Plotting for quantity {quantity}")
-    if plotstyle == "scatter":
+
+    if plotstyle == "scatterplot":
         fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
         ax1 = sns.scatterplot(
             x="hitrate", y=quantity,
             hue="machine.name", hue_order=machines,
             data=df,
-            palette=sns.color_palette("husl", len(machines)),
+            palette=sns.color_palette("colorblind"),
             alpha=0.9
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
         ax1.set_ylabel(qstyle["ylabel"], color="black")
         ax1.set_xlim([-0.05,1.05])
+        ax1.set_xticks(hitrateticks)
+        if qstyle["ylim"]:
+            ax1.set_ylim(qstyle["ylim"])
+        ax1.legend(loc='best')
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        plt.close()
+
+    elif plotstyle == "pointplot":
+        fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
+        ax1 = fig.add_subplot(1,1,1)
+        sns.pointplot(
+            x="hitrate", y=quantity,
+            hue="machine.name", hue_order=machines,
+            data=df,
+            estimator="median",# errorbar=("ci",100),
+            dodge=True, join=False,
+            markers=".", capsize=0.5/len(machines),
+            palette=sns.color_palette("colorblind"),
+            ax=ax1
+        )
+        ax1.set_title(scenario_plotlabel_dict[scenario])
+        ax1.set_xlabel("hitrate", loc="right", color="black")
+        scale_xticks(ax1, hitrateticks)
+        ax1.set_ylabel(qstyle["ylabel"], color="black")
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
         ax1.legend(loc='best')
@@ -169,10 +212,11 @@ for quantity, qstyle in QUANTITIES.items():
             hue="machine.name", hue_order=machines,
             data=df,
             orient="v",
-            palette=sns.color_palette("husl", len(machines))
+            palette=sns.color_palette("colorblind")
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
+        scale_xticks(ax1, hitrateticks)
         ax1.set_ylabel(qstyle["ylabel"], color="black")
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
@@ -188,10 +232,33 @@ for quantity, qstyle in QUANTITIES.items():
             hue="machine.name", hue_order=machines,
             data=df,
             orient="v",
-            palette=sns.color_palette("husl", len(machines))
+            linewidth=0.5,
+            palette=sns.color_palette("colorblind")
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
+        scale_xticks(ax1, hitrateticks)
+        ax1.set_ylabel(qstyle["ylabel"], color="black")
+        if qstyle["ylim"]:
+            ax1.set_ylim(qstyle["ylim"])
+        ax1.legend(loc='best')
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        plt.close()
+
+    elif plotstyle =="violinplot":
+        fig = plt.figure("hitrate-walltime", figsize=(6,4))
+        ax1 = sns.violinplot(
+            x="hitrate", y=quantity,
+            hue="machine.name", hue_order=machines,
+            data=df,
+            orient="v",
+            linewidth=0.5,
+            palette=sns.color_palette("colorblind")
+        )
+        ax1.set_title(scenario_plotlabel_dict[scenario])
+        ax1.set_xlabel("hitrate", loc="right")
+        scale_xticks(ax1, hitrateticks)
         ax1.set_ylabel(qstyle["ylabel"], color="black")
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
@@ -209,7 +276,7 @@ for quantity, qstyle in QUANTITIES.items():
             ylim=qstyle["ylim"] if qstyle["ylim"] else None,
             kind="kde", marginal_ticks=True,
             height=7,
-            palette=sns.color_palette("husl", len(machines))
+            palette=sns.color_palette("colorblind")
         )
         grid.set_axis_labels(xlabel="hitrate", ylabel=qstyle["ylabel"], color="black")
         grid.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
