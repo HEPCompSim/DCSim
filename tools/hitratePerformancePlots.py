@@ -188,9 +188,9 @@ for quantity, qstyle in QUANTITIES.items():
             x="hitrate", y=quantity,
             hue="machine.name", hue_order=machines,
             data=df,
-            estimator="median",# errorbar=("ci",100),
+            estimator="median", errorbar=("pi",95), # ci = Confidence Interval, pi = Percentile Interval, sd = Standard Deviation, se = Standard Error of Mean
             dodge=True, join=False,
-            markers=".", capsize=0.5/len(machines),
+            markers=".", capsize=0.5/len(machines), errwidth=1.,
             palette=sns.color_palette("colorblind"),
             ax=ax1
         )
@@ -212,6 +212,7 @@ for quantity, qstyle in QUANTITIES.items():
             hue="machine.name", hue_order=machines,
             data=df,
             orient="v",
+            flierprops=dict(marker="x"),
             palette=sns.color_palette("colorblind")
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
@@ -232,7 +233,9 @@ for quantity, qstyle in QUANTITIES.items():
             hue="machine.name", hue_order=machines,
             data=df,
             orient="v",
+            k_depth="proportion",
             linewidth=0.5,
+            flier_kws=dict(marker="."),
             palette=sns.color_palette("colorblind")
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
@@ -253,6 +256,7 @@ for quantity, qstyle in QUANTITIES.items():
             hue="machine.name", hue_order=machines,
             data=df,
             orient="v",
+            bw="scott", scale="count", inner="quartile",
             linewidth=0.5,
             palette=sns.color_palette("colorblind")
         )
@@ -268,16 +272,19 @@ for quantity, qstyle in QUANTITIES.items():
         plt.close()
 
     elif plotstyle == "jointplot":
-        grid = sns.jointplot(
+        grid = sns.JointGrid(
             x="hitrate", y=quantity,
             hue="machine.name", hue_order=machines,
             data=df,
-            xlim=[-0.05,1.05],
+            xlim=[-0.1,1.1],
             ylim=qstyle["ylim"] if qstyle["ylim"] else None,
-            kind="kde", marginal_ticks=True,
+            marginal_ticks=True,
             height=7,
             palette=sns.color_palette("colorblind")
         )
+        grid.plot_joint(sns.scatterplot)
+        grid.plot_marginals(sns.histplot, multiple="layer", element="step", fill=True)
+
         grid.set_axis_labels(xlabel="hitrate", ylabel=qstyle["ylabel"], color="black")
         grid.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
         grid.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
