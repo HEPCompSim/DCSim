@@ -109,8 +109,11 @@ parser.add_argument(
 args = parser.parse_args()
 
 scenario = args.scenario
-suffix="_"+args.suffix
-plotstyle=args.style
+if args.suffix:
+    suffix = "_"+args.suffix
+else:
+    suffix = ""
+plotstyle = args.style
 
 
 # create a dict of hitrate and corresponding simulation-trace JSON-output-files
