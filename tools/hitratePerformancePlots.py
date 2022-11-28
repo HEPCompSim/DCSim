@@ -169,7 +169,7 @@ for quantity, qstyle in QUANTITIES.items():
             x="hitrate", y=quantity,
             hue="machine.name", hue_order=machines,
             data=df,
-            palette=sns.color_palette("colorblind"),
+            palette=sns.color_palette("colorblind", n_colors=len(machines)),
             alpha=0.9
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
@@ -194,7 +194,7 @@ for quantity, qstyle in QUANTITIES.items():
             estimator="median", errorbar=("pi",95), # ci = Confidence Interval, pi = Percentile Interval, sd = Standard Deviation, se = Standard Error of Mean
             dodge=True, join=False,
             markers=".", capsize=0.5/len(machines), errwidth=1.,
-            palette=sns.color_palette("colorblind"),
+            palette=sns.color_palette("colorblind", n_colors=len(machines)),
             ax=ax1
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
@@ -216,7 +216,7 @@ for quantity, qstyle in QUANTITIES.items():
             data=df,
             orient="v",
             flierprops=dict(marker="x"),
-            palette=sns.color_palette("colorblind")
+            palette=sns.color_palette("colorblind", n_colors=len(machines)),
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
@@ -239,7 +239,7 @@ for quantity, qstyle in QUANTITIES.items():
             k_depth="proportion",
             linewidth=0.5,
             flier_kws=dict(marker="."),
-            palette=sns.color_palette("colorblind")
+            palette=sns.color_palette("colorblind", n_colors=len(machines)),
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
@@ -261,7 +261,7 @@ for quantity, qstyle in QUANTITIES.items():
             orient="v",
             bw="scott", scale="count", inner="quartile",
             linewidth=0.5,
-            palette=sns.color_palette("colorblind")
+            palette=sns.color_palette("colorblind", n_colors=len(machines)),
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
@@ -283,7 +283,7 @@ for quantity, qstyle in QUANTITIES.items():
             ylim=qstyle["ylim"] if qstyle["ylim"] else None,
             marginal_ticks=True,
             height=7,
-            palette=sns.color_palette("colorblind")
+            palette=sns.color_palette("colorblind", n_colors=len(machines)),
         )
         grid.plot_joint(sns.scatterplot)
         grid.plot_marginals(sns.histplot, multiple="layer", element="step", fill=True)
