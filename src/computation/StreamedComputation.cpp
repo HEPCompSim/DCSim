@@ -54,7 +54,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
 
         // Read the first block
         double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
-        fs.second->getStorageService()->readFile(fs.first, fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
+        fs.second->getStorageService()->readFile(fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
         double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
         if (read_end_time > read_start_time) {
             infile_transfer_time += read_end_time - read_start_time;
@@ -79,7 +79,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 exec_start_time = exec->get_start_time();
                 // Read data from the file
                 read_start_time = wrench::Simulation::getCurrentSimulatedDate();
-                fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
+                fs.second->getStorageService()->readFile(fs.second, num_bytes);
                 read_end_time = wrench::Simulation::getCurrentSimulatedDate();
                 // Wait for the computation to be done
                 exec->wait();
@@ -91,7 +91,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 exec->wait();
                 exec_end_time = exec->get_finish_time();
                 read_start_time = wrench::Simulation::getCurrentSimulatedDate();
-                fs.second->getStorageService()->readFile(fs.first, fs.second, num_bytes);
+                fs.second->getStorageService()->readFile(fs.second, num_bytes);
                 read_end_time = wrench::Simulation::getCurrentSimulatedDate();
             }
             data_to_process -= num_bytes;

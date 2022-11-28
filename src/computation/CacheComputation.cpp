@@ -90,7 +90,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         // If yes, we're done
         if (source_ss) {
             SimpleSimulator::global_file_map[source_ss].touchFile(f.get());
-            this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
+            this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
             continue;
         }
         // If not, then we have to copy the file from some GRID source to some reachable cache storage service
@@ -125,7 +125,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
                 auto to_evict = SimpleSimulator::global_file_map[destination_ss].removeLRUFile();
                 WRENCH_INFO("Evicting file %s from storage service on host %s",
                             to_evict->getID().c_str(), destination_ss->getHostname().c_str());
-                destination_ss->deleteFile(to_evict, wrench::FileLocation::LOCATION(destination_ss));
+                destination_ss->deleteFile(wrench::FileLocation::LOCATION(destination_ss, to_evict));
                 free_space += to_evict->getSize();
             }
 
@@ -139,7 +139,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
                 // TODO: reads a block).
                 WRENCH_DEBUG("Caching file %s on storage %s", f->getID().c_str(), destination_ss->getHostname().c_str());
                 // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
-                wrench::Simulation::createFile(f, wrench::FileLocation::LOCATION(destination_ss));
+                wrench::Simulation::createFile(wrench::FileLocation::LOCATION(destination_ss, f));
 
                 SimpleSimulator::global_file_map[destination_ss].touchFile(f.get());
 
@@ -148,7 +148,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
 
         }
 
-        this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss);
+        this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
     }
 
     // Fill monitoring information
