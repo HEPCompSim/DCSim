@@ -215,6 +215,7 @@ for quantity, qstyle in QUANTITIES.items():
             hue="machine.name", hue_order=machines,
             data=df,
             orient="v",
+            # whis=1.5, #[0.5,99.5],
             flierprops=dict(marker="x"),
             palette=sns.color_palette("colorblind", n_colors=len(machines)),
         )
