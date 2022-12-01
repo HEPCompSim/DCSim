@@ -51,7 +51,6 @@ set(TEST_FILES
 
 # wrench library and dependencies
 find_library(WRENCH_LIBRARY NAMES wrench)
-find_library(GTEST_LIBRARY NAMES gtest)
 find_library(SimGrid_LIBRARY NAMES simgrid)
 
 # generating the executable
@@ -72,12 +71,3 @@ target_link_libraries(dc-sim
 endif()
 
 install(TARGETS dc-sim DESTINATION bin)
-
-# generating unit tests
-add_executable(unit_tests EXCLUDE_FROM_ALL
-        ${SOURCE_FILES}
-        ${TEST_FILES}
-        )
-target_link_libraries(unit_tests
-        ${GTEST_LIBRARY} wrench -lpthread -lm
-        )

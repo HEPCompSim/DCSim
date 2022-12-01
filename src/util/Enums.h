@@ -34,8 +34,8 @@ inline WorkflowType get_workflow_type(std::string wfname) {
  */
 enum StorageServiceBufferType {
     Infinity, /* full buffering */
-    // Zero, /* ideal (continous) flow model, not implemented yet */
-    Value /* Any integral value between 0 and infinity corresponding to a real buffer size (small buffer size -> many simulation calls -> slower simulation) */
+    Zero, /* ideal (continous) flow model, not implemented yet */
+    Value /* Amakny integral value between 0 and infinity corresponding to a real buffer size (small buffer size -> many simulation calls -> slower simulation) */
 };
 
 /**
@@ -48,10 +48,9 @@ inline StorageServiceBufferType get_ssbuffer_type(std::string ssprop) {
     if(ssprop == "infinity") {
         return StorageServiceBufferType::Infinity;
     }
-//    else if (ssprop == "0") {
-//        throw std::logic_error("Feature 'continous flow model' for storage buffers not implemented yet");
-//        // return StorageServiceBufferType::Zero;
-//    }
+    else if ((ssprop == "0") or (ssprop == "zero")) {
+         return StorageServiceBufferType::Zero;
+    }
     else {
         if ((!ssprop.empty()) && (ssprop.find_first_not_of("0123456789")==std::string::npos) && (std::stoll(ssprop) > 0)) {
             return StorageServiceBufferType::Value;
