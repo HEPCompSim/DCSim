@@ -626,6 +626,9 @@ int main(int argc, char **argv) {
         }
     }
 
+    // HORRIBLE
+    if (buffer_size == "zero") buffer_size="0";
+
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
     for (auto host: SimpleSimulator::cache_hosts) {
