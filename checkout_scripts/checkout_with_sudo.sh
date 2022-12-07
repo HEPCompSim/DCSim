@@ -15,18 +15,19 @@ set -e
 
 this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURCE[0]}" )"
 this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
+work_dir="$PWD"
 
 
 # checking out packages from git as prerequisites for WRENCH:
 #
 # 1) pugixml, docu: https://pugixml.org/docs/manual.html, git: https://github.com/zeux/pugixml
 echo "Installing C++ XML processing library pugixml..."
-if [ ! -d "pugixml-1.12.1" ]; then
+if [ ! -d "$work_dir/pugixml-1.12.1" ]; then
     wget http://github.com/zeux/pugixml/releases/download/v1.12.1/pugixml-1.12.1.tar.gz
     tar -xf pugixml-1.12.1.tar.gz
     rm pugixml-1.12.1.tar.gz
 fi
-pushd pugixml-1.12.1
+pushd pugixml-1.12
 mkdir -p build
 cd build
 cmake ..
@@ -36,7 +37,7 @@ popd
 
 # 2) nlohmann json, docu: https://json.nlohmann.me/, git: https://github.com/nlohmann/json
 echo "Installing C++ JSON library..."
-if [ ! -d "json-3.11.2" ]; then
+if [ ! -d "$work_dir/json-3.11.2" ]; then
     wget https://github.com/nlohmann/json/archive/refs/tags/v3.11.2.tar.gz
     tar -xf v3.11.2.tar.gz
     rm v3.11.2.tar.gz
@@ -51,7 +52,7 @@ popd
 
 # 3) googletest, docu & git: https://github.com/google/googletest
 echo "Installing C++ code testing library googletest..."
-if [ ! -d "googletest-release-1.12.1" ]; then
+if [ ! -d "$work_dir/googletest-release-1.12.1" ]; then
     wget https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
     tar -xf release-1.12.1.tar.gz
     rm release-1.12.1.tar.gz
@@ -66,7 +67,7 @@ popd
 
 # 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
 echo "Installing SimGrid..."
-if [ ! -d "simgrid-v3.32" ]; then
+if [ ! -d "$work_dir/simgrid-v3.32" ]; then
     wget https://framagit.org/simgrid/simgrid/-/archive/v3.32/simgrid-v3.32.tar.gz
     tar -xf simgrid-v3.32.tar.gz
     rm simgrid-v3.32.tar.gz
@@ -81,12 +82,12 @@ popd
 
 # installing WRENCH 2.0:
 echo "Installing WRENCH..."
-if [ ! -d "wrench-v2.1"]; then
+if [ ! -d "$work_dir/wrench-2.1" ]; then
     wget https://github.com/wrench-project/wrench/archive/refs/tags/v2.1.tar.gz
-    tar -xf v2.1.tar.gz -C wrench-v2.1
+    tar -xf v2.1.tar.gz
     rm v2.1.tar.gz
 fi
-pushd wrench-v2.1
+pushd wrench-2.1
 mkdir -p build
 cd build
 cmake ..
