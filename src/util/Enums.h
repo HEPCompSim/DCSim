@@ -34,8 +34,8 @@ inline WorkflowType get_workflow_type(std::string wfname) {
  */
 enum StorageServiceBufferType {
     Infinity, /* full buffering */
-    Zero, /* ideal (continous) flow model, not implemented yet */
-    Value /* Amakny integral value between 0 and infinity corresponding to a real buffer size (small buffer size -> many simulation calls -> slower simulation) */
+    Zero, /* ideal (continous) flow model */
+    Value /* Any integral value between 0 and infinity corresponding to a real buffer size (small buffer size -> many simulation calls -> slower simulation) */
 };
 
 /**
