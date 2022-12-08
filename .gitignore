@@ -33,9 +33,16 @@ wrench*/*
 
 
 # outputs
+data/sgbatch/*
 tmp
 *.pdf
+*.png
 *.csv
+*.txt
+
+# logs and tests
+logs
+test
 
 # test/profiling outputs
 *.ipynb

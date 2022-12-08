@@ -1,0 +1,25 @@
+Universe = docker
+docker_image = mschnepf/slc7-condocker
+
+executable = ./test_dcsim-env_remote.sh
+
+request_cpus = 1
+request_memory = 1000+(1000*NumJobStarts)
+periodic_release = (HoldReasonCode == 34)
+request_disk = 4000000
+
++RemoteJob = True
++RequestWalltime = 3600
+
+x509userproxy = $ENV(X509_USER_PROXY)
+
+transfer_output_files = test.csv
+transfer_input_files = ../../../data/platform-files/sgbatch_scaletest.xml
+
+log = log_test_$(ClusterId).$(ProcId).log
+stdout = stdout_test_$(ClusterId).$(ProcId).log
+stderr = stderr_test_$(ClusterId).$(ProcId).log
+
+accounting_group=cms.production
+
+queue

@@ -1,0 +1,32 @@
+# submit multiple simulations for different initial hitrates and harvest scaling and job information
+
+executable = ./simulate.sh
+arguments = $(PLATFORM) $(HITRATE)
+
+should_transfer_files = YES
+transfer_input_files = ../../../data/platform-files/$(PLATFORM).xml
+transfer_output_files = scaling_dump_$(PLATFORM)_h$(HITRATE).txt, $(PLATFORM)_h$(HITRATE).csv
+when_to_transfer_output = ON_EXIT
+
+log = logs/log.$(ClusterId).$(ProcId)
+output = logs/out.$(ClusterId).$(ProcId)
+error = logs/err.$(ClusterId).$(ProcId)
+
+
+accounting_group=cms.jet
+Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="mdm1.ekp.kit.edu")
++RemoteJob = True
+
+universe = docker
+docker_image = mschnepf/slc7-condocker
+
++RequestWalltime = 7200 + (24*3600*NumJobStarts)
+request_cpus = 1
+RequestMemory = 20000+(5000*NumJobStarts)
+periodic_release = (HoldReasonCode == 34)
+RequestDisk = 4000000
+
+x509userproxy = $ENV(X509_USER_PROXY)
+
+PLATFORM = ETPbatch_reduced
+queue HITRATE from arguments.txt
