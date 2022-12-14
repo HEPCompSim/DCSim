@@ -195,9 +195,18 @@ void validate(boost::any& v, std::vector<std::string> const& values, StorageServ
     std::string const& s = validators::get_single_string(values);
 
     auto ssp = StorageServiceBufferValue(s);
+    StorageServiceBufferType stype;
     try {
-        ssp.getType();
-        v = boost::any(ssp);
+        stype = ssp.getType();
+        // Ensure that non-value options are parsed correctly
+        if(stype == StorageServiceBufferType::Zero) {
+            v = boost::any(StorageServiceBufferValue("0"));
+        } else if(stype == StorageServiceBufferType::Infinity) {
+            v = boost::any(StorageServiceBufferValue("infinity"));
+        }
+        else {
+            v = boost::any(ssp);
+        }
     }
     catch(std::runtime_error &e) {
         throw validation_error(validation_error::invalid_option_value);
@@ -399,7 +408,7 @@ std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobS
                 dupl_job_specs.outfile = wrench::Simulation::addFile(boost::replace_last_copy(dupl_job_specs.outfile->getID(), job_index_matches[job_index_matches.size()-1], std::to_string(dup_index)), dupl_job_specs.outfile->getSize());
                 // TODO: Think of a better way to copy the outfile destination
                 for (auto ss : grid_storage_services) {
-                    dupl_job_specs.outfile_destination = wrench::FileLocation::LOCATION(ss);
+                    dupl_job_specs.outfile_destination = wrench::FileLocation::LOCATION(ss, dupl_job_specs.outfile);
                     break;
                 }
             }
@@ -632,7 +641,7 @@ int main(int argc, char **argv) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
         auto storage_service = simulation->add(
-            new wrench::SimpleStorageService(
+            wrench::SimpleStorageService::createSimpleStorageService(
                 host, {"/"},
                 {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
                 {}
@@ -646,7 +655,7 @@ int main(int argc, char **argv) {
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     for (auto host: SimpleSimulator::storage_hosts) {
         auto storage_service = simulation->add(
-            new wrench::SimpleStorageService(
+            wrench::SimpleStorageService::createSimpleStorageService(
                 host, {"/"},
                 {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
                 {}
@@ -750,7 +759,7 @@ int main(int argc, char **argv) {
                 //TODO: Think of a more realistic distribution pattern and avoid duplications
                 for (auto storage_service: grid_storage_services) {
                     // simulation->stageFile(f, storage_service);
-                    simulation->createFile(f, wrench::FileLocation::LOCATION(storage_service));
+                    simulation->createFile(wrench::FileLocation::LOCATION(storage_service, f));
                     SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
                 }
                 // Distribute the infiles on all caches until desired hitrate is reached
@@ -758,7 +767,7 @@ int main(int argc, char **argv) {
                 if (cached_files_size < hitrate*incr_inputfile_size) {
                     for (const auto& cache : cache_storage_services) {
                         // simulation->stageFile(f, cache);
-                        simulation->createFile(f, wrench::FileLocation::LOCATION(cache));
+                        simulation->createFile(wrench::FileLocation::LOCATION(cache, f));
                         SimpleSimulator::global_file_map[cache].touchFile(f.get());
                     }
                     cached_files_size += f->getSize();
@@ -771,7 +780,7 @@ int main(int argc, char **argv) {
             // Set outfile destinations
             // TODO: Think of a way to identify a specific (GRID) storage
             for (auto storage_service: grid_storage_services) {
-                job_spec.outfile_destination = wrench::FileLocation::LOCATION(storage_service);
+                job_spec.outfile_destination = wrench::FileLocation::LOCATION(storage_service, job_spec.outfile);
                 break;
             }
         }
@@ -795,7 +804,7 @@ int main(int argc, char **argv) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 0;
     }
-    std::cerr << "Simulation done!" << std::endl;
+    std::cerr << "Simulation done! " << wrench::Simulation::getCurrentSimulatedDate() << std::endl;
 
     // Check routes from workers to remote storages
 #if 0

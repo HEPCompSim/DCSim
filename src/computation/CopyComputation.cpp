@@ -48,7 +48,7 @@ void CopyComputation::performComputation(std::shared_ptr<wrench::ActionExecutor>
                     fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
 
         double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
-        fs.second->getStorageService()->readFile(fs.first, fs.second);
+        fs.second->getStorageService()->readFile(fs.second);
         double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
 
         data_size += fs.first->getSize();

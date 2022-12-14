@@ -153,7 +153,6 @@ int SimpleExecutionController::main() {
         // Create the file write action
         auto fw_action = job->addFileWriteAction(
             "file_write_" + job_name,
-            job_spec->outfile,
             job_spec->outfile_destination
         );
         // //TODO: Think of a determination of storage_service to hold output data

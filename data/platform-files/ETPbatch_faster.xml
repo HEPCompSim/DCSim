@@ -1,0 +1,343 @@
+<?xml version="1.0"?>
+<!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
+<platform version="4.1">
+    <config>
+        <prop id="network/loopback-bw" value="1000000000000"/>
+    </config>
+
+    <zone id="global" routing="Floyd">
+
+        <zone id="KIT" routing="Floyd">
+
+            <zone id="ETP" routing="Floyd">
+
+                <host id="sg01" speed="2726Mf" core="24">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="64GiB"/>
+                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+                        <prop id="size" value="2.5TB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+                <host id="sg02" speed="1611Mf" core="24">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="64GiB"/>
+                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+                        <prop id="size" value="2.5TB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+                <host id="sg03" speed="2166Mf" core="12">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="32GiB"/>
+                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+                        <prop id="size" value="2.5TB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+                <!-- <host id="sm01" speed="1117Mf" core="24">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="64GiB"/>
+                    <disk id="ssd_cache1" read_bw="9.6Gbps" write_bw="9.6Gbps">
+                        <prop id="size" value="952GB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host> -->
+
+                <host id="ms01" speed="2870Mf" core="48">
+                    <prop id="type" value="worker"/>
+                    <prop id="ram" value="192GiB"/>
+                </host>
+                <host id="ms02" speed="2892Mf" core="48">
+                    <prop id="type" value="worker"/>
+                    <prop id="ram" value="192GiB"/>
+                </host>
+                <host id="ms03" speed="2857Mf" core="48">
+                    <prop id="type" value="worker"/>
+                    <prop id="ram" value="192GiB"/>
+                </host>
+                <host id="ms04" speed="2047Mf" core="48">
+                    <prop id="type" value="worker"/>
+                    <prop id="ram" value="192GiB"/>
+                </host>
+
+                <host id="mdm1" speed="5680Mf" core="256">
+                    <prop id="type" value="worker"/>
+                    <prop id="ram" value="192GiB"/>
+                </host>
+
+                <host id="WMSHost" speed="10Gf" core="10">
+                    <prop id="type" value="scheduler,executor"/>
+                    <prop id="ram" value="16GB"/>
+                </host>
+
+                <host id="CEPH" speed="1000Gf" core="10">
+                    <prop id="type" value="storage"/>
+                    <disk id="hard_drive" read_bw="40GBps" write_bw="40GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <router id="etpgateway"/>
+
+                <!-- <link id="loopback" bandwidth="5000GBps" latency="0us"/> -->
+
+                <link id="etp_sched" bandwidth="10Gbps" latency="0us"/>
+
+                <link id="etp_sg01" bandwidth="10Gbps" latency="0us"/>
+                <link id="etp_sg02" bandwidth="10Gbps" latency="0us"/>
+                <link id="etp_sg03" bandwidth="10Gbps" latency="0us"/>
+                <!-- <link id="etp_sm01" bandwidth="10Gbps" latency="0us"/> -->
+
+                <link id="etp_ms01" bandwidth="10Gbps" latency="0us"/>
+                <link id="etp_ms02" bandwidth="10Gbps" latency="0us"/>
+                <link id="etp_ms03" bandwidth="10Gbps" latency="0us"/>
+                <link id="etp_ms04" bandwidth="10Gbps" latency="0us"/>
+
+                <link id="etp_mdm1" bandwidth="40Gbps" latency="0us"/>
+
+                <link id="etp_ceph" bandwidth="10Gbps" latency="0us"/>
+
+
+                <route src="etpgateway" dst="WMSHost">
+                    <link_ctn id="etp_sched"/>
+                </route>
+
+                <route src="etpgateway" dst="sg01">
+                    <link_ctn id="etp_sg01"/>
+                </route>
+                <route src="etpgateway" dst="sg02">
+                    <link_ctn id="etp_sg02"/>
+                </route>
+                <route src="etpgateway" dst="sg03">
+                    <link_ctn id="etp_sg03"/>
+                </route>
+                <!-- <route src="etpgateway" dst="sm01">
+                    <link_ctn id="etp_sm01"/>
+                </route> -->
+
+                <route src="etpgateway" dst="ms01">
+                    <link_ctn id="etp_ms01"/>
+                </route>
+                <route src="etpgateway" dst="ms02">
+                    <link_ctn id="etp_ms02"/>
+                </route>
+                <route src="etpgateway" dst="ms03">
+                    <link_ctn id="etp_ms03"/>
+                </route>
+                <route src="etpgateway" dst="ms04">
+                    <link_ctn id="etp_ms04"/>
+                </route>
+
+                <route src="etpgateway" dst="mdm1">
+                    <link_ctn id="etp_mdm1"/>
+                </route>
+
+                <route src="etpgateway" dst="CEPH">
+                    <link_ctn id="etp_ceph"/>
+                </route>
+
+            </zone>
+
+            <zone id="GridKA" routing="Floyd">
+
+                <host id="TOPAS" speed="3194Mf" core="100">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <host id="TOPAS1" speed="3194Mf" core="150">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <host id="TOPAS2" speed="3194Mf" core="250">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <host id="TOPAS3" speed="3194Mf" core="250">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <host id="TOPAS4" speed="3194Mf" core="250">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <host id="TOPAS5" speed="3194Mf" core="250">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+		<host id="TOPAS6" speed="3194Mf" core="250">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+		<host id="TOPAS7" speed="3194Mf" core="144">
+                    <prop id="type" value="worker,cache"/>
+                    <prop id="ram" value="9410GiB"/>
+                    <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
+                        <prop id="size" value="1PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+                <!-- <host id="dCache" speed="1000Gf" core="10">
+                    <prop id="type" value="storage"/>
+                    <disk id="hard_drive" read_bw="40Gbps" write_bw="40Gbps">
+                        <prop id="size" value="7PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host> -->
+
+                <host id="DCMSdCache" speed="1000Gf" core="10">
+                    <prop id="type" value="storage"/>
+                    <disk id="hard_drive" read_bw="80Gbps" write_bw="80Gbps">
+                        <prop id="size" value="1.8PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
+
+                <router id="gridkagateway"/>
+
+
+                <link id="gridka_topas_FATPIPE" bandwidth="100Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                <link id="gridka_topas" bandwidth="200Gbps" latency="0us"/>
+
+                <!-- <link id="gridka_dcache" bandwidth="100Gbps" latency="0us"/> -->
+
+                <link id="gridka_dcmsdcachepool_FATPIPE" bandwidth="40Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                <link id="gridka_dcmsdcachepool" bandwidth="80Gbps" latency="0us"/>
+
+
+                <route src="gridkagateway" dst="TOPAS">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+
+                <route src="gridkagateway" dst="TOPAS1">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+
+                <route src="gridkagateway" dst="TOPAS2">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+
+                <route src="gridkagateway" dst="TOPAS3">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+
+                <route src="gridkagateway" dst="TOPAS4">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+
+                <route src="gridkagateway" dst="TOPAS5">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+                <route src="gridkagateway" dst="TOPAS6">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+                <route src="gridkagateway" dst="TOPAS7">
+                    <link_ctn id="gridka_topas_FATPIPE"/>
+                    <link_ctn id="gridka_topas"/>
+                </route>
+
+                <!-- <route src="gridkagateway" dst="dCache">
+                    <link_ctn id="gridka_topas"/>
+                </route> -->
+
+                <route src="gridkagateway" dst="DCMSdCache">
+                    <link_ctn id="gridka_dcmsdcachepool_FATPIPE"/>
+                    <link_ctn id="gridka_dcmsdcachepool"/>
+                </route>
+
+            </zone>
+
+
+            <zone id="KITcentral" routing="Floyd">
+
+                <router id="kitgateway"/>
+
+                <link id="etp_to_gridka" bandwidth="100Gbps" latency="0us"/>
+                <link id="kit_to_freiburg" bandwidth="100Gbps" latency="0us"/>
+            
+            </zone>
+
+
+            <zoneRoute src="ETP" dst="KITcentral" gw_src="etpgateway" gw_dst="kitgateway">
+                <link_ctn id="etp_to_gridka"/>
+            </zoneRoute>
+
+            <zoneRoute src="GridKA" dst="KITcentral" gw_src="gridkagateway" gw_dst="kitgateway">
+                <link_ctn id="etp_to_gridka"/>
+            </zoneRoute>
+
+        </zone>
+
+
+        <zone id="Freiburg" routing="Floyd">
+
+            <host id="NEMO" speed="2500Mf" core="1000">
+                <prop id="type" value="worker"/>
+                <prop id="ram" value="5000GiB"/>
+            </host>
+
+
+            <router id="freiburggateway"/>
+
+
+            <link id="freiburg_nemo" bandwidth="40Gbps" latency="0us"/>
+
+
+            <route src="freiburggateway" dst="NEMO">
+                <link_ctn id="freiburg_nemo"/>
+            </route>
+
+        </zone>
+
+        <zoneRoute src="KIT" dst="Freiburg" gw_src="kitgateway" gw_dst="freiburggateway">
+            <link_ctn id="kit_to_freiburg"/>
+        </zoneRoute>
+
+    </zone>
+
+</platform>

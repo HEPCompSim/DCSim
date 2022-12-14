@@ -78,7 +78,7 @@ popd
 git clone https://framagit.org/simgrid/simgrid.git
 mkdir -p simgrid/build
 pushd simgrid/build
-git checkout tags/v3.32
+# git checkout tags/v3.32
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -88,7 +88,7 @@ popd
 git clone https://github.com/wrench-project/wrench.git
 mkdir -p wrench/build
 pushd wrench/build
-git checkout tags/v.2.1
+# git checkout tags/v.2.1
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -98,7 +98,7 @@ popd
 git clone https://github.com/HEPCompSim/DCSim.git
 mkdir -p DCSim/build
 pushd DCSim/build
-git checkout extension/platform
+git checkout extension/platform-fluid-model
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -106,4 +106,4 @@ popd
 
 echo "RUNNING TEST COMMAND:"
 cd DCSim
-/usr/bin/time -v dc-sim -p data/platform-files/sgbatch_scaletest.xml -o test.csv -n 60
+/usr/bin/time -v dc-sim -p data/platform-files/sgbatch_scaletest.xml -o test.csv -n 60 -b zero
