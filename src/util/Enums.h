@@ -45,7 +45,7 @@ enum StorageServiceBufferType {
  * @return StorageServiceBufferType 
  */
 inline StorageServiceBufferType get_ssbuffer_type(std::string ssprop) {
-    if(ssprop == "infinity") {
+    if((ssprop == "infinity") or (ssprop == "inf")) {
         return StorageServiceBufferType::Infinity;
     }
     else if ((ssprop == "0") or (ssprop == "zero")) {

@@ -195,9 +195,18 @@ void validate(boost::any& v, std::vector<std::string> const& values, StorageServ
     std::string const& s = validators::get_single_string(values);
 
     auto ssp = StorageServiceBufferValue(s);
+    StorageServiceBufferType stype;
     try {
-        ssp.getType();
-        v = boost::any(ssp);
+        stype = ssp.getType();
+        // Ensure that non-value options are parsed correctly
+        if(stype == StorageServiceBufferType::Zero) {
+            v = boost::any(StorageServiceBufferValue("0"));
+        } else if(stype == StorageServiceBufferType::Infinity) {
+            v = boost::any(StorageServiceBufferValue("infinity"));
+        }
+        else {
+            v = boost::any(ssp);
+        }
     }
     catch(std::runtime_error &e) {
         throw validation_error(validation_error::invalid_option_value);
@@ -625,9 +634,6 @@ int main(int argc, char **argv) {
             SimpleSimulator::hosts_in_zones[hostnamesByZone.first] = hostnamesSet;
         }
     }
-
-    // HORRIBLE
-    if (buffer_size == "zero") buffer_size="0";
 
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
