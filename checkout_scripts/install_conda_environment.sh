@@ -98,7 +98,7 @@ popd
 git clone https://github.com/HEPCompSim/DCSim.git
 mkdir -p DCSim/build
 pushd DCSim/build
-git checkout extension/platform-fluid-model
+# git checkout extension/platform-fluid-model
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
