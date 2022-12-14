@@ -67,12 +67,16 @@ popd
 
 # 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
 echo "Installing SimGrid..."
-if [ ! -d "$work_dir/simgrid-v3.32" ]; then
-    wget https://framagit.org/simgrid/simgrid/-/archive/v3.32/simgrid-v3.32.tar.gz
-    tar -xf simgrid-v3.32.tar.gz
-    rm simgrid-v3.32.tar.gz
+# if [ ! -d "$work_dir/simgrid-v3.32" ]; then
+#     wget https://framagit.org/simgrid/simgrid/-/archive/v3.32/simgrid-v3.32.tar.gz
+#     tar -xf simgrid-v3.32.tar.gz
+#     rm simgrid-v3.32.tar.gz
+# fi
+# pushd simgrid-v3.32
+if [ ! -d "$work_dir/simgrid" ]; then
+    git clone https://framagit.org/simgrid/simgrid.git
 fi
-pushd simgrid-v3.32
+pushd simgrid
 mkdir -p build
 cd build
 cmake ..
@@ -82,12 +86,16 @@ popd
 
 # installing WRENCH 2.0:
 echo "Installing WRENCH..."
-if [ ! -d "$work_dir/wrench-2.1" ]; then
-    wget https://github.com/wrench-project/wrench/archive/refs/tags/v2.1.tar.gz
-    tar -xf v2.1.tar.gz
-    rm v2.1.tar.gz
+# if [ ! -d "$work_dir/wrench-2.1" ]; then
+#     wget https://github.com/wrench-project/wrench/archive/refs/tags/v2.1.tar.gz
+#     tar -xf v2.1.tar.gz
+#     rm v2.1.tar.gz
+# fi
+# pushd wrench-2.1
+if [ ! -d "$work_dir/wrench" ]; then
+    git clone https://github.com/wrench-project/wrench.git
 fi
-pushd wrench-2.1
+pushd wrench
 mkdir -p build
 cd build
 cmake ..
