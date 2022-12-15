@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include <iostream>
+#include <algorithm>
 #include "util/DefaultValues.h"
 
 #include "SimpleExecutionController.h"
@@ -29,6 +30,8 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionContro
  *  @param cache_storage_services local caches evicting files when needed
  *  @param hostname host running the execution controller
  *  @param outputdump_name name of the file where the simulation's job information is stored
+ *  @param shuffle_jobs switch to shuffle jobs for submission
+ *  @param generator generator for job shuffling
  *  
  */
 SimpleExecutionController::SimpleExecutionController(
@@ -37,7 +40,8 @@ SimpleExecutionController::SimpleExecutionController(
         const std::set<std::shared_ptr<wrench::StorageService>>& grid_storage_services,
         const std::set<std::shared_ptr<wrench::StorageService>>& cache_storage_services,
         const std::string& hostname,
-        const std::string& outputdump_name) : wrench::ExecutionController(
+        const std::string& outputdump_name,
+        const bool& shuffle_jobs, const std::mt19937& generator) : wrench::ExecutionController(
         hostname,
         "condor-simple") {
     this->workload_spec = workload_spec;
@@ -45,6 +49,8 @@ SimpleExecutionController::SimpleExecutionController(
     this->grid_storage_services = grid_storage_services;
     this->cache_storage_services = cache_storage_services;
     this->filename = outputdump_name;
+    this->shuffle_jobs = shuffle_jobs;
+    this->generator = generator;
 }
 
 /**
@@ -102,10 +108,19 @@ int SimpleExecutionController::main() {
     auto htcondor_compute_service = *this->htcondor_compute_services.begin();
 
 
+    // Shuffle jobs for submission
+    std::vector<std::string> job_spec_keys;
+    job_spec_keys.reserve(this->workload_spec.size());
+    for (auto job_name_spec: this->workload_spec) {
+        job_spec_keys.push_back(job_name_spec.first);
+    }
+    if (this->shuffle_jobs){
+        std::shuffle(job_spec_keys.begin(), job_spec_keys.end(), generator);
+    }
+
     // Create and submit all the jobs!
     WRENCH_INFO("There are %ld jobs to schedule", this->workload_spec.size());
-    for (auto job_name_spec: this->workload_spec) {
-        std::string job_name = job_name_spec.first;
+    for (auto job_name: job_spec_keys) {
         auto job_spec = &this->workload_spec[job_name];
 
         auto job = job_manager->createCompoundJob(job_name);

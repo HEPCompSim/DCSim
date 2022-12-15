@@ -43,6 +43,7 @@ std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator:
 std::mt19937 SimpleSimulator::gen(42);  // random number generator
 bool SimpleSimulator::infile_caching_on = true; // flag to turn off/on the caching of job input-files
 bool SimpleSimulator::prefetching_on = true;   // flag to enable prefetching during streaming
+bool SimpleSimulator::shuffle_jobs = false;   // flag to enable job shuffling during submission
 double SimpleSimulator::xrd_block_size = 1.*1000*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 // TODO: The initialized below is likely bogus (at compile time?)
 std::normal_distribution<double>* SimpleSimulator::flops_dist;
@@ -238,6 +239,7 @@ po::variables_map process_program_options(int argc, char** argv) {
 
     bool no_caching = false;
     bool prefetch_off = false;
+    bool shuffle_jobs = false;
 
     double xrd_block_size = 1000.*1000*1000;
     std::string storage_service_buffer_size = "1048576"; // 1MiB
@@ -267,6 +269,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("workflow-type", po::value<WorkflowTypeStruct>()->default_value(WorkflowTypeStruct("streaming")), "switch to define the type of the workflow. Please choose from 'calculation', 'streaming', or 'copy'")
         ("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")
         ("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")
+        ("shuffle-jobs", po::bool_switch()->default_value(shuffle_jobs), "switch to turn on/off shuffling jobs during submission")
 
         ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
 
@@ -547,6 +550,10 @@ int main(int argc, char **argv) {
     std::cerr << "Prefetching switch off?: " << vm["prefetch-off"].as<bool>() << std::endl;
     SimpleSimulator::prefetching_on = !(vm["prefetch-off"].as<bool>());
 
+    // Flag to turn on shuffling of jobs
+    std::cerr << "Job shuffling on?: " << vm["shuffle-jobs"].as<bool>() << std::endl;
+    SimpleSimulator::shuffle_jobs = vm["shuffle-jobs"].as<bool>();
+
     // Set XRootD block size
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
 
@@ -737,7 +744,9 @@ int main(int argc, char **argv) {
                 cache_storage_services,
                 host,
                 //hitrate,
-                filename
+                filename,
+                SimpleSimulator::shuffle_jobs,
+                SimpleSimulator::gen
             )
         );
         execution_controllers.insert(wms);
