@@ -1,0 +1,54 @@
+{
+    "calc_workflow": {
+        "num_jobs": 60,
+        "infiles_per_job": 0,
+        "average_flops": 2164428000000,
+        "sigma_flops": 216442800000,
+        "average_memory": 2000000000,
+        "sigma_memory": 200000000,
+        "average_infile_size": 0,
+        "sigma_infile_size": 0,
+        "average_outfile_size": 18000000,
+        "sigma_outfile_size": 1800000,
+        "workflow_type": "calculation"
+    },
+    "mc_workflow": {
+        "num_jobs": 60,
+        "infiles_per_job": 0,
+        "average_flops": 2164428000000,
+        "sigma_flops": 216442800000,
+        "average_memory": 2000000000,
+        "sigma_memory": 200000000,
+        "average_infile_size": 0,
+        "sigma_infile_size": 0,
+        "average_outfile_size": 18000000000,
+        "sigma_outfile_size": 1800000000,
+        "workflow_type": "calculation"
+    },
+    "copy_and_compute_workflow": {
+        "num_jobs": 60,
+        "infiles_per_job": 10,
+        "average_flops": 2164428000000,
+        "sigma_flops": 216442800000,
+        "average_memory": 2000000000,
+        "sigma_memory": 200000000,
+        "average_infile_size": 3600000000,
+        "sigma_infile_size": 360000000,
+        "average_outfile_size": 18000000000,
+        "sigma_outfile_size": 1800000000,
+        "workflow_type": "copy"
+    },
+    "stream_and_compute_workflow": {
+        "num_jobs": 60,
+        "infiles_per_job": 10,
+        "average_flops": 2164428000000,
+        "sigma_flops": 216442800000,
+        "average_memory": 2000000000,
+        "sigma_memory": 200000000,
+        "average_infile_size": 3600000000,
+        "sigma_infile_size": 360000000,
+        "average_outfile_size": 18000000000,
+        "sigma_outfile_size": 1800000000,
+        "workflow_type": "streaming"
+    }
+}

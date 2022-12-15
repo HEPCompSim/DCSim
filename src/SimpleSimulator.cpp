@@ -32,7 +32,6 @@ namespace po = boost::program_options;
  * all jobs.
  */
 const std::vector<std::string> workflow_keys = {
-        "name",
         "num_jobs","infiles_per_job",
         "average_flops","sigma_flops",
         "average_memory", "sigma_memory",
@@ -587,31 +586,35 @@ int main(int argc, char **argv) {
     else {
         for(auto &wf_confpath : workflow_configurations){
             std::ifstream wf_conf(wf_confpath);
-            nlohmann::json wf_json = nlohmann::json::parse(wf_conf);
+            nlohmann::json wfs_json = nlohmann::json::parse(wf_conf);
 
-            // Checking json syntax to match workflow spec
-            for (auto &wf_key : workflow_keys){
-                try {
-                    if(!wf_json.contains(wf_key)){
-                        throw std::invalid_argument("ERROR: the workflow configuration " + wf_confpath + " must contain " + wf_key + " as information.");
+            // Looping over the multiple workflows configured in the json file
+            for (auto &wf: wfs_json.items()){
+
+                // Checking json syntax to match workflow spec
+                for (auto &wf_key : workflow_keys){
+                    try {
+                        if(!wf.value().contains(wf_key)){
+                            throw std::invalid_argument("ERROR: the workflow configuration " + wf_confpath + " must contain " + wf_key + " as information.");
+                        }
+                    }
+                    catch(std::invalid_argument& e){
+                        std::cerr << e.what() << std::endl;
+                        exit(EXIT_FAILURE);
                     }
                 }
-                catch(std::invalid_argument& e){
-                    std::cerr << e.what() << std::endl;
-                    exit(EXIT_FAILURE);
-                }
+                std::string workflow_type_lower = boost::to_lower_copy(std::string(wf.value()["workflow_type"]));
+                auto workflow_spec = fill_workflow(
+                    wf.value()["num_jobs"], wf.value()["infiles_per_job"],
+                    wf.value()["average_flops"], wf.value()["sigma_flops"],
+                    wf.value()["average_memory"], wf.value()["sigma_memory"],
+                    wf.value()["average_infile_size"], wf.value()["sigma_infile_size"],
+                    wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
+                    get_workflow_type(workflow_type_lower), wf.key()
+                );
+                workload_spec.insert(workflow_spec.begin(), workflow_spec.end());
+                std::cerr << "The workflow " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
             }
-            std::string workflow_type_lower = boost::to_lower_copy(std::string(wf_json["workflow_type"]));
-            auto workflow_spec = fill_workflow(
-                wf_json["num_jobs"], wf_json["infiles_per_job"],
-                wf_json["average_flops"], wf_json["sigma_flops"],
-                wf_json["average_memory"], wf_json["sigma_memory"],
-                wf_json["average_infile_size"], wf_json["sigma_infile_size"],
-                wf_json["average_outfile_size"], wf_json["sigma_outfile_size"],
-                get_workflow_type(workflow_type_lower), wf_json["name"]
-            );
-            workload_spec.insert(workflow_spec.begin(), workflow_spec.end());
-            std::cerr << "The workflow " << std::string(wf_json["name"]) << " has " << wf_json["num_jobs"] << " unique jobs" << std::endl;
         }
     }
 
