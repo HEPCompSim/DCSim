@@ -124,7 +124,7 @@ int SimpleExecutionController::main() {
                 job_spec->total_mem, 1,
                 *copy_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                    WRENCH_INFO("Copy computation terminating")
+                    WRENCH_INFO("Copy computation terminating");
                 }
             );
             job->addCustomAction(run_action);
@@ -209,7 +209,7 @@ int SimpleExecutionController::main() {
 
     wrench::Simulation::sleep(10);
 
-    WRENCH_INFO("--------------------------------------------------------")
+    WRENCH_INFO("--------------------------------------------------------");
     if (this->workload_spec.size() == 0){
         WRENCH_INFO("Workload execution on %s is complete!", this->getHostname().c_str());
     } else{
