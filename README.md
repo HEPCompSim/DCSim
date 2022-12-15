@@ -67,26 +67,27 @@ The platform file has to follow the [SimGrid-defined DTD](https://simgrid.org/do
 Example files can be found in `data/platform-files`.
 The output-path can be any relative or absolute path of your file-system where you are allowed to write to.
 Instead of manually setting up all workflow parameters via command line options, 
-there is also the option to provide a JSON file, which contains all necessary information about a workflow by adding the option:
+there is also the option to provide a JSON file, which contains all necessary information about one or multiple workflows by adding the option:
 ```bash
 --workflow-configurations <path_to_workflow_json>
 ```
-The workflow should contain the full information as it would be set via the command line, e.g.:
+The workflows should contain the full information as it would be set via the command line, e.g.:
 ```json
 {
-    "name":"stream_and_compute_workflow",
-    "num_jobs": 60,
-    "infiles_per_job":10,
-    "average_flops":2164428000000,
-    "sigma_flops":216442800000,
-    "average_memory":2000000000,
-    "sigma_memory":200000000,
-    "average_infile_size":3600000000,
-    "sigma_infile_size":360000000,
-    "average_outfile_size":18000000000,
-    "sigma_outfile_size":1800000000,
-    "workflow_type":"streaming"
+    "stream_and_compute_workflow": {
+        "num_jobs": 60,
+        "infiles_per_job": 10,
+        "average_flops": 2164428000000,
+        "sigma_flops": 216442800000,
+        "average_memory": 2000000000,
+        "sigma_memory": 200000000,
+        "average_infile_size": 3600000000,
+        "sigma_infile_size": 360000000,
+        "average_outfile_size": 18000000000,
+        "sigma_outfile_size": 1800000000,
+        "workflow_type": "streaming"
+    }
 }
 ```
-It is also possible to give a list of workflow configuration files, which enables to simulate the execution of multiple workflows.
-Example configuration files covering different workflow-types are given in `data/workflow-configs`.
+It is also possible to give a list of workflow configuration files, which enables to simulate the execution of multiple sets of workflows.
+Example configuration file covering different workflow-types are given in `data/workflow-configs/workflow_testsuite.json`.
