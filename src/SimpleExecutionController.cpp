@@ -109,10 +109,10 @@ int SimpleExecutionController::main() {
 
 
     // Shuffle jobs for submission
-    std::vector<std::string> job_spec_keys;
+    std::vector<const std::string*> job_spec_keys;
     job_spec_keys.reserve(this->workload_spec.size());
-    for (auto job_name_spec: this->workload_spec) {
-        job_spec_keys.push_back(job_name_spec.first);
+    for (const auto &job_name_spec: this->workload_spec) {
+        job_spec_keys.push_back(&(job_name_spec.first));
     }
     if (this->shuffle_jobs){
         std::shuffle(job_spec_keys.begin(), job_spec_keys.end(), generator);
@@ -121,9 +121,9 @@ int SimpleExecutionController::main() {
     // Create and submit all the jobs!
     WRENCH_INFO("There are %ld jobs to schedule", this->workload_spec.size());
     for (auto job_name: job_spec_keys) {
-        auto job_spec = &this->workload_spec[job_name];
+        auto job_spec = &this->workload_spec[*job_name];
 
-        auto job = job_manager->createCompoundJob(job_name);
+        auto job = job_manager->createCompoundJob(*job_name);
 
         // Combined read-input-file-and-run-computation actions
         std::shared_ptr<MonitorAction> run_action;
@@ -135,7 +135,7 @@ int SimpleExecutionController::main() {
 
             //? Split this into a caching file read and a standard compute action?
             run_action = std::make_shared<MonitorAction>(
-                "copycompute_" + job_name,
+                "copycompute_" + *job_name,
                 job_spec->total_mem, 1,
                 *copy_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
@@ -150,7 +150,7 @@ int SimpleExecutionController::main() {
             );
 
             run_action = std::make_shared<MonitorAction>(
-                "streaming_" + job_name,
+                "streaming_" + *job_name,
                 job_spec->total_mem, 1,
                 *streamed_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
@@ -162,17 +162,17 @@ int SimpleExecutionController::main() {
         }
         else if (job_spec->workflow_type == WorkflowType::Calculation) {
             // TODO: figure out what is the best value for the ability tp parallelize HEP workflows on a CPU. Setting currently to 1.0.
-            compute_action = job->addComputeAction("calculation_" + job_name,job_spec->total_flops, job_spec->total_mem, 1, 1, wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
+            compute_action = job->addComputeAction("calculation_" + *job_name,job_spec->total_flops, job_spec->total_mem, 1, 1, wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
         }
 
         // Create the file write action
         auto fw_action = job->addFileWriteAction(
-            "file_write_" + job_name,
+            "file_write_" + *job_name,
             job_spec->outfile_destination
         );
         // //TODO: Think of a determination of storage_service to hold output data
         // // auto fw_action = job->addCustomAction(
-        // //     "file_write_" + job_name,
+        // //     "file_write_" + *job_name,
         // //     job_spec->total_mem, 0,
         // //     [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
         // //         // TODO: Which storage service should we write output on?
