@@ -26,6 +26,7 @@ public:
 
     static bool infile_caching_on;
     static bool prefetching_on;
+    static bool shuffle_jobs;
     static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;
     static double xrd_block_size;
     static std::mt19937 gen;

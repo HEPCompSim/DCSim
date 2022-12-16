@@ -33,7 +33,8 @@ public:
               //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
               const std::string& hostname,
               //const double& hitrate,
-              const std::string& outputdump_name);
+              const std::string& outputdump_name,
+              const bool& shuffle_jobs, const std::mt19937& generator);
 
     std::map<std::string, JobSpecification>& get_workload_spec() {
         return this->workload_spec;
@@ -76,6 +77,12 @@ private:
 
     /** @brief number of complete jobs so far **/
     size_t num_completed_jobs = 0;
+
+    /** @brief switch to shuffle jobs **/
+    bool shuffle_jobs = false;
+
+    /** @brief generator to shuffle jobs **/
+    std::mt19937 generator;
 
 };
 
