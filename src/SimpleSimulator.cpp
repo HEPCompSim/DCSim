@@ -707,11 +707,11 @@ int main(int argc, char **argv) {
                     host,
                     condor_compute_resources,
                     {
-                        {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "1.0"},
-                        {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "10.0"},
-                        {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "10.0"},
-                        {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "5.0"},
-                        {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "5.0"}
+                        {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "0.0"},
+                        {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "0.0"},
+                        {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "0.0"},
+                        {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "0.0"},
+                        {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "0.0"}
                     },
                     {}
                 )
