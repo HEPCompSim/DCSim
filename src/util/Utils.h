@@ -1,31 +1,10 @@
 
 
-#ifndef S_ENUMS_H
-#define S_ENUMS_H
+#ifndef S_UTILS_H
+#define S_UTILS_H
 
 #include <string>
 #include <stdexcept>
-
-/**
- * @brief Set of enums that can be used in the simulation and related methods.
- */
-
-enum WorkloadType {Calculation, Streaming, Copy};
-
-inline WorkloadType get_workload_type(std::string wfname) {
-    if(wfname == "calculation") {
-        return WorkloadType::Calculation;
-    }
-    else if (wfname == "streaming") {
-        return WorkloadType::Streaming;
-    }
-    else if (wfname == "copy") {
-        return WorkloadType::Copy;
-    }
-    else {
-        throw std::runtime_error("Workload type " + wfname + " invalid. Please choose 'calculation', 'streaming', or 'copy'");
-    }
-}
 
 
 /** 
@@ -62,5 +41,5 @@ inline StorageServiceBufferType get_ssbuffer_type(std::string ssprop) {
 }
 
 
-#endif //S_ENUMS_H
+#endif //S_UTILS_H
 
