@@ -406,7 +406,6 @@ std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobS
             std::string dupl_job_id = boost::replace_last_copy(job_spec.first, job_index_matches[job_index_matches.size()-1], std::to_string(dup_index));
             JobSpecification dupl_job_specs = job_spec.second;
             if (d > 0) {
-                // TODO: Check if this works as intended
                 dupl_job_specs.outfile = wrench::Simulation::addFile(boost::replace_last_copy(dupl_job_specs.outfile->getID(), job_index_matches[job_index_matches.size()-1], std::to_string(dup_index)), dupl_job_specs.outfile->getSize());
                 // TODO: Think of a better way to copy the outfile destination
                 for (auto ss : grid_storage_services) {

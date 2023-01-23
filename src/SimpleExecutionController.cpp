@@ -89,8 +89,9 @@ int SimpleExecutionController::main() {
     WRENCH_INFO("Created a job manager");
 
     // Create a data movement manager
-    this->data_movement_manager = this->createDataMovementManager();
-    WRENCH_INFO("Created a data manager");
+    // DEPRECATED
+    // this->data_movement_manager = this->createDataMovementManager();
+    // WRENCH_INFO("Created a data manager");
 
 
     // Get the available compute services
