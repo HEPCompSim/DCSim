@@ -37,7 +37,7 @@ const std::vector<std::string> workload_keys = {
         "average_memory", "sigma_memory",
         "average_infile_size", "sigma_infile_size",
         "average_outfile_size", "sigma_outfile_size",
-        "workload_type"
+        "workload_type", "submission_time"
     };
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
 std::mt19937 SimpleSimulator::gen(42);  // random number generator
@@ -235,6 +235,7 @@ po::variables_map process_program_options(int argc, char** argv) {
     double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
     double sigma_outfile_size = 0.1*average_outfile_size;
 
+
     size_t duplications = 1;
 
     bool no_caching = false;
@@ -263,10 +264,11 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("sigma-insize", po::value<double>()->default_value(sigma_infile_size), "jobs' distribution spread in input-file size")
         ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
         ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
+        ("workload-type", po::value<WorkloadTypeStruct>()->default_value(WorkloadTypeStruct("streaming")), "switch to define the type of the workload. Please choose from 'calculation', 'streaming', or 'copy'")
+        ("submission-time", po::value<double>()->default_value(0.), "time to wait before submission of jobs")
 
         ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workload to feed into the simulation")
 
-        ("workload-type", po::value<WorkloadTypeStruct>()->default_value(WorkloadTypeStruct("streaming")), "switch to define the type of the workload. Please choose from 'calculation', 'streaming', or 'copy'")
         ("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")
         ("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")
         ("shuffle-jobs", po::bool_switch()->default_value(shuffle_jobs), "switch to turn on/off shuffling jobs during submission")
@@ -460,6 +462,7 @@ int main(int argc, char **argv) {
     double sigma_infile_size = vm["sigma-insize"].as<double>();
     double average_outfile_size = vm["outsize"].as<double>();
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
+    double submission_time_offset = vm["submission-time"].as<double>();
 
     size_t duplications = vm["duplications"].as<size_t>();
     std::vector<std::string> workload_configurations = vm["workload-configurations"].as<std::vector<std::string>>();
@@ -544,7 +547,7 @@ int main(int argc, char **argv) {
                         wf.value()["average_infile_size"], wf.value()["sigma_infile_size"],
                         wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
                         get_workload_type(workload_type_lower), wf.key(),
-                        wf.value()["submit_time"],
+                        wf.value()["submission_time"],
                         SimpleSimulator::gen
                     )
                 );
