@@ -15,19 +15,20 @@ action() {
     local base="$( cd "$( dirname "$this_file" )" && pwd )"
     local parent="$( dirname "$base" )"
 
-    local PLATFORM_DIR="$parent/data/platform-files"
-    local PLATFORM="sgbatch_validation.xml"
+    local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
+    local WORKLOAD="$parent/data/workflow-configs/crown_ttbar_validation.json"
 
     local NJOBS=1
     local NINFILES=20 #10
     local AVGINSIZE=$(bc -l <<< "8554379000 / ${NINFILES}")
-    local AVGOUTSIZE=0
+    local AVGOUTSIZE=16000000
     local FLOPS=$(bc -l <<< "1.95*1480*1000*1000*1000")
     local MEM=2400
     local SIGMA_FLOPS=0
     local SIGMA_MEM=0
     local SIGMA_INSIZE=0
     local SIGMA_OUTSIZE=0
+
     local DUPLICATIONS=48
 
     local XRD_BLOCKSIZE=100000000
@@ -41,22 +42,24 @@ action() {
 
     for hitrate in $(LANG=en_US seq 0.0 0.1 1.0)
     do 
-        dc-sim --platform "$PLATFORM_DIR/$PLATFORM" \
-            --njobs $NJOBS \
-            --ninfiles $NINFILES --insize $AVGINSIZE \
-            --sigma-insize $SIGMA_INSIZE \
+        dc-sim --platform "$PLATFORM" \
             --hitrate ${hitrate} \
-            --flops $FLOPS \
-            --sigma-flops $SIGMA_FLOPS \
-            --mem $MEM \
-            --sigma-mem $SIGMA_MEM \
-            --outsize $AVGOUTSIZE \
-            --sigma-outsize $SIGMA_OUTSIZE \
             --duplications $DUPLICATIONS \
             --xrd-blocksize $XRD_BLOCKSIZE \
-            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_${NJOBS}jobs_hitrate${hitrate}.csv \
+            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
             --cfg=network/loopback-bw:100000000000000 \
-            --no-caching #\
+            --no-caching \
+            --workflow-configurations "$WORKLOAD" #\
+            # --njobs $NJOBS \
+            # --ninfiles $NINFILES \
+            # --insize $AVGINSIZE \
+            # --sigma-insize $SIGMA_INSIZE \
+            # --flops $FLOPS \
+            # --sigma-flops $SIGMA_FLOPS \
+            # --mem $MEM \
+            # --sigma-mem $SIGMA_MEM \
+            # --outsize $AVGOUTSIZE \
+            # --sigma-outsize $SIGMA_OUTSIZE \
             # --no-streaming \
             # --wrench-full-log
             # --log=simple_wms.threshold=debug \
