@@ -5,7 +5,7 @@
 
 #include <wrench-dev.h>
 
-#include "util/Enums.h"
+#include "util/Utils.h"
 
 /**
  * @brief Container to hold all job specific information
@@ -13,6 +13,8 @@
  */
 struct JobSpecification {
 public:
+    // identifier
+    std::string jobid;
     // Input files to process
     std::vector<std::shared_ptr<wrench::DataFile>> infiles;
     // Output file to write by the job
@@ -23,8 +25,6 @@ public:
     double total_flops;
     // Memory consumption of the job
     double total_mem;
-    // Usage of block streaming
-    WorkloadType workload_type;
 
 };
 #endif //S_JOB_SPECIFICATION_H
