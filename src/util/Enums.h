@@ -10,20 +10,20 @@
  * @brief Set of enums that can be used in the simulation and related methods.
  */
 
-enum WorkflowType {Calculation, Streaming, Copy};
+enum WorkloadType {Calculation, Streaming, Copy};
 
-inline WorkflowType get_workflow_type(std::string wfname) {
+inline WorkloadType get_workload_type(std::string wfname) {
     if(wfname == "calculation") {
-        return WorkflowType::Calculation;
+        return WorkloadType::Calculation;
     }
     else if (wfname == "streaming") {
-        return WorkflowType::Streaming;
+        return WorkloadType::Streaming;
     }
     else if (wfname == "copy") {
-        return WorkflowType::Copy;
+        return WorkloadType::Copy;
     }
     else {
-        throw std::runtime_error("Workflow type " + wfname + " invalid. Please choose 'calculation', 'streaming', or 'copy'");
+        throw std::runtime_error("Workload type " + wfname + " invalid. Please choose 'calculation', 'streaming', or 'copy'");
     }
 }
 
