@@ -740,8 +740,23 @@ int main(int argc, char **argv) {
 
 
     /* Launch the simulation */
-    std::cerr << "Launching the Simulation..." << std::endl;
     try {
+        /* initialize output-dump file */
+        std::ofstream filedump;
+        filedump.open(filename, ios::out | ios::trunc);
+        if (filedump.is_open()) {
+            filedump << "job.tag" << ", "; // << "job.ncpu" << ", " << "job.memory" << ", " << "job.disk" << ", ";
+            filedump << "machine.name" << ", ";
+            filedump << "hitrate" << ", ";
+            filedump << "job.start" << ", " << "job.end" << ", " << "job.computetime" << ", ";
+            filedump << "infiles.transfertime" << ", " << "infiles.size" << ", " << "outfiles.transfertime" << ", " << "outfiles.size" << "\n";
+            filedump.close();
+            std::cerr << "Wrote header of the output dump into file " << filename << std::endl;
+        }
+        else {
+            throw std::runtime_error("Couldn't open output-file " + filename + " for dump!");
+        }
+        std::cerr << "Launching the Simulation..." << std::endl;
         simulation->launch();
     } catch (std::runtime_error &e) {
         std::cerr << "Exception: " << e.what() << std::endl;
