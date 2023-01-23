@@ -4,6 +4,7 @@
 #define S_SIMPLESIMULATOR_H
 
 #include "LRU_FileList.h"
+#include "Workload.h"
 
 class SimpleSimulator {
 

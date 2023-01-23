@@ -12,7 +12,7 @@
 #include "SimpleExecutionController.h"
 #include "JobSpecification.h"
 
-#include "util/Enums.h"
+#include "util/Utils.h"
 
 #include <iostream>
 #include <fstream>
@@ -306,84 +306,6 @@ po::variables_map process_program_options(int argc, char** argv) {
 
 
 /**
- * @brief Fill a Workload consisting of jobs with job specifications, 
- * which include the inputfile and outputfile dependencies.
- * It can be chosen between jobs streaming input data and perform computations simultaneously 
- * or jobs copying the full input-data and compute afterwards.
- *    
- * @param num_jobs: number of tasks
- * @param infiles_per_task: number of input-files each job processes
- * @param average_flops: expectation value of the flops (truncated gaussian) distribution
- * @param sigma_flops: std. deviation of the flops (truncated gaussian) distribution
- * @param average_memory: expectation value of the memory (truncated gaussian) distribution
- * @param sigma_memory: std. deviation of the memory (truncated gaussian) distribution
- * @param average_infile_size: expectation value of the input-file size (truncated gaussian) distribution
- * @param sigma_infile_size: std. deviation of the input-file size (truncated gaussian) distribution
- * @param average_outfile_size: expectation value of the output-file size (truncated gaussian) distribution
- * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
- * @param workload_type: flag to specifiy, whether the job should run with streaming or not
- * @param jobname_suffix: part of job name to distinguish between different workloads
- * 
- * @throw std::runtime_error
- */
-std::map<std::string, JobSpecification> fill_workload (
-        size_t num_jobs,
-        size_t infiles_per_task,
-        double average_flops, double sigma_flops,
-        double average_memory, double sigma_memory,
-        double average_infile_size, double sigma_infile_size,
-        double average_outfile_size, double sigma_outfile_size,
-        WorkloadType workload_type, std::string jobname_suffix
-) {
-
-    // Map to store the workload specification
-    std::map<std::string, JobSpecification> workload;
-    std::string potential_separator = "_";
-    if(jobname_suffix == ""){
-        potential_separator = "";
-    }
-
-    // Initialize random number generators
-    std::normal_distribution<> flops_dist(average_flops, sigma_flops);
-    std::normal_distribution<> mem_dist(average_memory, sigma_memory);
-    std::normal_distribution<> insize_dist(average_infile_size, sigma_infile_size);
-    std::normal_distribution<> outsize_dist(average_outfile_size,sigma_outfile_size);
-
-    for (size_t j = 0; j < num_jobs; j++) {
-
-        // Create a job specification
-        JobSpecification job_specification;
-
-        // Sample strictly positive task flops
-        double dflops = flops_dist(SimpleSimulator::gen);
-        while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops_dist(SimpleSimulator::gen);
-        job_specification.total_flops = dflops;
-
-        // Sample strictly positive task memory requirements
-        double dmem = mem_dist(SimpleSimulator::gen);
-        while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem_dist(SimpleSimulator::gen);
-        job_specification.total_mem = dmem;
-
-        for (size_t f = 0; f < infiles_per_task; f++) {
-            // Sample inputfile sizes
-            double dinsize = insize_dist(SimpleSimulator::gen);
-            while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(SimpleSimulator::gen);
-            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + jobname_suffix + potential_separator + std::to_string(j) + "_" + std::to_string(f), dinsize));
-        }
-
-        // Sample outfile sizes
-        double doutsize = outsize_dist(SimpleSimulator::gen);
-        while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(SimpleSimulator::gen);
-        job_specification.outfile = wrench::Simulation::addFile("outfile_" + jobname_suffix + potential_separator + std::to_string(j), doutsize);
-
-        job_specification.workload_type = workload_type;
-
-        workload["job_" + jobname_suffix + potential_separator + std::to_string(j)] = job_specification;
-    }
-    return workload;
-}
-
-/**
  * @brief Method to duplicate the jobs of a workload
  * 
  * @param workload Workload containing jobs to duplicate
@@ -574,17 +496,21 @@ int main(int argc, char **argv) {
     /* Create a workload */
     std::cerr << "Constructing workload specification..." << std::endl;
 
-    std::map<std::string, JobSpecification> workload_spec = {};
+    std::vector<Workload> workload_specs = {};
 
 
     if(workload_configurations.size() == 0){
-        workload_spec = fill_workload(
-            num_jobs, infiles_per_job,
-            average_flops, sigma_flops,
-            average_memory,sigma_memory,
-            average_infile_size, sigma_infile_size,
-            average_outfile_size, sigma_outfile_size,
-            vm["workflow-type"].as<WorkloadTypeStruct>().get(), ""
+        workload_specs.push_back(
+            Workload(
+                num_jobs, infiles_per_job,
+                average_flops, sigma_flops,
+                average_memory,sigma_memory,
+                average_infile_size, sigma_infile_size,
+                average_outfile_size, sigma_outfile_size,
+                vm["workflow-type"].as<WorkloadTypeStruct>().get(), "",
+                submission_time_offset,
+                SimpleSimulator::gen
+            )
         );
 
         std::cerr << "The workload has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
@@ -610,15 +536,18 @@ int main(int argc, char **argv) {
                     }
                 }
                 std::string workload_type_lower = boost::to_lower_copy(std::string(wf.value()["workload_type"]));
-                auto workload_spec = fill_workload(
-                    wf.value()["num_jobs"], wf.value()["infiles_per_job"],
-                    wf.value()["average_flops"], wf.value()["sigma_flops"],
-                    wf.value()["average_memory"], wf.value()["sigma_memory"],
-                    wf.value()["average_infile_size"], wf.value()["sigma_infile_size"],
-                    wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
-                    get_workload_type(workload_type_lower), wf.key()
+                workload_specs.push_back(
+                    Workload(
+                        wf.value()["num_jobs"], wf.value()["infiles_per_job"],
+                        wf.value()["average_flops"], wf.value()["sigma_flops"],
+                        wf.value()["average_memory"], wf.value()["sigma_memory"],
+                        wf.value()["average_infile_size"], wf.value()["sigma_infile_size"],
+                        wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
+                        get_workload_type(workload_type_lower), wf.key(),
+                        wf.value()["submit_time"],
+                        SimpleSimulator::gen
+                    )
                 );
-                workload_spec.insert(workload_spec.begin(), workload_spec.end());
                 std::cerr << "The workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
             }
         }
@@ -730,7 +659,7 @@ int main(int argc, char **argv) {
 
     /* Instantiate Execution Controllers */
     std::set<std::shared_ptr<SimpleExecutionController>> execution_controllers;
-    //TODO: Think of a way to support more than one execution controller
+    //TODO: Think of a way to support more than one execution controller host
     if (SimpleSimulator::executors.size() != 1) {
         throw std::runtime_error("Currently this simulator supports only a single execution controller!");
     }
@@ -745,7 +674,7 @@ int main(int argc, char **argv) {
                 //hitrate,
                 filename,
                 SimpleSimulator::shuffle_jobs,
-                SimpleSimulator::gen
+                gen
             )
         );
         execution_controllers.insert(wms);
