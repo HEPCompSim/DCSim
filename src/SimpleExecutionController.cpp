@@ -129,7 +129,7 @@ int SimpleExecutionController::main() {
         // Combined read-input-file-and-run-computation actions
         std::shared_ptr<MonitorAction> run_action;
         std::shared_ptr<wrench::ComputeAction> compute_action;
-        if (job_spec->workflow_type == WorkflowType::Copy) {
+        if (job_spec->workload_type == WorkloadType::Copy) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
                 new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
             );
@@ -145,7 +145,7 @@ int SimpleExecutionController::main() {
             );
             job->addCustomAction(run_action);
         }
-        else if (job_spec->workflow_type == WorkflowType::Streaming){
+        else if (job_spec->workload_type == WorkloadType::Streaming){
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
                 new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops, SimpleSimulator::prefetching_on)
             );
@@ -161,8 +161,8 @@ int SimpleExecutionController::main() {
             );
             job->addCustomAction(run_action);
         }
-        else if (job_spec->workflow_type == WorkflowType::Calculation) {
-            // TODO: figure out what is the best value for the ability tp parallelize HEP workflows on a CPU. Setting currently to 1.0.
+        else if (job_spec->workload_type == WorkloadType::Calculation) {
+            // TODO: figure out what is the best value for the ability tp parallelize HEP workloads on a CPU. Setting currently to 1.0.
             compute_action = job->addComputeAction("calculation_" + *job_name,job_spec->total_flops, job_spec->total_mem, 1, 1, wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
         }
 
@@ -188,10 +188,10 @@ int SimpleExecutionController::main() {
         // // );
 
         // // Add necessary dependencies
-        if (job_spec->workflow_type == WorkflowType::Streaming || job_spec->workflow_type == WorkflowType::Copy) {
+        if (job_spec->workload_type == WorkloadType::Streaming || job_spec->workload_type == WorkloadType::Copy) {
             job->addActionDependency(run_action, fw_action);
         }
-        else if (job_spec->workflow_type == WorkflowType::Calculation) {
+        else if (job_spec->workload_type == WorkloadType::Calculation) {
             job->addActionDependency(compute_action, fw_action);
         }
 
@@ -210,7 +210,7 @@ int SimpleExecutionController::main() {
 
     this->num_completed_jobs = 0;
     while (this->workload_spec.size() > 0) {
-        // Wait for a workflow execution event, and process it
+        // Wait for a workload execution event, and process it
         try {
             this->waitForAndProcessNextEvent();
         } catch (wrench::ExecutionException &e) {

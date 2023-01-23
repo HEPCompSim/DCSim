@@ -63,13 +63,13 @@ private:
     std::shared_ptr<wrench::JobManager> job_manager;
     /** @brief The data movement manager */
     std::shared_ptr<wrench::DataMovementManager> data_movement_manager;
-    /** @brief Whether the workflow execution shoulb be aborted */
+    /** @brief Whether the workflow execution should be aborted */
     bool abort = false;
     /** @brief The desired fraction of input files served by the cache */
     double hitrate = 0.;
 
     /** @brief Map holding information about the first and last task of jobs for output dump */
-//    std::map<std::shared_ptr<wrench::StandardJob>, std::pair<wrench::WorkflowTask*, wrench::WorkflowTask*>> job_first_last_tasks;
+//    std::map<std::shared_ptr<wrench::StandardJob>, std::pair<wrench::WorkloadTask*, wrench::WorkloadTask*>> job_first_last_tasks;
     /** @brief Filename for the output-dump file */
     std::string filename;
     /** @brief Output filestream object to write out dump */

@@ -24,7 +24,7 @@ public:
     // Memory consumption of the job
     double total_mem;
     // Usage of block streaming
-    WorkflowType workflow_type;
+    WorkloadType workload_type;
 
 };
 #endif //S_JOB_SPECIFICATION_H
