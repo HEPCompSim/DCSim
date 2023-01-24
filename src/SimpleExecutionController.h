@@ -25,22 +25,19 @@ class SimpleExecutionController : public wrench::ExecutionController {
 public:
     // Constructor
     SimpleExecutionController(
-              const std::map<std::string, JobSpecification> &workload_spec,
+              const Workload &workload_spec,
               const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
               const std::set<std::shared_ptr<wrench::StorageService>>& grid_storage_services,
               const std::set<std::shared_ptr<wrench::StorageService>>& cache_storage_services,
-              //const std::set<std::shared_ptr<wrench::NetworkProximityService>>& network_proximity_services,
-              //std::shared_ptr<wrench::FileRegistryService> file_registry_service,
               const std::string& hostname,
-              //const double& hitrate,
               const std::string& outputdump_name,
               const bool& shuffle_jobs, const std::mt19937& generator);
 
-    std::map<std::string, JobSpecification>& get_workload_spec() {
+    std::map<std::string,JobSpecification>& get_workload_spec() {
         return this->workload_spec;
     }
 
-    void set_workload_spec(std::map<std::string, JobSpecification> w) {
+    void set_workload_spec(std::map<std::string,JobSpecification> w) {
         this->workload_spec = w;
     }
 
@@ -54,15 +51,17 @@ private:
     std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
-    std::map<std::string, JobSpecification> workload_spec;
+
+    /** @brief job batch to submit with all specs **/
+    std::map<std::string,JobSpecification> workload_spec;
 
 
     int main() override;
 
     /** @brief The job manager */
     std::shared_ptr<wrench::JobManager> job_manager;
-    /** @brief The data movement manager */
-    std::shared_ptr<wrench::DataMovementManager> data_movement_manager;
+    // /** @brief The data movement manager */
+    // std::shared_ptr<wrench::DataMovementManager> data_movement_manager;
     /** @brief Whether the workflow execution should be aborted */
     bool abort = false;
     /** @brief The desired fraction of input files served by the cache */
@@ -77,6 +76,12 @@ private:
 
     /** @brief number of complete jobs so far **/
     size_t num_completed_jobs = 0;
+
+    /** @brief time to wait before submission **/
+    double time_offset = 0.;
+
+    /** @brief job type for this workload*/
+    WorkloadType workload_type;
 
     /** @brief switch to shuffle jobs **/
     bool shuffle_jobs = false;

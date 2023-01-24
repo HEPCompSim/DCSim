@@ -41,6 +41,7 @@ const std::vector<std::string> workload_keys = {
     };
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
 std::mt19937 SimpleSimulator::gen(42);  // random number generator
+std::ofstream filedump; // output file stream to write monitoring dump to
 bool SimpleSimulator::infile_caching_on = true; // flag to turn off/on the caching of job input-files
 bool SimpleSimulator::prefetching_on = true;   // flag to enable prefetching during streaming
 bool SimpleSimulator::shuffle_jobs = false;   // flag to enable job shuffling during submission
@@ -667,82 +668,81 @@ int main(int argc, char **argv) {
         throw std::runtime_error("Currently this simulator supports only a single execution controller!");
     }
     for (auto host: SimpleSimulator::executors) {
-        auto wms = simulation->add(
-            new SimpleExecutionController(
-                workload_spec,
-                htcondor_compute_services,
-                grid_storage_services,
-                cache_storage_services,
-                host,
-                //hitrate,
-                filename,
-                SimpleSimulator::shuffle_jobs,
-                gen
-            )
-        );
-        execution_controllers.insert(wms);
+        for (auto workload_spec: workload_specs) {
+            auto wms = simulation->add(
+                new SimpleExecutionController(
+                    workload_spec,
+                    htcondor_compute_services,
+                    grid_storage_services,
+                    cache_storage_services,
+                    host,
+                    filename,
+                    SimpleSimulator::shuffle_jobs,
+                    SimpleSimulator::gen
+                )
+            );
+            execution_controllers.insert(wms);
+        }
     }
 
     /* Instantiate inputfiles and set outfile destinations*/
-    auto wms = *execution_controllers.begin();
     std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
-    try {
-        for (auto &job_name_spec: wms->get_workload_spec()) {
-            // job specifications
-            auto &job_spec = job_name_spec.second;
-            std::shuffle(job_spec.infiles.begin(), job_spec.infiles.end(), SimpleSimulator::gen); // Shuffle the input files
-            // Compute the job's incremental inputfiles size
-            double incr_inputfile_size = 0.;
-            for (auto const &f : job_spec.infiles) {
-                incr_inputfile_size += f->getSize();
-            }
-            double cached_files_size = 0.;
-            for (auto const &f : job_spec.infiles) {
-                // Distribute the inputfiles on all GRID storages
-                //TODO: Think of a more realistic distribution pattern and avoid duplications
-                for (auto storage_service: grid_storage_services) {
-                    // simulation->stageFile(f, storage_service);
-                    simulation->createFile(wrench::FileLocation::LOCATION(storage_service, f));
-                    SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
+    for (auto wms: execution_controllers) {
+        try {
+            for (auto &job_spec: wms->get_workload_spec()) {
+                std::shuffle(job_spec.second.infiles.begin(), job_spec.second.infiles.end(), SimpleSimulator::gen); // Shuffle the input files
+                // Compute the job's incremental inputfiles size
+                double incr_inputfile_size = 0.;
+                for (auto const &f : job_spec.second.infiles) {
+                    incr_inputfile_size += f->getSize();
                 }
-                // Distribute the infiles on all caches until desired hitrate is reached
-                //TODO: Rework the initialization of input files on caches
-                if (cached_files_size < hitrate*incr_inputfile_size) {
-                    for (const auto& cache : cache_storage_services) {
-                        // simulation->stageFile(f, cache);
-                        simulation->createFile(wrench::FileLocation::LOCATION(cache, f));
-                        SimpleSimulator::global_file_map[cache].touchFile(f.get());
+                double cached_files_size = 0.;
+                for (auto const &f : job_spec.second.infiles) {
+                    // Distribute the inputfiles on all GRID storages
+                    //TODO: Think of a more realistic distribution pattern and avoid duplications
+                    for (auto storage_service: grid_storage_services) {
+                        // simulation->stageFile(f, storage_service);
+                        simulation->createFile(wrench::FileLocation::LOCATION(storage_service, f));
+                        SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
                     }
-                    cached_files_size += f->getSize();
+                    // Distribute the infiles on all caches until desired hitrate is reached
+                    //TODO: Rework the initialization of input files on caches
+                    if (cached_files_size < hitrate*incr_inputfile_size) {
+                        for (const auto& cache : cache_storage_services) {
+                            // simulation->stageFile(f, cache);
+                            simulation->createFile(wrench::FileLocation::LOCATION(cache, f));
+                            SimpleSimulator::global_file_map[cache].touchFile(f.get());
+                        }
+                        cached_files_size += f->getSize();
+                    }
+                }
+                if (cached_files_size/incr_inputfile_size < hitrate) {
+                    throw std::runtime_error("Desired hitrate was not reached!");
+                }
+
+                // Set outfile destinations
+                // TODO: Think of a way to identify a specific (GRID) storage
+                for (auto storage_service: grid_storage_services) {
+                    job_spec.second.outfile_destination = wrench::FileLocation::LOCATION(storage_service, job_spec.second.outfile);
+                    break;
                 }
             }
-            if (cached_files_size/incr_inputfile_size < hitrate) {
-                throw std::runtime_error("Desired hitrate was not reached!");
-            }
-
-            // Set outfile destinations
-            // TODO: Think of a way to identify a specific (GRID) storage
-            for (auto storage_service: grid_storage_services) {
-                job_spec.outfile_destination = wrench::FileLocation::LOCATION(storage_service, job_spec.outfile);
-                break;
-            }
+        } catch (std::runtime_error &e) {
+            std::cerr << "Exception: " << e.what() << std::endl;
+            return 0;
         }
-    } catch (std::runtime_error &e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-        return 0;
-    }
 
-    /* Duplicate the workload */
-    std::cerr << "Duplicating workload..." << std::endl;
-    auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
-    wms->set_workload_spec(new_workload_spec);
-    std::cerr << "The workload now has " << std::to_string(new_workload_spec.size()) << " jobs in total " << std::endl;
+        /* Duplicate the workload */
+        std::cerr << "Duplicating workload..." << std::endl;
+        auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
+        wms->set_workload_spec(new_workload_spec);
+        std::cerr << "The workload now has " << std::to_string(new_workload_spec.size()) << " jobs in total " << std::endl;
+    }
 
 
     /* Launch the simulation */
     try {
         /* initialize output-dump file */
-        std::ofstream filedump;
         filedump.open(filename, ios::out | ios::trunc);
         if (filedump.is_open()) {
             filedump << "job.tag" << ", "; // << "job.ncpu" << ", " << "job.memory" << ", " << "job.disk" << ", ";
