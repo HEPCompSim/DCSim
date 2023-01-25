@@ -511,7 +511,7 @@ int main(int argc, char **argv) {
                 average_memory,sigma_memory,
                 average_infile_size, sigma_infile_size,
                 average_outfile_size, sigma_outfile_size,
-                vm["workflow-type"].as<WorkloadTypeStruct>().get(), "",
+                vm["workload-type"].as<WorkloadTypeStruct>().get(), "",
                 submission_time_offset,
                 SimpleSimulator::gen
             )
