@@ -109,6 +109,7 @@ int SimpleExecutionController::main() {
 
     // Create and submit all the jobs!
     WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->time_offset);
+    wrench::Simulation::sleep(this->time_offset);
     for (auto job_name: job_spec_keys) {
         auto job_spec = &this->workload_spec[*job_name];
 
