@@ -108,7 +108,7 @@ int SimpleExecutionController::main() {
     }
 
     // Create and submit all the jobs!
-    WRENCH_INFO("There are %ld jobs to schedule", this->workload_spec.size());
+    WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->time_offset);
     for (auto job_name: job_spec_keys) {
         auto job_spec = &this->workload_spec[*job_name];
 
@@ -154,7 +154,7 @@ int SimpleExecutionController::main() {
             compute_action = job->addComputeAction("calculation_" + *job_name,job_spec->total_flops, job_spec->total_mem, 1, 1, wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
         }
         else {
-            throw std::runtime_error("WorkloadType " + std::to_string(this->workload_type) + "not implemented!");
+            throw std::runtime_error("WorkloadType::" + workload_type_to_string(this->workload_type) + "not implemented!");
         }
 
         // Create the file write action

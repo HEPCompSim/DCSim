@@ -15,6 +15,7 @@
 #include <fstream>
 
 #include "JobSpecification.h"
+#include "Workload.h"
 #include "LRU_FileList.h"
 
 #include "util/Utils.h"

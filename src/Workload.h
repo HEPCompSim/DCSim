@@ -5,6 +5,45 @@
 #include "JobSpecification.h"
 #include "util/Utils.h"
 
+
+#define WORKLOAD_TYPES( F ) \
+    F(Calculation) \
+    F(Streaming) \
+    F(Copy)
+
+#define F(type) type ,
+enum WorkloadType { WORKLOAD_TYPES( F ) NumWorkloadTypes };
+#undef F
+
+std::string workload_type_to_string( WorkloadType );
+// WorkloadType string_to_workload_type( const std::string& );
+
+
+// enum class WorkloadType {Calculation, Streaming, Copy};
+
+inline WorkloadType get_workload_type(std::string wfname) {
+    if(wfname == "calculation") {
+        return WorkloadType::Calculation;
+    }
+    else if (wfname == "streaming") {
+        return WorkloadType::Streaming;
+    }
+    else if (wfname == "copy") {
+        return WorkloadType::Copy;
+    }
+    else {
+        throw std::runtime_error("Workload type " + wfname + " invalid. Please choose 'calculation', 'streaming', or 'copy'");
+    }
+}
+
+// std::string workloadtype_to_string(WorkloadType type) {
+//     if (type == WorkloadType::Calculation) return "Calculation";
+//     else if (type == WorkloadType::Streaming) return "Streaming";
+//     else if (type == WorkloadType::Copy) return "Copy";
+//     else throw std::runtime_error("Couldn't cast WorkflowType to string!");
+// }
+
+
 class Workload {
     public:
         // Constructor
@@ -26,25 +65,11 @@ class Workload {
         WorkloadType workload_type;
         // time offset until job submission relative to simulation start time (0)
         double submit_time_offset;
+
+    private:
+        /** @brief generator to shuffle jobs **/
+        std::mt19937 generator;
 };
-
-
-enum WorkloadType {Calculation, Streaming, Copy};
-
-inline WorkloadType get_workload_type(std::string wfname) {
-    if(wfname == "calculation") {
-        return WorkloadType::Calculation;
-    }
-    else if (wfname == "streaming") {
-        return WorkloadType::Streaming;
-    }
-    else if (wfname == "copy") {
-        return WorkloadType::Copy;
-    }
-    else {
-        throw std::runtime_error("Workload type " + wfname + " invalid. Please choose 'calculation', 'streaming', or 'copy'");
-    }
-}
 
 
 #endif //S_WORKLOAD_H

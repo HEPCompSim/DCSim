@@ -3,6 +3,24 @@
 #include "Workload.h"
 
 
+#define F(type) #type ,
+const char* workload_type_names[] = { WORKLOAD_TYPES( F ) nullptr };
+#undef F
+
+std::string workload_type_to_string( WorkloadType workload )
+{
+  return ((int)workload < (int)NumWorkloadTypes)
+    ? workload_type_names[ (int)workload ]
+    : "";
+}
+
+// WorkloadType string_to_workload_type( const std::string& s )
+// {
+//   return std::find( workload_type_names, workload_type_names + NumWorkloadTypes, s ) - workload_type_names;
+//   // You could raise an exception if the above expression == NumTokenTypes, if you wanted
+// }
+
+
 /**
  * @brief Fill a Workload consisting of jobs with job specifications, 
  * which include the inputfile and outputfile dependencies.
@@ -33,10 +51,11 @@ Workload::Workload(
         const double average_memory, const double sigma_memory,
         const double average_infile_size, const double sigma_infile_size,
         const double average_outfile_size, const double sigma_outfile_size,
-        const WorkloadType workload_type, const std::string name_suffix,
+        const enum WorkloadType workload_type, const std::string name_suffix,
         const double time_offset,
         const std::mt19937& generator
 ) {
+    this->generator = generator;
     // Map to store the workload specification
     std::vector<JobSpecification> batch;
     std::string potential_separator = "_";
@@ -56,25 +75,25 @@ Workload::Workload(
         JobSpecification job_specification;
 
         // Sample strictly positive task flops
-        double dflops = flops_dist(generator);
-        while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops_dist(generator);
+        double dflops = flops_dist(this->generator);
+        while ((average_flops+sigma_flops) < dflops || dflops < 0.) dflops = flops_dist(this->generator);
         job_specification.total_flops = dflops;
 
         // Sample strictly positive task memory requirements
-        double dmem = mem_dist(generator);
-        while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem_dist(generator);
+        double dmem = mem_dist(this->generator);
+        while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem_dist(this->generator);
         job_specification.total_mem = dmem;
 
         for (size_t f = 0; f < infiles_per_task; f++) {
             // Sample inputfile sizes
-            double dinsize = insize_dist(generator);
-            while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(generator);
+            double dinsize = insize_dist(this->generator);
+            while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(this->generator);
             job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(j) + "_" + std::to_string(f), dinsize));
         }
 
         // Sample outfile sizes
-        double doutsize = outsize_dist(generator);
-        while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(generator);
+        double doutsize = outsize_dist(this->generator);
+        while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(this->generator);
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + name_suffix + potential_separator + std::to_string(j), doutsize);
 
         job_specification.jobid = "job_" + name_suffix + potential_separator + std::to_string(j);
