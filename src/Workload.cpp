@@ -97,6 +97,8 @@ Workload::Workload(
         job_specification.outfile = wrench::Simulation::addFile("outfile_" + name_suffix + potential_separator + std::to_string(j), doutsize);
 
         job_specification.jobid = "job_" + name_suffix + potential_separator + std::to_string(j);
+
+        batch.push_back(job_specification);
     }
     this->job_batch = batch;
     this->workload_type = workload_type;
