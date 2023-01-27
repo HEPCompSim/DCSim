@@ -9,7 +9,7 @@
  */
 #include <wrench.h>
 #include "SimpleSimulator.h"
-#include "SimpleExecutionController.h"
+#include "WorkloadExecutionController.h"
 #include "JobSpecification.h"
 
 #include "util/Utils.h"
@@ -662,7 +662,7 @@ int main(int argc, char **argv) {
 
 
     /* Instantiate Execution Controllers */
-    std::set<std::shared_ptr<SimpleExecutionController>> workload_execution_controllers;
+    std::set<std::shared_ptr<WorkloadExecutionController>> workload_execution_controllers;
     //TODO: Think of a way to support more than one execution controller host
     if (SimpleSimulator::executors.size() != 1) {
         throw std::runtime_error("Currently this simulator supports only a single host running workload execution controllers!");
@@ -671,7 +671,7 @@ int main(int argc, char **argv) {
     for (auto host: SimpleSimulator::executors) {
         for (auto& workload_spec: workload_specs) {
             auto wms = simulation->add(
-                new SimpleExecutionController(
+                new WorkloadExecutionController(
                     workload_spec,
                     htcondor_compute_services,
                     grid_storage_services,

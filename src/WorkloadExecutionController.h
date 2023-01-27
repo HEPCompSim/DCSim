@@ -22,10 +22,10 @@
 
 class Simulation;
 
-class SimpleExecutionController : public wrench::ExecutionController {
+class WorkloadExecutionController : public wrench::ExecutionController {
 public:
     // Constructor
-    SimpleExecutionController(
+    WorkloadExecutionController(
               const Workload &workload_spec,
               const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
               const std::set<std::shared_ptr<wrench::StorageService>>& grid_storage_services,

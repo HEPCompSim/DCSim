@@ -11,13 +11,13 @@
 #include <algorithm>
 #include "util/DefaultValues.h"
 
-#include "SimpleExecutionController.h"
+#include "WorkloadExecutionController.h"
 #include "JobSpecification.h"
 #include "computation/StreamedComputation.h"
 #include "computation/CopyComputation.h"
 #include "MonitorAction.h"
 
-XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionController");
+XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for WorkloadExecutionController");
 
 
 /**
@@ -34,7 +34,7 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for SimpleExecutionContro
  *  @param generator generator for job shuffling
  *  
  */
-SimpleExecutionController::SimpleExecutionController(
+WorkloadExecutionController::WorkloadExecutionController(
         const Workload& workload_spec,
         const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
         const std::set<std::shared_ptr<wrench::StorageService>>& grid_storage_services,
@@ -58,13 +58,13 @@ SimpleExecutionController::SimpleExecutionController(
 }
 
 /**
- * @brief main method of the SimpleExecutionController daemon
+ * @brief main method of the WorkloadExecutionController daemon
  * 
  * @return 0 on completion
  * 
  * @throw std::runtime_error
  */
-int SimpleExecutionController::main() {
+int WorkloadExecutionController::main() {
 
     wrench::TerminalOutput::setThisProcessLoggingColor(wrench::TerminalOutput::COLOR_GREEN);
 
@@ -224,7 +224,7 @@ int SimpleExecutionController::main() {
         WRENCH_INFO("Workload execution on %s is incomplete!", this->getHostname().c_str());
     }
 
-    WRENCH_INFO("SimpleExecutionController daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());
+    WRENCH_INFO("WorkloadExecutionController daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());
 
     this->job_manager.reset();
 
@@ -238,10 +238,10 @@ int SimpleExecutionController::main() {
  * 
  * @param event: an execution event
  */
-void SimpleExecutionController::processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent> event) {
+void WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent> event) {
     WRENCH_INFO("Notified that compound job %s has failed!", event->job->getName().c_str());
     WRENCH_INFO("Failure cause: %s", event->failure_cause->toString().c_str());
-    WRENCH_INFO("As a SimpleExecutionController, I abort as soon as there is a failure");
+    WRENCH_INFO("As a WorkloadExecutionController, I abort as soon as there is a failure");
     this->abort = true;
 }
 
@@ -252,7 +252,7 @@ void SimpleExecutionController::processEventCompoundJobFailure(std::shared_ptr<w
 *
 * @param event: an execution event
 */
-void SimpleExecutionController::processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
+void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
 
     /* Retrieve the job that this event is for */
     WRENCH_INFO("Notified that job %s with %ld actions has completed", event->job->getName().c_str(), event->job->getActions().size());

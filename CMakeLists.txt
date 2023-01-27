@@ -18,8 +18,8 @@ include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/
 
 # source files
 set(SOURCE_FILES
-        src/SimpleExecutionController.h
-        src/SimpleExecutionController.cpp
+        src/WorkloadExecutionController.h
+        src/WorkloadExecutionController.cpp
         src/SimpleSimulator.h
         src/SimpleSimulator.cpp
         src/JobSpecification.h
@@ -49,7 +49,7 @@ set(TEST_FILES
         src/computation/CopyComputation.h
         src/LRU_FileList.h
         src/SimpleSimulator.h
-        src/SimpleExecutionController.h
+        src/WorkloadExecutionController.h
         src/Workload.h
         )
 
