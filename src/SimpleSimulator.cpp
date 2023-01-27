@@ -315,11 +315,11 @@ po::variables_map process_program_options(int argc, char** argv) {
  * @param duplications Number of duplications each job is duplicated
  * @return std::map<std::string, JobSpecification> 
  */
-std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
+std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification>& workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
     size_t num_jobs = workload.size();
     std::map<std::string, JobSpecification> dupl_workload;
+    std::cerr << "\tDuplicating workload " << &workload << " with " << std::to_string(num_jobs) << " jobs ";
     for (auto & job_spec: workload) {
-
         boost::smatch job_index_matches;
         boost::regex job_index_expression{"\\d+"};
         boost::regex_search(job_spec.first, job_index_matches,  job_index_expression);
@@ -341,6 +341,7 @@ std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobS
             dupl_workload.insert(std::make_pair(dupl_job_id, dupl_job_specs));
         }
     }
+    std::cerr << "-> New workload has " << dupl_workload.size() << " jobs\n";
     return dupl_workload;
 }
 
@@ -502,7 +503,6 @@ int main(int argc, char **argv) {
 
     std::vector<Workload> workload_specs = {};
 
-
     if(workload_configurations.size() == 0){
         workload_specs.push_back(
             Workload(
@@ -517,7 +517,7 @@ int main(int argc, char **argv) {
             )
         );
 
-        std::cerr << "The workload has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
+        std::cerr << "\tThe workload has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
     }
     else {
         for(auto &wf_confpath : workload_configurations){
@@ -552,11 +552,11 @@ int main(int argc, char **argv) {
                         SimpleSimulator::gen
                     )
                 );
-                std::cerr << "The workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
+                std::cerr << "\tThe workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
             }
         }
     }
-
+    std::cerr << "Created " << workload_specs.size() << " unique workloads!" << "\n";
 
     /* Read and parse the platform description file to instantiate a simulation platform */
     std::cerr << "Instantiating SimGrid platform..." << std::endl;
@@ -662,13 +662,14 @@ int main(int argc, char **argv) {
 
 
     /* Instantiate Execution Controllers */
-    std::set<std::shared_ptr<SimpleExecutionController>> execution_controllers;
+    std::set<std::shared_ptr<SimpleExecutionController>> workload_execution_controllers;
     //TODO: Think of a way to support more than one execution controller host
     if (SimpleSimulator::executors.size() != 1) {
-        throw std::runtime_error("Currently this simulator supports only a single execution controller!");
+        throw std::runtime_error("Currently this simulator supports only a single host running workload execution controllers!");
     }
+    std::cerr << "Creating workload execution controllers..." << "\n";
     for (auto host: SimpleSimulator::executors) {
-        for (auto workload_spec: workload_specs) {
+        for (auto& workload_spec: workload_specs) {
             auto wms = simulation->add(
                 new SimpleExecutionController(
                     workload_spec,
@@ -681,13 +682,15 @@ int main(int argc, char **argv) {
                     SimpleSimulator::gen
                 )
             );
-            execution_controllers.insert(wms);
+            std::cerr << "\tCreated execution controller " << wms->getName() << " executing workload " << &workload_spec << " with " << workload_spec.job_batch.size() << " jobs to simulate\n";
+            workload_execution_controllers.insert(wms);
         }
+        std::cerr << "Total number of execution controllers: " << workload_execution_controllers.size() << "\n";
     }
 
     /* Instantiate inputfiles and set outfile destinations*/
     std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
-    for (auto wms: execution_controllers) {
+    for (auto wms: workload_execution_controllers) {
         try {
             for (auto &job_spec: wms->get_workload_spec()) {
                 std::shuffle(job_spec.second.infiles.begin(), job_spec.second.infiles.end(), SimpleSimulator::gen); // Shuffle the input files
@@ -731,13 +734,17 @@ int main(int argc, char **argv) {
             std::cerr << "Exception: " << e.what() << std::endl;
             return 0;
         }
+    }
 
+    std::cerr << "Duplicating workloads ... " << "\n";
+    size_t num_total_jobs = 0;
+    for (auto wms: workload_execution_controllers) {
         /* Duplicate the workload */
-        std::cerr << "Duplicating workload..." << std::endl;
         auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
         wms->set_workload_spec(new_workload_spec);
-        std::cerr << "The workload now has " << std::to_string(new_workload_spec.size()) << " jobs in total " << std::endl;
+        num_total_jobs += new_workload_spec.size();
     }
+    std::cerr << "The simulation now has " << std::to_string(num_total_jobs) << " jobs in total " << std::endl;
 
 
     /* Launch the simulation */
