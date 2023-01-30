@@ -79,7 +79,7 @@ private:
     size_t num_completed_jobs = 0;
 
     /** @brief time to wait before submission **/
-    double time_offset = 0.;
+    double arrival_time = 0.;
 
     /** @brief job type for this workload*/
     WorkloadType workload_type;
