@@ -55,7 +55,7 @@ class Workload {
             const double average_infile_size, const double sigma_infile_size,
             const double average_outfile_size, const double sigma_outfile_size,
             const WorkloadType workload_type, const std::string name_suffix,
-            const double time_offset,
+            const double arrival_time,
             const std::mt19937& generator
         );
 
@@ -64,7 +64,7 @@ class Workload {
         // Usage of block streaming
         WorkloadType workload_type;
         // time offset until job submission relative to simulation start time (0)
-        double submit_time_offset;
+        double submit_arrival_time;
 
     private:
         /** @brief generator to shuffle jobs **/

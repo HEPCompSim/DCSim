@@ -47,7 +47,7 @@ WorkloadExecutionController::WorkloadExecutionController(
     for (auto& job_spec: workload_spec.job_batch) {
         this->workload_spec[job_spec.jobid] = job_spec;
     }
-    this->time_offset = workload_spec.submit_time_offset;
+    this->arrival_time = workload_spec.submit_arrival_time;
     this->workload_type = workload_spec.workload_type;
     this->htcondor_compute_services = htcondor_compute_services;
     this->grid_storage_services = grid_storage_services;
@@ -108,8 +108,8 @@ int WorkloadExecutionController::main() {
     }
 
     // Create and submit all the jobs!
-    WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->time_offset);
-    wrench::Simulation::sleep(this->time_offset);
+    WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->arrival_time);
+    wrench::Simulation::sleep(this->arrival_time);
     for (auto job_name: job_spec_keys) {
         auto job_spec = &this->workload_spec[*job_name];
 

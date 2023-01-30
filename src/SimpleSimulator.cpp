@@ -464,7 +464,7 @@ int main(int argc, char **argv) {
     double sigma_infile_size = vm["sigma-insize"].as<double>();
     double average_outfile_size = vm["outsize"].as<double>();
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
-    double submission_time_offset = vm["submission-time"].as<double>();
+    double submission_arrival_time = vm["submission-time"].as<double>();
 
     size_t duplications = vm["duplications"].as<size_t>();
     std::vector<std::string> workload_configurations = vm["workload-configurations"].as<std::vector<std::string>>();
@@ -512,7 +512,7 @@ int main(int argc, char **argv) {
                 average_infile_size, sigma_infile_size,
                 average_outfile_size, sigma_outfile_size,
                 vm["workload-type"].as<WorkloadTypeStruct>().get(), "",
-                submission_time_offset,
+                submission_arrival_time,
                 SimpleSimulator::gen
             )
         );

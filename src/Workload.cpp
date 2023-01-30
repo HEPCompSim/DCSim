@@ -39,7 +39,7 @@ std::string workload_type_to_string( WorkloadType workload )
  * @param sigma_outfile_size: std. deviation of the output-file size (truncated gaussian) distribution
  * @param workload_type: flag to specifiy, whether the job should run with streaming or not
  * @param name_suffix: part of job name to distinguish between different workloads
- * @param time_offset: submission time offset relative to simulation start
+ * @param arrival_time: submission time offset relative to simulation start
  * @param generator: random number generator objects to draw from
  * 
  * @throw std::runtime_error
@@ -52,7 +52,7 @@ Workload::Workload(
         const double average_infile_size, const double sigma_infile_size,
         const double average_outfile_size, const double sigma_outfile_size,
         const enum WorkloadType workload_type, const std::string name_suffix,
-        const double time_offset,
+        const double arrival_time,
         const std::mt19937& generator
 ) {
     this->generator = generator;
@@ -102,5 +102,5 @@ Workload::Workload(
     }
     this->job_batch = batch;
     this->workload_type = workload_type;
-    this->submit_time_offset = time_offset;
+    this->submit_arrival_time = arrival_time;
 }
