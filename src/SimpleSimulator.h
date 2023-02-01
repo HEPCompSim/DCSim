@@ -4,6 +4,7 @@
 #define S_SIMPLESIMULATOR_H
 
 #include "LRU_FileList.h"
+#include "Workload.h"
 
 class SimpleSimulator {
 
@@ -47,6 +48,9 @@ public:
     static double mean_outsize;
     static double sigma_outsize;
     static std::normal_distribution<double>* outsize_dist;
+    
+    /** @brief Output filestream object to write out dump */
+    static std::ofstream filedump;
 };
 
 #endif //S_SIMPLESIMULATOR_H

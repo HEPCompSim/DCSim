@@ -1,5 +1,5 @@
 {
-    "calc_workflow": {
+    "calc_workload": {
         "num_jobs": 60,
         "infiles_per_job": 0,
         "average_flops": 2164428000000,
@@ -10,9 +10,10 @@
         "sigma_infile_size": 0,
         "average_outfile_size": 18000000,
         "sigma_outfile_size": 1800000,
-        "workflow_type": "calculation"
+        "workload_type": "calculation",
+        "submission_time": 0
     },
-    "mc_workflow": {
+    "mc_workload": {
         "num_jobs": 60,
         "infiles_per_job": 0,
         "average_flops": 2164428000000,
@@ -23,9 +24,10 @@
         "sigma_infile_size": 0,
         "average_outfile_size": 18000000000,
         "sigma_outfile_size": 1800000000,
-        "workflow_type": "calculation"
+        "workload_type": "calculation",
+        "submission_time": 10000
     },
-    "copy_and_compute_workflow": {
+    "copy_and_compute_workload": {
         "num_jobs": 60,
         "infiles_per_job": 10,
         "average_flops": 2164428000000,
@@ -36,9 +38,10 @@
         "sigma_infile_size": 360000000,
         "average_outfile_size": 18000000000,
         "sigma_outfile_size": 1800000000,
-        "workflow_type": "copy"
+        "workload_type": "copy",
+        "submission_time": 20000
     },
-    "stream_and_compute_workflow": {
+    "stream_and_compute_workload": {
         "num_jobs": 60,
         "infiles_per_job": 10,
         "average_flops": 2164428000000,
@@ -49,6 +52,7 @@
         "sigma_infile_size": 360000000,
         "average_outfile_size": 18000000000,
         "sigma_outfile_size": 1800000000,
-        "workflow_type": "streaming"
+        "workload_type": "streaming",
+        "submission_time": 55000.5
     }
 }

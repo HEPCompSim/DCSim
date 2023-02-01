@@ -29,11 +29,11 @@ plt.rcParams['font.family'] = 'sans-serif'
 QUANTITIES = {
     "Walltime": {
         "ylabel": "jobtime / min",
-        "ylim": None, # [20,65],
+        "ylim": [0,250], # [0,65],
     },
     "IOtime": {
         "ylabel": "transfer time / min",
-        "ylim": None, # [20,65],
+        "ylim": None, # [0,65],
     },
     "Efficiency": {
         "ylabel": "CPU eff.",
