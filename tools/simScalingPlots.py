@@ -9,9 +9,21 @@ import glob
 import argparse
 
 
-plt.rcParams["figure.figsize"] = [4., 3.]
-plt.rcParams["figure.autolayout"] = True
-
+plt.rcParams['figure.autolayout'] = True
+pd.set_option('display.max_columns',None)
+plt.rcParams['axes.facecolor'] = 'white'
+plt.rcParams['axes.spines.left'] = True
+plt.rcParams['axes.spines.right'] = True
+plt.rcParams['axes.spines.top'] = False
+plt.rcParams['axes.spines.bottom'] = True
+plt.rcParams['axes.grid'] = False
+plt.rcParams['axes.grid.axis'] = 'both'
+plt.rcParams['axes.labelcolor'] = '#555555'
+plt.rcParams['text.color'] = 'black'
+plt.rcParams['figure.figsize'] = 6,4
+plt.rcParams['figure.dpi'] = 100
+plt.rcParams['figure.titleweight'] = 'normal'
+plt.rcParams['font.family'] = 'sans-serif'
 
 def valid_file(param):
     base, ext = os.path.splitext(param)
@@ -129,7 +141,7 @@ ax.set_title("Simulation scaling " + scenario_plotlabel_dict[scenario])
 ax.set_xlabel('$N_{jobs}$', loc='right')
 ax.set_ylabel('time / min', color='cornflowerblue')
 ax.set_xlim([0,runtimesdf['NJobs'].iloc[-1]*1.05])
-# ax.set_ylim([0,400])
+ax.set_ylim([0,200])
 
 ax.plot(runtimesdf['NJobs'], runtimesdf['TIME']/60, linestyle='dotted', color='cornflowerblue')
 ax.scatter(runtimesdf['NJobs'], runtimesdf['TIME']/60, color='cornflowerblue', marker='x', label='runtime')

@@ -5,7 +5,7 @@ arguments = $(PLATFORM) $(NJOBS) $(BUFFERSIZE)
 
 should_transfer_files = YES
 transfer_input_files = ../../../data/platform-files/$(PLATFORM).xml
-transfer_output_files = scaling_dump_$(PLATFORM)$(NJOBS)jobs.txt, $(PLATFORM)$(NJOBS).csv
+transfer_output_files = scaling_dump_$(PLATFORM)$(NJOBS)jobs_b$(BUFFERSIZE).txt, $(PLATFORM)$(NJOBS)b$(BUFFERSIZE).csv
 when_to_transfer_output = ON_EXIT
 
 log = logs/log.$(ClusterId).$(ProcId)
@@ -28,6 +28,7 @@ RequestDisk = 4000000
 
 x509userproxy = $ENV(X509_USER_PROXY)
 
-PLATFORM = ETPbatch_reduced_simple
-BUFFERSIZE = 1048576
-queue NJOBS in (850, 900, 950)
+PLATFORM = ETPbatch_reduced
+BUFFERSIZE = infinity
+queue NJOBS in (50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950)
+# queue NJOBS in (400)

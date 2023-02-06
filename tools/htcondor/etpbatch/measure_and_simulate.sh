@@ -18,7 +18,7 @@ source /cvmfs/grid.cern.ch/umd-c7ui-latest/etc/profile.d/setup-c7-ui-example.sh
 # source /cvmfs/etp.kit.edu/DCSim/pre_0.2/setup.sh
 
 echo "GETTING CONDA ENVIRONMENT FROM REMOTE STORAGE"
-gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env02.tar.gz dcsim-env.tar.gz
+gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env.fluid.tar.gz dcsim-env.tar.gz
 # gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/aakhmets/dcsim-env.tar.gz dcsim-env.tar.gz
 echo "EXTRACTING AND SETTING CONDA ENVIRONMENT"
 mkdir -p dcsim-env
@@ -60,12 +60,12 @@ PLATFORM="${1}"
         --hitrate 0.0 \
         --xrd-blocksize ${XRDBLOCKSIZE} \
         --storage-buffer-size ${BUFFERSIZE} \
-        --output-file ${PLATFORM}${NJOBS}.csv \
+        --output-file ${PLATFORM}${NJOBS}b${BUFFERSIZE}.csv \
     & TEST_PID=$!
 
     (while [[ True ]]; \
         do ps -aux | grep " ${TEST_PID} " | grep "dc-sim" \
-        >> scaling_dump_${PLATFORM}${NJOBS}jobs.txt; \
+        >> scaling_dump_${PLATFORM}${NJOBS}jobs_b${BUFFERSIZE}.txt; \
         sleep 10; done;)\
     & MONITOR_PID=$!
     echo "Simulation process to monitor: $TEST_PID"
@@ -73,3 +73,5 @@ PLATFORM="${1}"
 
     wait $TEST_PID
     kill -9 ${MONITOR_PID}
+
+ls -l

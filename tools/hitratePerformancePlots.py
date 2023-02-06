@@ -169,7 +169,7 @@ for quantity, qstyle in QUANTITIES.items():
             x="hitrate", y=quantity,
             hue="machine.name", hue_order=machines,
             data=df,
-            palette=sns.color_palette("colorblind"),
+            palette=sns.color_palette("colorblind",n_colors=len(machines)),
             alpha=0.9
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
@@ -194,7 +194,7 @@ for quantity, qstyle in QUANTITIES.items():
             estimator="median", errorbar=("pi",95), # ci = Confidence Interval, pi = Percentile Interval, sd = Standard Deviation, se = Standard Error of Mean
             dodge=True, join=False,
             markers=".", capsize=0.5/len(machines), errwidth=1.,
-            palette=sns.color_palette("colorblind"),
+            palette=sns.color_palette("colorblind", as_cmap=True),
             ax=ax1
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
