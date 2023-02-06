@@ -39,7 +39,9 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  * @param hostname Name of the host, where the job runs
  */
 void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor, bool cache_files = true) {
-
+#define USE_NEW_CACHING
+#ifndef USE_NEW_CACHING
+    cerr<<"Old caching"<<endl;
     std::string hostname = action_executor->getHostname(); // host where action is executed
     auto host = simgrid::s4u::Host::by_name(hostname); 
     std::string netzone = host->get_englobing_zone()->get_name(); // network zone executing host belongs to
@@ -96,6 +98,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         // If not, then we have to copy the file from some GRID source to some reachable cache storage service
         // TODO: Find the optimal GRID source, whatever that means (right now it's whichever one works first)
         for (auto const &ss : this->grid_storage_services) {
+
 #ifdef SIMULATE_FILE_LOOKUP_OPERATION
             bool has_file = ss->lookupFile(f, wrench::FileLocation::LOCATION(ss));
 #else
@@ -149,6 +152,96 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
 
         this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
+#else
+        cerr<<"New caching"<<endl;
+        std::string hostname = action_executor->getHostname(); // host where action is executed
+    auto host = simgrid::s4u::Host::by_name(hostname);
+    std::string netzone = host->get_englobing_zone()->get_name(); // network zone executing host belongs to
+    auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
+
+    double cached_data_size = 0.;
+    double remote_data_size = 0.;
+
+    // Identify all cache storage services that can be reached from
+    // this host, which runs the streaming action
+    std::vector<std::shared_ptr<wrench::StorageService>> matched_storage_services;
+
+    for (auto const &ss : this->cache_storage_services) {
+        bool host_in_scope = false;
+        if (SimpleSimulator::local_cache_scope) {
+            host_in_scope = (ss->getHostname() == hostname);
+        } else {
+            host_in_scope = (SimpleSimulator::hosts_in_zones[netzone].find(ss->getHostname()) != SimpleSimulator::hosts_in_zones[netzone].end());
+        }
+        if (host_in_scope) {
+            matched_storage_services.push_back(ss);
+            WRENCH_DEBUG("Found a reachable cache on host %s", ss->getHostname().c_str());
+        }
+    }
+    if (matched_storage_services.empty()) {
+        WRENCH_DEBUG("Couldn't find a reachable cache");
+
+    }
+
+
+    // For each file, identify where to read it from and/or deal with cache updates, etc.
+    for (auto const &f : this->files) {
+        // find a source providing the required file
+        std::shared_ptr<wrench::StorageService> source_ss;
+        // See whether the file is already available in a "reachable" cache storage service
+        for (auto const &ss : matched_storage_services) {
+#ifdef SIMULATE_FILE_LOOKUP_OPERATION
+            bool has_file = ss->lookupFile(f, wrench::FileLocation::LOCATION(ss));
+#else
+            bool has_file = ss->hasFile(f);
+#endif
+            if (has_file) {
+                source_ss = ss;
+                WRENCH_DEBUG("Found file %s with size %.2f in cache %s", f->getID().c_str(), f->getSize(), source_ss->getHostname().c_str());
+                cached_data_size += f->getSize();
+                break;
+            }
+        }
+        // If yes, we're done
+        if (source_ss) {
+            cerr<<"reading from cache"<<endl;
+
+            this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
+            continue;
+        }
+        // If not, then we have to copy the file from some GRID source to some reachable cache storage service
+        // TODO: Find the optimal GRID source, whatever that means (right now it's whichever one works first)
+        for (auto const &ss : this->grid_storage_services) {
+#ifdef SIMULATE_FILE_LOOKUP_OPERATION
+            bool has_file = ss->lookupFile(f, wrench::FileLocation::LOCATION(ss));
+#else
+            bool has_file = ss->hasFile(f);
+#endif
+            if (has_file) {
+                source_ss = ss;
+                remote_data_size += f->getSize();
+                break;
+            }
+        }
+        if (!source_ss) {
+            throw std::runtime_error("CacheComputation(): Couldn't find file " + f->getID() + " on any storage service!");
+        }
+
+        // When there is a reachable cache, cache the file and evict others when needed
+        if (!matched_storage_services.empty()) {
+            auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
+            this->file_sources[f] = wrench::ProxyLocation::LOCATION(source_ss,wrench::FileLocation::LOCATION(destination_ss, f));
+            cerr<<"using proxy location"<<endl;
+        }else{
+            cerr<<"direct"<<endl;
+
+            //hit remote server directly and do not cache
+            this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
+
+        }
+
+#endif
+
     }
 
     // Fill monitoring information

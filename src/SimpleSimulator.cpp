@@ -582,11 +582,16 @@ int main(int argc, char **argv) {
     for (auto host: SimpleSimulator::cache_hosts) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
-        auto storage_service = simulation->add(
-            wrench::SimpleStorageService::createSimpleStorageService(
+        auto cache=simulation->add(wrench::SimpleStorageService::createSimpleStorageService(
                 host, {"/"},
-                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
+                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size},{wrench::SimpleStorageServiceProperty::CACHING_BEHAVIOR,"LRU"}},
                 {}
+        ));
+        auto storage_service = simulation->add(
+            wrench::StorageServiceProxy::createRedirectProxy(host,
+             cache,
+            nullptr,
+            {{wrench::StorageServiceProxyProperty::UNCACHED_READ_METHOD,"ReadThrough"}}
             )
         );
         cache_storage_services.insert(storage_service);
@@ -713,7 +718,7 @@ int main(int argc, char **argv) {
                     if (cached_files_size < hitrate*incr_inputfile_size) {
                         for (const auto& cache : cache_storage_services) {
                             // simulation->stageFile(f, cache);
-                            simulation->createFile(wrench::FileLocation::LOCATION(cache, f));
+                            simulation->createFile(wrench::FileLocation::LOCATION(static_pointer_cast<wrench::StorageServiceProxy>(cache)->getCache(), f));
                             SimpleSimulator::global_file_map[cache].touchFile(f.get());
                         }
                         cached_files_size += f->getSize();

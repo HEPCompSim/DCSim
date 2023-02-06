@@ -16,7 +16,7 @@ MEM=2400
 OUTSIZE=$(bc -l <<< "50000000")
 SIGMAOUTSIZE=$(bc -l <<< "1000000")
 DUPLICATIONS=1
-HITRATE=0.05
+HITRATE=0.5
 
 
 PLATFORM="../data/platform-files/ETPbatch_faster"
@@ -26,9 +26,9 @@ LD_PRELOAD=/usr/local/lib/libprofiler.so CPUPROFILE=prof_${NJOBS}_${XRDBLOCKSIZE
         --flops ${FLOPS} --sigma-flops ${SIGMAFLOPS} --mem ${MEM} \
         --outsize ${OUTSIZE} --sigma-outsize ${SIGMAOUTSIZE} \
         --duplications ${DUPLICATIONS} \
-        --hitrate 0.0 \
+        --hitrate ${HITRATE} \
  	--storage-buffer-size ${BUFFERSIZE} \
         --xrd-blocksize ${XRDBLOCKSIZE} \
-        --output-file ${PLATFORM}${NJOBS}.csv 
-
-pprof --text `pwd`/dc-sim prof_${NJOBS}_${XRDBLOCKSIZE}_${BUFFERSIZE}.out > prof_${NJOBS}_${XRDBLOCKSIZE}_${BUFFERSIZE}.txt
+        --output-file ${PLATFORM}${NJOBS}.csv \
+		--cache-scope "network"
+#pprof --text `pwd`/dc-sim prof_${NJOBS}_${XRDBLOCKSIZE}_${BUFFERSIZE}.out > prof_${NJOBS}_${XRDBLOCKSIZE}_${BUFFERSIZE}.txt
