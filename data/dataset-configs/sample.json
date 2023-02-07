@@ -1,6 +1,13 @@
 {
   "main_dataset": {
       "location":["RemoteStorage"],
+      "num_files": 100,
+      "average_file_size": 427718950,
+      "sigma_file_size": 0
+  },
+  "second_dataset": {
+      "location":["RemoteStorage"],
+      "num_files": 100,
       "average_file_size": 427718950,
       "sigma_file_size": 0
   }
