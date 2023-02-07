@@ -1,0 +1,7 @@
+{
+  "main_dataset": {
+      "location":["RemoteStorage"],
+      "average_file_size": 427718950,
+      "sigma_file_size": 0
+  }
+}

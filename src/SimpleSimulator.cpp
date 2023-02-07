@@ -21,6 +21,8 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
 
 
 namespace po = boost::program_options;
@@ -31,6 +33,10 @@ namespace po = boost::program_options;
  * with memory footprint by avoiding passing around / storing items that apply to
  * all jobs.
  */
+const std::vector<std::string> dataset_keys = {
+        "location",
+        "average_file_size", "sigma_file_size"
+    };
 const std::vector<std::string> workload_keys = {
         "num_jobs", "infiles_per_job", "cores",
         "flops", "memory", "infilesize", "outfilesize",
@@ -247,6 +253,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("hitrate,H", po::value<double>()->default_value(hitrate), "initial fraction of staged input-files on caches at simulation start")
 
         ("workload-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with workload configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")
+        ("dataset-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with dataset configurations.")
 
         ("njobs,n", po::value<size_t>()->default_value(60), "number of jobs to simulate")
         ("ncores,c", po::value<int>()->default_value(1), "number of cores jobs run on")
@@ -466,6 +473,9 @@ int main(int argc, char **argv) {
     size_t duplications = vm["duplications"].as<size_t>();
     std::vector<std::string> workload_configurations = vm["workload-configurations"].as<std::vector<std::string>>();
 
+    // dataset-configurations name containing datasets infomration
+    std::vector<std::string> dataset_configurations = vm["dataset-configurations"].as<std::vector<std::string>>();
+
     // Flags to turn on/off the caching of jobs' input-files
     SimpleSimulator::infile_caching_on = !(vm["no-caching"].as<bool>());
 
@@ -493,6 +503,49 @@ int main(int argc, char **argv) {
             rec_netzone_caches = true;
         }
     }
+
+    /* Create datasets */
+
+    std::cerr << "Constructing dataset specifications..." << std::endl;
+
+    std::vector<Dataset> dataset_specs = {};
+
+    if(dataset_configurations.size() ==0){
+        //Default dataset config
+    }
+    else {
+        for(auto &ds_confpath : dataset_configurations){
+            std::ifstream ds_conf(ds_confpath);
+            nlohmann::json dss_json = nlohmann::json::parse(ds_conf);
+
+            // Looping over the multiple workloads configured in the json file
+            for (auto &ds: dss_json.items()){
+
+                // Checking json syntax to match workload spec
+                for (auto &ds_key : dataset_keys){
+                    try {
+                        if(!ds.value().contains(ds_key)){
+                            throw std::invalid_argument("ERROR: the dataset configuration " + ds_confpath + " must contain " + ds_key + " as information.");
+                        }
+                    }
+                    catch(std::invalid_argument& e){
+                        std::cerr << e.what() << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                dataset_specs.push_back(
+                    Dataset(
+                        // TODO: support simple strings when only one host is required as location
+                        ds.value()["location"].get<std::vector<std::string>>(),
+                        ds.value()["average_file_size"], ds.value()["sigma_file_size"],
+                        ds.key(),
+                        SimpleSimulator::gen));
+                std::cerr << "\tDataset " << std::string(ds.key()) << " loaded" << std::endl;
+            }
+        }
+    }
+    std::cerr << "Created " << dataset_specs.size() << " unique datasets!" << "\n";
+
 
 
     /* Create a workload */
@@ -592,7 +645,7 @@ int main(int argc, char **argv) {
     }
 
     // and remote storages that are able to serve all file requests
-    //TODO: Think of a way to support grid storages serving only some datasets
+
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     for (auto host: SimpleSimulator::storage_hosts) {
         auto storage_service = simulation->add(

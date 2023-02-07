@@ -5,6 +5,7 @@
 
 #include "LRU_FileList.h"
 #include "Workload.h"
+#include "Dataset.h"
 
 class SimpleSimulator {
 
