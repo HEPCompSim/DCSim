@@ -34,7 +34,7 @@ namespace po = boost::program_options;
  * all jobs.
  */
 const std::vector<std::string> dataset_keys = {
-        "location",
+        "location", "num_files",
         "average_file_size", "sigma_file_size"
     };
 const std::vector<std::string> workload_keys = {
@@ -537,6 +537,7 @@ int main(int argc, char **argv) {
                     Dataset(
                         // TODO: support simple strings when only one host is required as location
                         ds.value()["location"].get<std::vector<std::string>>(),
+                        ds.value()["num_files"],
                         ds.value()["average_file_size"], ds.value()["sigma_file_size"],
                         ds.key(),
                         SimpleSimulator::gen));
