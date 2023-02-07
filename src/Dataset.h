@@ -9,14 +9,11 @@ class Dataset {
     public:
         // Constructor
         Dataset(
-            const std::vector<std::string> hostname, const double num_files,
-            const double average_infile_size, const double sigma_infile_size,
+            const std::vector<std::string> hostname,
+            const double average_file_size, const double sigma_file_size,
             const std::string name_suffix,
             const std::mt19937& generator
         );
-        std::vector<std::string> hostnames;
-        std::vector<std::shared_ptr<wrench::DataFile>> files;
-        std::string name;
 
     private:
         /** @brief generator to shuffle jobs **/
