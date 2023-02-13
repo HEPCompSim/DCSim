@@ -1,5 +1,5 @@
 {
-  "main_dataset": {
+  "crown_ttbar_validation": {
       "location":["RemoteStorage"],
       "num_files": 100,
       "average_file_size": 427718950,

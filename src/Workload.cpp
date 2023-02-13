@@ -88,6 +88,13 @@ Workload::Workload(
         while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem_dist(this->generator);
         job_specification.total_mem = dmem;
 
+        for (size_t f = 0; f < infiles_per_task; f++) {
+            // Sample inputfile sizes
+            double dinsize = insize_dist(this->generator);
+            while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(this->generator);
+            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dinsize));
+        }
+
         // Sample outfile sizes
         double doutsize = outsize_dist(this->generator);
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(this->generator);

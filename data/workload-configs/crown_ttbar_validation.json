@@ -23,6 +23,6 @@
         },
         "workload_type": "streaming",
         "submission_time": 10,
-        "infile_dataset": "crown_ttbar"
+        "dataset": "crown_ttbar_validation"
     }
 }
