@@ -14,7 +14,7 @@
  */
 Dataset::Dataset(
     const std::vector<std::string> hostnames, const double num_files,
-    const double average_file_size, const double sigma_file_size,
+    const double average_infile_size, const double sigma_infile_size,
     const std::string name_suffix,
     const std::mt19937 &generator)
 {
@@ -24,12 +24,13 @@ Dataset::Dataset(
         potential_separator = "";
     }
 
-    std::normal_distribution<> size_dist(average_file_size, sigma_file_size);
+    std::normal_distribution<> size_dist(average_infile_size, sigma_infile_size);
     for (size_t f = 0; f < num_files; f++) {
         // Sample inputfile sizes
         double dsize = size_dist(this->generator);
-        while ((average_file_size+3*sigma_file_size) < dsize || dsize < 0.)
+        while ((average_infile_size+3*sigma_infile_size) < dsize || dsize < 0.)
             dsize = size_dist(this->generator);
-        files.push_back(wrench::Simulation::addFile("file_" + name_suffix + potential_separator + std::to_string(f), dsize));
-    }    
+        files.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dsize));
+    }
+    this->hostnames = hostnames;
 }

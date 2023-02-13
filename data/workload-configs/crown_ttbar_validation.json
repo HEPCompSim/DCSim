@@ -27,6 +27,7 @@
             "sigma": 0
         },
         "workload_type": "streaming",
-        "submission_time": 10
+        "submission_time": 10,
+        "dataset": "crown_ttbar_validation"
     }
 }

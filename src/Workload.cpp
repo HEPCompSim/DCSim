@@ -94,7 +94,7 @@ Workload::Workload(
             // Sample inputfile sizes
             double dinsize = insize_dist(this->generator);
             while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(this->generator);
-            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(j) + "_" + std::to_string(f), dinsize));
+            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dinsize));
         }
 
         // Sample outfile sizes
