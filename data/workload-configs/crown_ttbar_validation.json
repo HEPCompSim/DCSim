@@ -10,6 +10,7 @@
         "sigma_infile_size": 0,
         "average_outfile_size": 16000000,
         "sigma_outfile_size": 0,
-        "workflow_type": "streaming"
+        "workload_type": "streaming",
+        "submission_time": 10
     }
 }

@@ -16,7 +16,7 @@ action() {
     local parent="$( dirname "$base" )"
 
     local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
-    local WORKLOAD="$parent/data/workflow-configs/crown_ttbar_validation.json"
+    local WORKLOAD="$parent/data/workload-configs/crown_ttbar_validation.json"
 
     local NJOBS=1
     local NINFILES=20 #10
@@ -49,7 +49,7 @@ action() {
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
             --cfg=network/loopback-bw:100000000000000 \
             --no-caching \
-            --workflow-configurations "$WORKLOAD" #\
+            --workload-configurations "$WORKLOAD" #\
             # --njobs $NJOBS \
             # --ninfiles $NINFILES \
             # --insize $AVGINSIZE \

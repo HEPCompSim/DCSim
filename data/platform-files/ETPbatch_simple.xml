@@ -83,7 +83,7 @@
                     <link_ctn id="etp_worker"/>
                 </route>
 
-                <route src="etpgateway" dst="sg0X">
+                <route src="etpgateway" dst="ETPsg0X">
                     <link_ctn id="etp_sg0X_FATPIPE"/>
                     <link_ctn id="etp_sg0X"/>
                 </route>

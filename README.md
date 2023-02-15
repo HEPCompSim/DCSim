@@ -1,6 +1,6 @@
 # DistCacheSim
 
-Simulator for the simulation of high energy physics workflows on distributed computing systems with caching.
+Simulator for the simulation of high energy physics workloads on distributed computing systems with caching.
 
 
 ## Install instructions
@@ -66,15 +66,15 @@ dc-sim -p <platform-file> -o <output-path>
 The platform file has to follow the [SimGrid-defined DTD](https://simgrid.org/doc/latest/Platform.html).
 Example files can be found in `data/platform-files`.
 The output-path can be any relative or absolute path of your file-system where you are allowed to write to.
-Instead of manually setting up all workflow parameters via command line options, 
-there is also the option to provide a JSON file, which contains all necessary information about one or multiple workflows by adding the option:
+Instead of manually setting up all workload parameters via command line options, 
+there is also the option to provide a JSON file, which contains all necessary information about one or multiple workloads by adding the option:
 ```bash
---workflow-configurations <path_to_workflow_json>
+--workload-configurations <path_to_workload_json>
 ```
-The workflows should contain the full information as it would be set via the command line, e.g.:
+The workloads should contain the full information as it would be set via the command line, e.g.:
 ```json
 {
-    "stream_and_compute_workflow": {
+    "stream_and_compute_workload": {
         "num_jobs": 60,
         "infiles_per_job": 10,
         "average_flops": 2164428000000,
@@ -85,9 +85,9 @@ The workflows should contain the full information as it would be set via the com
         "sigma_infile_size": 360000000,
         "average_outfile_size": 18000000000,
         "sigma_outfile_size": 1800000000,
-        "workflow_type": "streaming"
+        "workload_type": "streaming"
     }
 }
 ```
-It is also possible to give a list of workflow configuration files, which enables to simulate the execution of multiple sets of workflows.
-Example configuration file covering different workflow-types are given in `data/workflow-configs/workflow_testsuite.json`.
+It is also possible to give a list of workload configuration files, which enables to simulate the execution of multiple sets of workloads.
+Example configuration file covering different workload-types are given in `data/workload-configs/workload_testsuite.json`.
