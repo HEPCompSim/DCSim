@@ -153,7 +153,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
 
         this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
 #else
-        cerr<<"New caching"<<endl;
+        //cerr<<"New caching"<<endl;
         std::string hostname = action_executor->getHostname(); // host where action is executed
     auto host = simgrid::s4u::Host::by_name(hostname);
     std::string netzone = host->get_englobing_zone()->get_name(); // network zone executing host belongs to
@@ -204,7 +204,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
         // If yes, we're done
         if (source_ss) {
-            cerr<<"reading from cache"<<endl;
+            //cerr<<"reading from cache"<<endl;
 
             this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
             continue;
@@ -231,9 +231,9 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         if (!matched_storage_services.empty()) {
             auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
             this->file_sources[f] = wrench::ProxyLocation::LOCATION(source_ss,wrench::FileLocation::LOCATION(destination_ss, f));
-            cerr<<"using proxy location"<<endl;
+            //cerr<<"using proxy location"<<endl;
         }else{
-            cerr<<"direct"<<endl;
+            //cerr<<"direct"<<endl;
 
             //hit remote server directly and do not cache
             this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
