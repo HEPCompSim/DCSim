@@ -101,6 +101,14 @@
                     <prop id="ram" value="50TiB"/>
                 </host>
 
+                <host id="dCache" speed="1000Gf" core="10">
+                    <prop id="type" value="cache"/>
+                    <disk id="hard_drive" read_bw="80Gbps" write_bw="80Gbps">
+                        <prop id="size" value="7PB"/>
+                        <prop id="mount" value="/"/>
+                    </disk>
+                </host>
+
                 <router id="DESYGridgateway"/>
 
                 <link id="DESY_Tier2" bandwidth="40Gbps" latency="0us"/>
