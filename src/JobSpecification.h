@@ -29,4 +29,5 @@ public:
     double total_mem;
 
 };
+
 #endif //S_JOB_SPECIFICATION_H

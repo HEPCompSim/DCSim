@@ -16,11 +16,6 @@
             "average": 2400,
             "sigma": 0
         },
-        "infilesize": {
-            "type": "gaussian",
-            "average": 427718950,
-            "sigma": 0
-        },
         "outfilesize": {
             "type": "gaussian",
             "average": 16000000,
@@ -28,6 +23,6 @@
         },
         "workload_type": "streaming",
         "submission_time": 10,
-        "dataset": "crown_ttbar_validation"
+        "infile_dataset": "crown_ttbar"
     }
 }

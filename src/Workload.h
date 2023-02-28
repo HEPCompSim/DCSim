@@ -59,10 +59,9 @@ class Workload {
             const int request_cores,
             const double average_flops, const double sigma_flops,
             const double average_memory, const double sigma_memory,
-            const double average_infile_size, const double sigma_infile_size,
             const double average_outfile_size, const double sigma_outfile_size,
             const WorkloadType workload_type, const std::string name_suffix,
-            const double arrival_time,
+            const std::string infile_dataset, const double arrival_time,
             const std::mt19937& generator
         );
 
@@ -85,6 +84,8 @@ class Workload {
         WorkloadType workload_type;
         // time offset until job submission relative to simulation start time (0)
         double submit_arrival_time;
+        // infile dataset name
+        std::string infile_dataset;
 
     private:
         /** @brief generator to shuffle jobs **/

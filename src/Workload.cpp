@@ -52,10 +52,9 @@ Workload::Workload(
         const int request_cores,
         const double average_flops, const double sigma_flops,
         const double average_memory, const double sigma_memory,
-        const double average_infile_size, const double sigma_infile_size,
         const double average_outfile_size, const double sigma_outfile_size,
         const enum WorkloadType workload_type, const std::string name_suffix,
-        const double arrival_time,
+        const std::string infile_dataset, const double arrival_time,
         const std::mt19937& generator
 ) {
     this->generator = generator;
@@ -69,7 +68,6 @@ Workload::Workload(
     // Initialize random number generators
     std::normal_distribution<> flops_dist(average_flops, sigma_flops);
     std::normal_distribution<> mem_dist(average_memory, sigma_memory);
-    std::normal_distribution<> insize_dist(average_infile_size, sigma_infile_size);
     std::normal_distribution<> outsize_dist(average_outfile_size,sigma_outfile_size);
 
     for (size_t j = 0; j < num_jobs; j++) {
@@ -90,13 +88,6 @@ Workload::Workload(
         while ((average_memory+sigma_memory) < dmem || dmem < 0.) dmem = mem_dist(this->generator);
         job_specification.total_mem = dmem;
 
-        for (size_t f = 0; f < infiles_per_task; f++) {
-            // Sample inputfile sizes
-            double dinsize = insize_dist(this->generator);
-            while ((average_infile_size+3*sigma_infile_size) < dinsize || dinsize < 0.) dinsize = insize_dist(this->generator);
-            job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dinsize));
-        }
-
         // Sample outfile sizes
         double doutsize = outsize_dist(this->generator);
         while ((average_outfile_size+3*sigma_outfile_size) < doutsize || doutsize < 0.) doutsize = outsize_dist(this->generator);
@@ -109,6 +100,7 @@ Workload::Workload(
     this->job_batch = batch;
     this->workload_type = workload_type;
     this->submit_arrival_time = arrival_time;
+    this->infile_dataset = infile_dataset;
 }
 
 /**

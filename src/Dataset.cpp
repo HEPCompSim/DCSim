@@ -33,4 +33,5 @@ Dataset::Dataset(
         files.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dsize));
     }
     this->hostnames = hostnames;
+    this->name = name_suffix;
 }
