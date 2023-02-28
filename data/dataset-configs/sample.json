@@ -1,7 +1,7 @@
 {
-  "crown_ttbar_validation": {
+  "crown_ttbar": {
       "location":["RemoteStorage"],
-      "num_files": 100,
+      "num_files": 20,
       "average_file_size": 427718950,
       "sigma_file_size": 0
   },

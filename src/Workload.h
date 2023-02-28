@@ -65,19 +65,6 @@ class Workload {
             const std::mt19937& generator
         );
 
-        Workload(
-            const size_t num_jobs,
-            const size_t infiles_per_job,
-            nlohmann::json cores,
-            nlohmann::json flops,
-            nlohmann::json memory,
-            nlohmann::json infile_size,
-            nlohmann::json outfile_size,
-            const WorkloadType workload_type, const std::string name_suffix,
-            const double arrival_time,
-            const std::mt19937& generator
-        );
-
         // job list with specifications
         std::vector<JobSpecification> job_batch;
         // Usage of block streaming

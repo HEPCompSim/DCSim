@@ -39,7 +39,9 @@ const std::vector<std::string> dataset_keys = {
     };
 const std::vector<std::string> workload_keys = {
         "num_jobs","infiles_per_job",
-        "flops", "memory", "outfilesize",
+        "average_flops","sigma_flops",
+        "average_memory", "sigma_memory",
+        "average_outfile_size", "sigma_outfile_size",
         "infile_dataset",
         "workload_type", "submission_time"
     };
@@ -622,9 +624,9 @@ int main(int argc, char **argv) {
                 workload_specs.push_back(
                     Workload(
                         wf.value()["num_jobs"], wf.value()["infiles_per_job"],
-                        wf.value()["cores"],
-                        wf.value()["flops"], wf.value()["memory"],
-                        wf.value()["outfilesize"],
+                        wf.value()["average_flops"], wf.value()["sigma_flops"],
+                        wf.value()["average_memory"], wf.value()["sigma_memory"],
+                        wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
                         get_workload_type(workload_type_lower), wf.key(),
                         wf.value()["infile_dataset"],
                         wf.value()["submission_time"],

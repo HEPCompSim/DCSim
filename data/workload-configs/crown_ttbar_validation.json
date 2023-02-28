@@ -2,27 +2,14 @@
     "crown_ttbar_validation": {
         "num_jobs": 1,
         "infiles_per_job": 20,
-        "cores": {
-            "type": "histogram",
-            "counts": [0,1]
-        },
-        "flops": {
-            "type": "gaussian",
-            "average": 2886000000000,
-            "sigma": 0
-        },
-        "memory": {
-            "type": "gaussian",
-            "average": 2400,
-            "sigma": 0
-        },
-        "outfilesize": {
-            "type": "gaussian",
-            "average": 16000000,
-            "sigma": 0
-        },
+        "average_flops": 2886000000000,
+        "sigma_flops": 0,
+        "average_memory": 2400,
+        "sigma_memory": 0,
+        "average_outfile_size": 16000000,
+        "sigma_outfile_size": 0,
         "workload_type": "streaming",
         "submission_time": 10,
-        "dataset": "crown_ttbar_validation"
+        "infile_dataset": "crown_ttbar"
     }
 }

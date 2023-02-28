@@ -16,6 +16,7 @@ class Dataset {
         );
         std::vector<std::string> hostnames;
         std::vector<std::shared_ptr<wrench::DataFile>> files;
+        std::string name;
 
     private:
         /** @brief generator to shuffle jobs **/
