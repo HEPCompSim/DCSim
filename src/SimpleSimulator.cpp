@@ -504,6 +504,7 @@ int main(int argc, char **argv) {
     std::vector<Workload> workload_specs = {};
 
     if(workload_configurations.size() == 0){
+        std::cerr << "Trying to create a single workload from CLI parameters, consider using a workload config instead...";
         workload_specs.push_back(
             Workload(
                 num_jobs, infiles_per_job,
