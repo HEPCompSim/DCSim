@@ -32,6 +32,7 @@ action() {
     local DUPLICATIONS=48
 
     local XRD_BLOCKSIZE=100000000
+    local STORAGE_BUFFER_SIZE="inf" #1048576
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
@@ -48,6 +49,7 @@ action() {
             --xrd-blocksize $XRD_BLOCKSIZE \
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
             --cfg=network/loopback-bw:100000000000000 \
+            --storage-buffer-size $STORAGE_BUFFER_SIZE \
             --no-caching \
             --workload-configurations "$WORKLOAD" #\
             # --njobs $NJOBS \
