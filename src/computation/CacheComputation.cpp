@@ -228,7 +228,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
 
         // When there is a reachable cache, cache the file and evict others when needed
-        if (!matched_storage_services.empty()) {
+        if (!matched_storage_services.empty()&&cache_files) {
             auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
             this->file_sources[f] = wrench::ProxyLocation::LOCATION(source_ss,wrench::FileLocation::LOCATION(destination_ss, f));
             //cerr<<"using proxy location"<<endl;
