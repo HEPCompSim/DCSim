@@ -542,10 +542,8 @@ int main(int argc, char **argv) {
                 workload_specs.push_back(
                     Workload(
                         wf.value()["num_jobs"], wf.value()["infiles_per_job"],
-                        wf.value()["average_flops"], wf.value()["sigma_flops"],
-                        wf.value()["average_memory"], wf.value()["sigma_memory"],
-                        wf.value()["average_infile_size"], wf.value()["sigma_infile_size"],
-                        wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
+                        wf.value()["flops"], wf.value()["memory"],
+                        wf.value()["infilesize"], wf.value()["outfilesize"],
                         get_workload_type(workload_type_lower), wf.key(),
                         wf.value()["submission_time"],
                         SimpleSimulator::gen
