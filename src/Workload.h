@@ -87,12 +87,12 @@ class Workload {
     private:
         /** @brief generator to shuffle jobs **/
         std::mt19937 generator;
-        std::function<double()> flops_dist;
-        std::function<double()> mem_dist;
-        std::function<double()> insize_dist;
-        std::function<double()> outsize_dist;
+        std::function<double(std::mt19937&)> flops_dist;
+        std::function<double(std::mt19937&)> mem_dist;
+        std::function<double(std::mt19937&)> insize_dist;
+        std::function<double(std::mt19937&)> outsize_dist;
 
-        std::function<double()> initializeRNG(nlohmann::json json);
+        std::function<double(std::mt19937&)> initializeRNG(nlohmann::json json);
 
         JobSpecification sampleJob(const size_t job_id, const size_t infiles_per_job, std::string name_suffix, std::string potential_separator);
 };

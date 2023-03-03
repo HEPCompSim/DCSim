@@ -146,15 +146,7 @@ Workload::Workload(
     }
 
     // Initialize random number generators
-    this->flops_dist = [&]() {
-        if(flops["type"]=="gaussian") {
-            return std::normal_distribution<double>(flops["average"],flops["sigma"])(this->generator);
-        } else if(flops["type"]=="histogram") {
-            return std::piecewise_constant_distribution<double>(flops["bins"].begin(),flops["bins"].end(),flops["counts"].begin())(this->generator);
-        } else {
-            throw std::runtime_error("Random number generation for type " + std::string(flops["type"]) + " not implemented!");
-        }
-    };
+    this->flops_dist = Workload::initializeRNG(flops);
     this->mem_dist = Workload::initializeRNG(memory);
     this->insize_dist = Workload::initializeRNG(infile_size);
     this->outsize_dist = Workload::initializeRNG(outfile_size);
@@ -169,16 +161,26 @@ Workload::Workload(
 }
 
 
-std::function<double()> Workload::initializeRNG(nlohmann::json json) {
-    std::function<double()> dist = [&]() {
-        if(json["type"]=="gaussian") {
-            return std::normal_distribution<double>(json["average"],json["sigma"])(this->generator);
-        } else if(json["type"]=="histogram") {
-            return std::piecewise_constant_distribution<double>(json["bins"].begin(),json["bins"].end(),json["counts"].begin())(this->generator);
-        } else {
-            throw std::runtime_error("Random number generation for type " + std::string(json["type"]) + " not implemented!");
-        }
-    };
+std::function<double(std::mt19937&)> Workload::initializeRNG(nlohmann::json json) {
+    std::cerr << json["type"] << ": ";
+    std::function<double(std::mt19937&)> dist;
+    if(json["type"].get<std::string>()=="gaussian") {
+        double ave = json["average"].get<double>();
+        double sigma = json["sigma"].get<double>();
+        std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
+        dist = [ave, sigma](std::mt19937& generator){
+            return std::normal_distribution<double>(ave, sigma)(generator);
+        };
+    } else if(json["type"].get<std::string>()=="histogram") {
+        auto bins = json["bins"].get<std::vector<double>>();
+        auto weights = json["counts"].get<std::vector<int>>();
+        std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
+        dist = [bins, weights](std::mt19937& generator){
+            return std::piecewise_constant_distribution<double>(bins.begin(),bins.end(),weights.begin())(generator);
+        };
+    } else {
+        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented!");
+    }
     return dist;
 }
 
@@ -190,25 +192,25 @@ JobSpecification Workload::sampleJob(size_t job_id, const size_t infiles_per_job
     size_t j = job_id;
 
     // Sample strictly positive task flops
-    double dflops = this->flops_dist();
-    while (dflops < 0.) dflops = this->flops_dist();
+    double dflops = this->flops_dist(this->generator);
+    while (dflops < 0.) dflops = this->flops_dist(this->generator);
     job_specification.total_flops = dflops;
 
     // Sample strictly positive task memory requirements
-    double dmem = this->mem_dist();
-    while (dmem < 0.) dmem = this->mem_dist();
+    double dmem = this->mem_dist(this->generator);
+    while (dmem < 0.) dmem = this->mem_dist(this->generator);
     job_specification.total_mem = dmem;
 
     for (size_t f = 0; f < infiles_per_job; f++) {
         // Sample strictly positive inputfile sizes
-        double dinsize = this->insize_dist();
-        while (dinsize < 0.) dinsize = this->insize_dist();
+        double dinsize = this->insize_dist(this->generator);
+        while (dinsize < 0.) dinsize = this->insize_dist(this->generator);
         job_specification.infiles.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(j) + "_" + std::to_string(f), dinsize));
     }
 
     // Sample outfile sizes
-    double doutsize = this->outsize_dist();
-    while (doutsize < 0.) doutsize = this->outsize_dist();
+    double doutsize = this->outsize_dist(this->generator);
+    while (doutsize < 0.) doutsize = this->outsize_dist(this->generator);
     job_specification.outfile = wrench::Simulation::addFile("outfile_" + name_suffix + potential_separator + std::to_string(j), doutsize);
 
     job_specification.jobid = "job_" + name_suffix + potential_separator + std::to_string(j);
