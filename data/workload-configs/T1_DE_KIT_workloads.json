@@ -1,5 +1,5 @@
 {
-    "Analysis": {
+    "Analysis_T1": {
         "num_jobs": 60,
         "infiles_per_job": 1,
         "flops": {
@@ -25,7 +25,7 @@
         "workload_type": "streaming",
         "submission_time": 0
     },
-    "Test": {
+    "Test_T1": {
         "num_jobs": 60,
         "infiles_per_job": 1,
         "flops": {
@@ -51,7 +51,7 @@
         "workload_type": "streaming",
         "submission_time": 0
     },
-    "Digi": {
+    "Digi_T1": {
         "num_jobs": 60,
         "infiles_per_job": 1,
         "flops": {
@@ -77,7 +77,7 @@
         "workload_type": "streaming",
         "submission_time": 0
     },
-    "DataProcessing": {
+    "DataProcessing_T1": {
         "num_jobs": 60,
         "infiles_per_job": 1,
         "flops": {
@@ -103,7 +103,7 @@
         "workload_type": "streaming",
         "submission_time": 0
     },
-    "Merge": {
+    "Merge_T1": {
         "num_jobs": 60,
         "infiles_per_job": 1,
         "flops": {
