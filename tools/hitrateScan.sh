@@ -18,16 +18,16 @@ action() {
     local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
     local WORKLOAD="$parent/data/workload-configs/crown_ttbar_validation.json"
 
-    local NJOBS=1
-    local NINFILES=20 #10
-    local AVGINSIZE=$(bc -l <<< "8554379000 / ${NINFILES}")
-    local AVGOUTSIZE=16000000
-    local FLOPS=$(bc -l <<< "1.95*1480*1000*1000*1000")
-    local MEM=2400
-    local SIGMA_FLOPS=0
-    local SIGMA_MEM=0
-    local SIGMA_INSIZE=0
-    local SIGMA_OUTSIZE=0
+    # local NJOBS=1
+    # local NINFILES=20 #10
+    # local AVGINSIZE=$(bc -l <<< "8554379000 / ${NINFILES}")
+    # local AVGOUTSIZE=16000000
+    # local FLOPS=$(bc -l <<< "1.95*1480*1000*1000*1000")
+    # local MEM=2400
+    # local SIGMA_FLOPS=0
+    # local SIGMA_MEM=0
+    # local SIGMA_INSIZE=0
+    # local SIGMA_OUTSIZE=0
 
     local DUPLICATIONS=48
 
@@ -52,16 +52,6 @@ action() {
             --storage-buffer-size $STORAGE_BUFFER_SIZE \
             --no-caching \
             --workload-configurations "$WORKLOAD" #\
-            # --njobs $NJOBS \
-            # --ninfiles $NINFILES \
-            # --insize $AVGINSIZE \
-            # --sigma-insize $SIGMA_INSIZE \
-            # --flops $FLOPS \
-            # --sigma-flops $SIGMA_FLOPS \
-            # --mem $MEM \
-            # --sigma-mem $SIGMA_MEM \
-            # --outsize $AVGOUTSIZE \
-            # --sigma-outsize $SIGMA_OUTSIZE \
             # --no-streaming \
             # --wrench-full-log
             # --log=simple_wms.threshold=debug \
