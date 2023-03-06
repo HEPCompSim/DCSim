@@ -71,23 +71,38 @@ there is also the option to provide a JSON file, which contains all necessary in
 ```bash
 --workload-configurations <path_to_workload_json>
 ```
-The workloads should contain the full information as it would be set via the command line, e.g.:
+The workloads have to contain the full information. 
+Opposed to as it would be set via the command line, where only gaussian distributed job characteristics are supported, in the workload file also distributions according to a histogram can be used.
+An example for a workload mixing both gaussian and histogram distributions of its job characteristics would be, e.g.:
 ```json
 {
-    "stream_and_compute_workload": {
+    "calc_workload": {
         "num_jobs": 60,
-        "infiles_per_job": 10,
-        "average_flops": 2164428000000,
-        "sigma_flops": 216442800000,
-        "average_memory": 2000000000,
-        "sigma_memory": 200000000,
-        "average_infile_size": 3600000000,
-        "sigma_infile_size": 360000000,
-        "average_outfile_size": 18000000000,
-        "sigma_outfile_size": 1800000000,
-        "workload_type": "streaming"
+        "infiles_per_job": 0,
+        "flops": {
+            "type": "histogram",
+            "bins": [1164428000000,2164428000000,3164428000000],
+            "counts": [50,50]
+        },
+        "memory": {
+            "type": "gaussian",
+            "average": 2000000000,
+            "sigma": 200000000
+        },
+        "infilesize": {
+            "type": "gaussian",
+            "average": 0,
+            "sigma": 0
+        },
+        "outfilesize": {
+            "type": "gaussian",
+            "average": 18000000,
+            "sigma": 1800000
+        },
+        "workload_type": "calculation",
+        "submission_time": 0
     }
 }
 ```
-It is also possible to give a list of workload configuration files, which enables to simulate the execution of multiple sets of workloads.
-Example configuration file covering different workload-types are given in `data/workload-configs/workload_testsuite.json`.
+It is also possible to give a list of workload configuration files and configure more than one workload per file, which enables to simulate the execution of multiple sets of workloads in the same simulation run.
+Example configurations covering different workload-types is given in `data/workload-configs/workload_testsuite.json`.
