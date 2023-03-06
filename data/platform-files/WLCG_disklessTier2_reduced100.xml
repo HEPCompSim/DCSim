@@ -67,7 +67,7 @@
                     </route>
                 </zone>
 
-                <zoneRoute src="GridKA-service" dst="Tier1" gw_src="GridKAgateway" gw_dst="Tier1_router">
+                <zoneRoute src="GridKA-service" dst="Tier1" gw_src="GridKAgateway" gw_dst="Tier1Tier1_router">
                     <link_ctn id="GridKA_Tier1_FATPIPE"/>
                     <link_ctn id="GridKA_Tier1"/>
                 </zoneRoute>
