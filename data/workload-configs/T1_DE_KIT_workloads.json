@@ -23,7 +23,7 @@
             "bins": [0, 3.25456e+08, 6.50913e+08, 9.76369e+08, 1.30183e+09, 1.62728e+09, 1.95274e+09, 2.27819e+09, 2.60365e+09, 2.92911e+09, 3.25456e+09]
         },
         "workload_type": "streaming",
-        "submission_time": 0
+        "submission_time": 10
     },
     "Test_T1": {
         "num_jobs": 1,
@@ -49,7 +49,7 @@
             "bins": [3.68334e+07, 4.34585e+07, 5.00836e+07, 5.67087e+07, 6.33337e+07, 6.99588e+07, 7.65839e+07, 8.32089e+07, 8.9834e+07, 9.64591e+07, 1.03084e+08]
         },
         "workload_type": "streaming",
-        "submission_time": 0
+        "submission_time": 10
     },
     "Digi_T1": {
         "num_jobs": 8,
@@ -75,7 +75,7 @@
             "bins": [0, 3.44294e+09, 6.88587e+09, 1.03288e+10, 1.37717e+10, 1.72147e+10, 2.06576e+10, 2.41006e+10, 2.75435e+10, 3.09864e+10, 3.44294e+10]
         },
         "workload_type": "streaming",
-        "submission_time": 0
+        "submission_time": 10
     },
     "DataProcessing_T1": {
         "num_jobs": 2,
@@ -101,7 +101,7 @@
             "bins": [0, 1.03208e+09, 2.06417e+09, 3.09625e+09, 4.12834e+09, 5.16042e+09, 6.1925e+09, 7.22459e+09, 8.25667e+09, 9.28875e+09, 1.03208e+10]
         },
         "workload_type": "streaming",
-        "submission_time": 0
+        "submission_time": 10
     },
     "Merge_T1": {
         "num_jobs": 1,
@@ -127,6 +127,6 @@
             "bins": [0, 4.38038e+08, 8.76076e+08, 1.31411e+09, 1.75215e+09, 2.19019e+09, 2.62823e+09, 3.06627e+09, 3.50431e+09, 3.94234e+09, 4.38038e+09]
         },
         "workload_type": "streaming",
-        "submission_time": 0
+        "submission_time": 10
     }
 }
