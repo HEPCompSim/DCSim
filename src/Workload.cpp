@@ -1,6 +1,5 @@
-
-
 #include "Workload.h"
+#include "Dataset.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(workload, "Log category for WorkloadExecutionController");
 
@@ -203,4 +202,27 @@ JobSpecification Workload::sampleJob(size_t job_id, const size_t infiles_per_job
     job_specification.jobid = "job_" + name_suffix + potential_separator + std::to_string(j);
 
     return job_specification;
+}
+
+void Workload::assignFiles(std::vector<Dataset> const &dataset_specs)
+{
+    auto ds_it = std::find_if(dataset_specs.begin(), dataset_specs.end(), [&](Dataset ds)
+                                { return ds.name == infile_dataset; });
+    if (ds_it == dataset_specs.end())
+        throw std::runtime_error("ERROR: no valid infile dataset name in workload configuration.");
+    auto ds = *ds_it;
+    int num_jobs = job_batch.size();
+    int num_files = ds.files.size();
+    int k = num_files / num_jobs;
+    std::cerr << "Assigning " << num_files << " files to "<< num_jobs << " jobs\n";
+    for (auto j = 0; j < num_jobs; ++j)
+    {
+        auto beg_it = ds.files.begin() + j * k;
+        if (std::distance(beg_it, ds.files.end()) < k)
+            {
+                std::copy(beg_it, ds.files.end(), std::back_inserter(job_batch[j].infiles));
+                break;
+            }
+        std::copy_n(beg_it, k, std::back_inserter(job_batch[j].infiles));
+    }
 }

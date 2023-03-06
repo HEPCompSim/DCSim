@@ -4,6 +4,7 @@
 
 #include "JobSpecification.h"
 #include "util/Utils.h"
+#include "Dataset.h"
 
 // #include <variant>
 
@@ -85,6 +86,7 @@ class Workload {
         double submit_arrival_time;
         // infile dataset name
         std::string infile_dataset;
+        void assignFiles(std::vector<Dataset> const &);
 
     private:
         /** @brief generator to shuffle jobs **/
