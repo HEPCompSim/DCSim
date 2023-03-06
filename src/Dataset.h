@@ -10,7 +10,7 @@ class Dataset {
         // Constructor
         Dataset(
             const std::vector<std::string> hostname, const double num_files,
-            const double average_infile_size, const double sigma_infile_size,
+            nlohmann::json file_size,
             const std::string name_suffix,
             const std::mt19937& generator
         );
@@ -19,7 +19,8 @@ class Dataset {
         std::string name;
 
     private:
-        /** @brief generator to shuffle jobs **/
+        std::function<double(std::mt19937&)> size_dist;
+        std::function<double(std::mt19937&)> initializeRNG(nlohmann::json json);
         std::mt19937 generator;
 };
 

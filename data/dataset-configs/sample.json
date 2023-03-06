@@ -2,13 +2,19 @@
   "crown_ttbar": {
       "location":["RemoteStorage"],
       "num_files": 20,
-      "average_file_size": 427718950,
-      "sigma_file_size": 0
+      "filesize": {
+        "type": "gaussian",
+        "average": 427718950,
+        "sigma": 0
+    }
   },
   "second_dataset": {
       "location":["RemoteStorage"],
       "num_files": 100,
-      "average_file_size": 427718950,
-      "sigma_file_size": 0
+      "filesize": {
+        "type": "gaussian",
+        "average": 427718950,
+        "sigma": 0
+    }
   }
 }

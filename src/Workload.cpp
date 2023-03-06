@@ -102,3 +102,105 @@ Workload::Workload(
     this->submit_arrival_time = arrival_time;
     this->infile_dataset = infile_dataset;
 }
+
+/**
+ * @brief Fill a Workload consisting of jobs with job specifications, 
+ * which include the inputfile and outputfile dependencies.
+ * It can be chosen between jobs streaming input data and perform computations simultaneously 
+ * or jobs copying the full input-data and compute afterwards.
+ *    
+ * @param num_jobs: number of tasks
+ * @param infiles_per_task: number of input-files each job processes
+ * @param flops: json object containing type and parameters for the flops distribution
+ * @param memory: json object containing type and parameters for the memory distribution
+ * @param infile_size: json object containing type and parameters for the input-file size distribution
+ * @param outfile_size: json object containing type and parameters for the output-file size distribution
+ * @param workload_type: flag to specifiy, whether the job should run with streaming or not
+ * @param name_suffix: part of job name to distinguish between different workloads
+ * @param arrival_time: submission time offset relative to simulation start
+ * @param generator: random number generator objects to draw from
+ * 
+ * @throw std::runtime_error
+ */
+Workload::Workload(
+        const size_t num_jobs,
+        const size_t infiles_per_job,
+        nlohmann::json flops,
+        nlohmann::json memory,
+        nlohmann::json outfile_size,
+        const enum WorkloadType workload_type, const std::string name_suffix,
+        const std::string infile_dataset, const double arrival_time,
+        const std::mt19937& generator
+) {
+    this->generator = generator;
+    // Map to store the workload specification
+    std::vector<JobSpecification> batch;
+    std::string potential_separator = "_";
+    if(name_suffix == ""){
+        potential_separator = "";
+    }
+
+    // Initialize random number generators
+    this->flops_dist = Workload::initializeRNG(flops);
+    this->mem_dist = Workload::initializeRNG(memory);
+    this->outsize_dist = Workload::initializeRNG(outfile_size);
+    for (size_t j = 0; j < num_jobs; j++)
+    {
+        batch.push_back(sampleJob(j, infiles_per_job, name_suffix, potential_separator));
+    }
+
+    this->job_batch = batch;
+    this->workload_type = workload_type;
+    this->submit_arrival_time = arrival_time;
+    this->infile_dataset = infile_dataset;
+}
+
+std::function<double(std::mt19937&)> Workload::initializeRNG(nlohmann::json json) {
+    std::cerr << json["type"] << ": ";
+    std::function<double(std::mt19937&)> dist;
+    if(json["type"].get<std::string>()=="gaussian") {
+        double ave = json["average"].get<double>();
+        double sigma = json["sigma"].get<double>();
+        std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
+        dist = [ave, sigma](std::mt19937& generator){
+            return std::normal_distribution<double>(ave, sigma)(generator);
+        };
+    } else if(json["type"].get<std::string>()=="histogram") {
+        auto bins = json["bins"].get<std::vector<double>>();
+        auto weights = json["counts"].get<std::vector<int>>();
+        std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
+        dist = [bins, weights](std::mt19937& generator){
+            return std::piecewise_constant_distribution<double>(bins.begin(),bins.end(),weights.begin())(generator);
+        };
+    } else {
+        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented!");
+    }
+    return dist;
+}
+
+
+JobSpecification Workload::sampleJob(size_t job_id, const size_t infiles_per_job, std::string name_suffix, std::string potential_separator) {
+    // Create a job specification
+    JobSpecification job_specification;
+
+    size_t j = job_id;
+
+    // Sample strictly positive task flops
+    double dflops = this->flops_dist(this->generator);
+    while (dflops < 0.) dflops = this->flops_dist(this->generator);
+    job_specification.total_flops = dflops;
+
+    // Sample strictly positive task memory requirements
+    double dmem = this->mem_dist(this->generator);
+    while (dmem < 0.) dmem = this->mem_dist(this->generator);
+    job_specification.total_mem = dmem;
+
+    // Sample outfile sizes
+    double doutsize = this->outsize_dist(this->generator);
+    while (doutsize < 0.) doutsize = this->outsize_dist(this->generator);
+    job_specification.outfile = wrench::Simulation::addFile("outfile_" + name_suffix + potential_separator + std::to_string(j), doutsize);
+
+    job_specification.jobid = "job_" + name_suffix + potential_separator + std::to_string(j);
+
+    return job_specification;
+}
