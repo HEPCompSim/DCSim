@@ -14,7 +14,7 @@
                 <!-- <host id="Tier1" speed="3194Mf" core="42400"> -->
                 <cluster id="Tier1" prefix="" radical="0" suffix="" speed="3194Mf" core="42" bw="100Mbps" lat="0us">
                     <prop id="type" value="worker"/>
-                    <prop id="ram" value="118.720TiB"/>
+                    <prop id="ram" value="118.720GiB"/>
                     <!-- <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
                         <prop id="size" value="1PB"/>
                         <prop id="mount" value="/"/>
@@ -98,7 +98,7 @@
 
                 <host id="Tier2" speed="2761Mf" core="20">
                     <prop id="type" value="worker"/>
-                    <prop id="ram" value="50TiB"/>
+                    <prop id="ram" value="50GiB"/>
                 </host>
 
                 <host id="dCache" speed="1000Gf" core="10">
