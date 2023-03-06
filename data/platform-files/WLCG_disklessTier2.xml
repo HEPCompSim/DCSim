@@ -24,7 +24,7 @@
 
                 <zone id="GridKA-service" routing="Floyd">
                 
-                    <host id="dCache" speed="1000Gf" core="10">
+                    <host id="GridKA_dCache" speed="1000Gf" core="10">
                         <prop id="type" value="storage"/>
                         <disk id="hard_drive" read_bw="80Gbps" write_bw="80Gbps">
                             <prop id="size" value="7PB"/>
@@ -61,7 +61,7 @@
                         <link_ctn id="GridKA_sched"/>
                     </route>
 
-                    <route src="GridKAgateway" dst="dCache">
+                    <route src="GridKAgateway" dst="GridKA_dCache">
                         <link_ctn id="GridKA_dcachepool_FATPIPE"/>
                         <link_ctn id="GridKA_dcachepool"/>
                     </route>
@@ -101,7 +101,7 @@
                     <prop id="ram" value="50TiB"/>
                 </host>
 
-                <host id="dCache" speed="1000Gf" core="10">
+                <host id="DESY_dCache" speed="1000Gf" core="10">
                     <prop id="type" value="cache"/>
                     <disk id="hard_drive" read_bw="80Gbps" write_bw="80Gbps">
                         <prop id="size" value="7PB"/>
@@ -113,8 +113,14 @@
 
                 <link id="DESY_Tier2" bandwidth="40Gbps" latency="0us"/>
 
+                <link id="DESY_dCachepool" bandwidth="40Gbps" latency="0us"/>
+
                 <route src="DESYGridgateway" dst="Tier2">
                     <link_ctn id="DESY_Tier2"/>
+                </route>
+
+                <route src="DESYGridgateway" dst="DESY_dCache">
+                    <link_ctn id="DESY_dCachepool"/>
                 </route>
 
             </zone>
