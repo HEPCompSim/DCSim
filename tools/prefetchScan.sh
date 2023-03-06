@@ -15,14 +15,16 @@ action() {
     local base="$( cd "$( dirname "$this_file" )" && pwd )"
     local parent="$( dirname "$base" )"
 
-    local PLATFORM="$parent/data/platform-files/WLCG_disklessTier2_reduced1000.xml"
+    local PLATFORM="$parent/data/platform-files/WLCG_disklessTier2_reduced100.xml"
+    # local PLATFORM="$parent/data/platform-files/WLCG_disklessTier2_reduced1000.xml"
     # local WORKLOADS="$parent/data/workload-configs/Dummy_workloads.json $parent/data/workload-configs/T?_DE_*_workloads.json"
     local WORKLOADS="$parent/data/workload-configs/T?_DE_*_workloads.json"
 
     local XRD_BLOCKSIZE=100000000
     local STORAGE_BUFFER_SIZE=0 #1048576
 
-    local SCENARIO="prefetchScan"
+    local SCENARIO="prefetchScanScaled100"
+    # local SCENARIO="prefetchScanScaled1000"
 
     local OUTDIR="$parent/tmp/outputs/WLCG"
     if [ ! -d $OUTDIR ]; then
