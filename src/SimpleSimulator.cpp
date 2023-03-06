@@ -33,10 +33,7 @@ namespace po = boost::program_options;
  */
 const std::vector<std::string> workload_keys = {
         "num_jobs","infiles_per_job",
-        "average_flops","sigma_flops",
-        "average_memory", "sigma_memory",
-        "average_infile_size", "sigma_infile_size",
-        "average_outfile_size", "sigma_outfile_size",
+        "flops", "memory", "infilesize", "outfilesize",
         "workload_type", "submission_time"
     };
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
@@ -504,6 +501,7 @@ int main(int argc, char **argv) {
     std::vector<Workload> workload_specs = {};
 
     if(workload_configurations.size() == 0){
+        std::cerr << "Trying to create a single workload from CLI parameters, consider using a workload config instead..." << std::endl;
         workload_specs.push_back(
             Workload(
                 num_jobs, infiles_per_job,
@@ -522,6 +520,7 @@ int main(int argc, char **argv) {
     else {
         for(auto &wf_confpath : workload_configurations){
             std::ifstream wf_conf(wf_confpath);
+            if(!wf_conf.is_open()) throw std::runtime_error("File " + wf_confpath + " could not be opened!");
             nlohmann::json wfs_json = nlohmann::json::parse(wf_conf);
 
             // Looping over the multiple workloads configured in the json file
@@ -543,10 +542,8 @@ int main(int argc, char **argv) {
                 workload_specs.push_back(
                     Workload(
                         wf.value()["num_jobs"], wf.value()["infiles_per_job"],
-                        wf.value()["average_flops"], wf.value()["sigma_flops"],
-                        wf.value()["average_memory"], wf.value()["sigma_memory"],
-                        wf.value()["average_infile_size"], wf.value()["sigma_infile_size"],
-                        wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
+                        wf.value()["flops"], wf.value()["memory"],
+                        wf.value()["infilesize"], wf.value()["outfilesize"],
                         get_workload_type(workload_type_lower), wf.key(),
                         wf.value()["submission_time"],
                         SimpleSimulator::gen

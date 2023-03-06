@@ -6,6 +6,8 @@ project(%s)
 add_definitions("-Wall -Wno-unused-variable -Wno-unused-private-field")
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 
@@ -73,5 +75,7 @@ target_link_libraries(dc-sim
                        ${Boost_LIBRARIES}
                       )
 endif()
+
+# set_property(TARGET dc-sim PROPERTY CXX_STANDARD 17)
 
 install(TARGETS dc-sim DESTINATION bin)
