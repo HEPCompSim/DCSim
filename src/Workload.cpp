@@ -162,19 +162,19 @@ Workload::Workload(
 
 
 std::function<double(std::mt19937&)> Workload::initializeRNG(nlohmann::json json) {
-    std::cerr << json["type"] << ": ";
+    // std::cerr << json["type"] << ": ";
     std::function<double(std::mt19937&)> dist;
     if(json["type"].get<std::string>()=="gaussian") {
         double ave = json["average"].get<double>();
         double sigma = json["sigma"].get<double>();
-        std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
+        // std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
         dist = [ave, sigma](std::mt19937& generator){
             return std::normal_distribution<double>(ave, sigma)(generator);
         };
     } else if(json["type"].get<std::string>()=="histogram") {
         auto bins = json["bins"].get<std::vector<double>>();
         auto weights = json["counts"].get<std::vector<int>>();
-        std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
+        // std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
         dist = [bins, weights](std::mt19937& generator){
             return std::piecewise_constant_distribution<double>(bins.begin(),bins.end(),weights.begin())(generator);
         };
