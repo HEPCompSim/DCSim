@@ -120,7 +120,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
             auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
             // Evict files while to create space, using an LRU scheme!
-            double free_space = destination_ss->getFreeSpace().begin()->second;
+            double free_space = destination_ss->getTotalFreeSpace();
             while (free_space < f->getSize()) {
                 auto to_evict = SimpleSimulator::global_file_map[destination_ss].removeLRUFile();
                 WRENCH_INFO("Evicting file %s from storage service on host %s",
@@ -139,7 +139,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
                 // TODO: reads a block).
                 WRENCH_DEBUG("Caching file %s on storage %s", f->getID().c_str(), destination_ss->getHostname().c_str());
                 // wrench::StorageService::copyFile(f, wrench::FileLocation::LOCATION(source_ss), wrench::FileLocation::LOCATION(destination_ss));
-                wrench::Simulation::createFile(wrench::FileLocation::LOCATION(destination_ss, f));
+                wrench::StorageService::createFileAtLocation(wrench::FileLocation::LOCATION(destination_ss, f));
 
                 SimpleSimulator::global_file_map[destination_ss].touchFile(f.get());
 
