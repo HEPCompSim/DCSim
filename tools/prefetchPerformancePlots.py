@@ -33,12 +33,12 @@ QUANTITIES = {
     "Walltime": {
         "ident": "Walltime",
         "label": "jobtime / min",
-        "ylim": [0.,4000.],
+        "ylim": [0.,2000.],
     },
     "IOtime": {
         "ident": "IOtime",
         "label": "transfer time / min",
-        "ylim": [0.,3000.],
+        "ylim": [0.,1500.],
     },
     "CPUEfficiency": {
         "ident": "Efficiency",
@@ -215,10 +215,14 @@ def run(args=parser.parse_args()):
     data["Site"] = data["machine.name"].apply(lambda x: mapHostToSite(x,mapping))
     sites = sorted(data["Site"].unique())
 
+    if not args.suffix:
+        suffix = args.scenario
+    else:
+        suffix = args.suffix
     plotHistograms(data,
                    sites=sites,
                    title=args.scenario,
-                   suffix=args.scenario)
+                   suffix=suffix)
 
 
 if __name__ == "__main__":
