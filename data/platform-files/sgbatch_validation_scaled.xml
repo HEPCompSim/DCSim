@@ -10,16 +10,16 @@
             <host id="sg01.etp.kit.edu" speed="1970Mf" core="240">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="64GiB"/>
-                <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps">
-                <!-- <disk id="ssd_cache1" read_bw="170MBps" write_bw="170MBps"> -->
+                <!-- <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps"> -->
+                <disk id="ssd_cache1" read_bw="170MBps" write_bw="170MBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
             </host>
-            <host id="sg02.etp.kit.edu" speed="1969.583Mf" core="24">
+            <host id="sg02.etp.kit.edu" speed="1969.583Mf" core="240">
                 <prop id="type" value="networkmonitor"/>
                 <prop id="ram" value="64GiB"/>
-                <disk id="ssd_cache1" read_bw="0.12GBps" write_bw="0.12GBps">
+                <disk id="ssd_cache1" read_bw="1.2GBps" write_bw="1.2GBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
@@ -27,8 +27,8 @@
             <host id="sg03.etp.kit.edu" speed="1990Mf" core="120">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="32GiB"/>
-                <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps">
-                <!-- <disk id="ssd_cache1" read_bw="130MBps" write_bw="130MBps"> -->
+                <!-- <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps"> -->
+                <disk id="ssd_cache1" read_bw="130MBps" write_bw="130MBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
@@ -36,13 +36,13 @@
             <host id="sg04.etp.kit.edu" speed="1950Mf" core="120">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="32GiB"/>
-                <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps">
-                <!-- <disk id="ssd_cache1" read_bw="90MBps" write_bw="90MBps"> -->
+                <!-- <disk id="ssd_cache1" read_bw="10GBps" write_bw="10GBps"> -->
+                <disk id="ssd_cache1" read_bw="90MBps" write_bw="90MBps">
                     <prop id="size" value="2TB"/>
                     <prop id="mount" value="/"/>
                 </disk>
             </host>
-            <host id="WMSHost" speed="10Gf" core="10">
+            <host id="WMSHost" speed="10Gf" core="100">
                 <prop id="type" value="scheduler,executor"/>
                 <prop id="ram" value="16GB"/>
             </host>
@@ -55,7 +55,7 @@
             <link id="etp_link1" bandwidth="100Gbps" latency="0us"/>
             <link id="etp_link2up" bandwidth="11.5Gbps" latency="0us"/>
             <link id="etp_link2down" bandwidth="11.5Gbps" latency="0us"/>
-            <link id="etp_linkOut" bandwidth="1.6Gbps" latency="0us"/>
+            <link id="etp_linkOut" bandwidth="16Gbps" latency="0us"/>
             <link id="etp_link3" bandwidth="100Gbps" latency="0us"/>
             <link id="etp_link4" bandwidth="100Gbps" latency="0us"/>
 
@@ -83,7 +83,7 @@
         </zone>
 
         <zone id="Remote" routing="Full">
-            <host id="RemoteStorage" speed="1000Gf" core="10">
+            <host id="RemoteStorage" speed="1000Gf" core="100">
                 <prop id="type" value="storage"/>
                 <disk id="hard_drive" read_bw="400GBps" write_bw="400GBps">
                     <prop id="size" value="1PB"/>
