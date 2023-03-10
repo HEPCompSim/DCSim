@@ -40,6 +40,11 @@ QUANTITIES = {
         "label": "transfer time / min",
         "ylim": [0.,1500.],
     },
+    "CPUtime": {
+        "ident": "CPUtime",
+        "label": "CPU time / min",
+        "ylim": [0.,2000.]
+    },
     "CPUEfficiency": {
         "ident": "Efficiency",
         "label": "CPU eff.",
@@ -205,6 +210,7 @@ def run(args=parser.parse_args()):
     print(data.keys())
     # Derive quantities
     data["Walltime"] = (data["job.end"]-data["job.start"])/60
+    data["CPUtime"] = data["job.computetime"]/60
     data["IOtime"] = (data["infiles.transfertime"]+data["outfiles.transfertime"])/60
     data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
     #TODO: classify according to sites
