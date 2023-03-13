@@ -1,6 +1,6 @@
 {
     "Analysis_T1": {
-        "num_jobs": 24,
+        "num_jobs": 32,
         "infiles_per_job": 10,
         "flops": {
             "type": "histogram",
@@ -26,7 +26,7 @@
         "submission_time": 10
     },
     "Digi_T1": {
-        "num_jobs": 25,
+        "num_jobs": 33,
         "infiles_per_job": 10,
         "flops": {
             "type": "histogram",
@@ -52,7 +52,7 @@
         "submission_time": 10
     },
     "DataProcessing_T1": {
-        "num_jobs": 6,
+        "num_jobs": 8,
         "infiles_per_job": 10,
         "flops": {
             "type":"histogram",

@@ -1,6 +1,6 @@
 {
     "Analysis_T2": {
-        "num_jobs": 53,
+        "num_jobs": 71,
         "infiles_per_job": 10,
         "flops": {
             "type": "histogram",
@@ -26,7 +26,7 @@
         "submission_time": 10
     },
     "Digi_T2": {
-        "num_jobs": 37,
+        "num_jobs": 49,
         "infiles_per_job": 10,
         "flops": {
             "type": "histogram",
@@ -52,7 +52,7 @@
         "submission_time": 10
     },
     "DataProcessing_T2": {
-        "num_jobs": 5,
+        "num_jobs": 7,
         "infiles_per_job": 10,
         "flops": {
             "type":"histogram",
@@ -130,7 +130,7 @@
         "submission_time": 10
     },
     "Merge_T2": {
-        "num_jobs": 2,
+        "num_jobs": 3,
         "infiles_per_job": 10,
         "flops": {
             "type":"histogram",
