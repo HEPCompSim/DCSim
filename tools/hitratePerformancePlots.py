@@ -18,22 +18,30 @@ plt.rcParams['axes.spines.top'] = False
 plt.rcParams['axes.spines.bottom'] = True
 plt.rcParams['axes.grid'] = False
 plt.rcParams['axes.grid.axis'] = 'both'
-plt.rcParams['axes.labelcolor'] = '#555555'
+plt.rcParams['axes.labelcolor'] = 'black'
+plt.rcParams['axes.labelsize'] = 13
 plt.rcParams['text.color'] = 'black'
 plt.rcParams['figure.figsize'] = 6,4
 plt.rcParams['figure.dpi'] = 100
 plt.rcParams['figure.titleweight'] = 'normal'
 plt.rcParams['font.family'] = 'sans-serif'
+# plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.size'] = 13
 
+markers = ['o', '+', 'x', '*', '.', 'X']
 
 QUANTITIES = {
     "Walltime": {
         "ylabel": "jobtime / min",
-        "ylim": [0,300], # [0,65],
+        "ylim": [0,65], # [0,65],
     },
     "IOtime": {
         "ylabel": "transfer time / min",
         "ylim": None, # [0,65],
+    },
+    "CPUtime": {
+        "ylabel": "CPU time / min",
+        "ylim": None,
     },
     "Efficiency": {
         "ylabel": "CPU eff.",
@@ -43,6 +51,8 @@ QUANTITIES = {
 
 
 scenario_plotlabel_dict = {
+    "": "",
+    "data": "Data",
     "copy": "Input-files copied",
     "fullstream": "Block-streaming",
     "SGBatch_fullstream_10G": "SG-Batch 10Gb/s gateway",
@@ -59,6 +69,7 @@ def valid_file(param: str) -> str:
         raise FileNotFoundError('{}: No such file'.format(param))
     return param
 
+
 def scale_xticks(ax: plt.Axes, ticks: Iterable):
     """Helper function which sets the xticks to the according scaled positions
 
@@ -72,6 +83,14 @@ def scale_xticks(ax: plt.Axes, ticks: Iterable):
     ax.set_xticklabels(["{:.1f}".format(x) for x in ticks])
 
 
+def mapHostToSite(test: str, mapping: 'dict[str,str]',):
+    match = next((x for x in mapping.keys() if x in test), False)
+    if match:
+        return mapping[match]
+    else:
+        return test
+
+
 parser = argparse.ArgumentParser(
     description="Produce a plot containing the hitrate dependency of the simulated system. \
         It uses several files, one for each hitrate value to be represented in the scan. \
@@ -82,7 +101,7 @@ parser.add_argument(
     "--scenario", 
     type=str,
     choices=scenario_plotlabel_dict.keys(),
-    required=True,
+    default="",
     help="Choose a scenario, which is used in the according plotting label and file-name of the plot."
 )
 parser.add_argument(
@@ -108,7 +127,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-scenario = args.scenario
+if args.scenario != "":
+    scenario = "_"+args.scenario.lower()
+else:
+    scenario = ""
 if args.suffix:
     suffix = "_"+args.suffix
 else:
@@ -151,12 +173,21 @@ else:
 # Derive quantities
 df["Walltime"] = (df["job.end"]-df["job.start"])/60
 df["IOtime"] = (df["infiles.transfertime"]+df["outfiles.transfertime"])/60
+df["CPUtime"] = df["job.computetime"]/60
 df["Efficiency"] = df["job.computetime"]/(df["job.end"]-df["job.start"])
+mapping = {
+    "sg01": "Worker Node 1",
+    "sg03": "Worker Node 2",
+    "sg04": "Worker Node 3",
+}
+df["Site"] = df["machine.name"].apply(lambda x: mapHostToSite(x,mapping))
 
 
 # plot and save
 machines = sorted(df["machine.name"].unique())
+sites = sorted(df["Site"].unique())
 print(f"Unique machines for hue: {machines}")
+print(f"Unique sites for hue: {sites}")
 hitrateticks = [x*0.1 for x in range(0,11)]
 
 for quantity, qstyle in QUANTITIES.items():
@@ -167,9 +198,9 @@ for quantity, qstyle in QUANTITIES.items():
         fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
         ax1 = sns.scatterplot(
             x="hitrate", y=quantity,
-            hue="machine.name", hue_order=machines,
+            hue="Site", hue_order=sites,
             data=df,
-            palette=sns.color_palette("colorblind", n_colors=len(machines)),
+            palette=sns.color_palette("colorblind", n_colors=len(sites)),
             alpha=0.9
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
@@ -180,21 +211,22 @@ for quantity, qstyle in QUANTITIES.items():
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
         ax1.legend(loc='best')
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
         plt.close()
 
     elif plotstyle == "pointplot":
+        markers = markers[0:len(sites)]
         fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
         ax1 = fig.add_subplot(1,1,1)
         sns.pointplot(
             x="hitrate", y=quantity,
-            hue="machine.name", hue_order=machines,
+            hue="Site", hue_order=sites,
             data=df,
             estimator="median", errorbar=("pi",95), # ci = Confidence Interval, pi = Percentile Interval, sd = Standard Deviation, se = Standard Error of Mean
             dodge=True, join=False,
-            markers=".", capsize=0.5/len(machines), errwidth=1.,
-            palette=sns.color_palette("colorblind", n_colors=len(machines)),
+            markers=markers, capsize=0.5/len(sites), errwidth=1.,
+            palette=sns.color_palette("colorblind", n_colors=len(sites)),
             ax=ax1
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
@@ -204,20 +236,20 @@ for quantity, qstyle in QUANTITIES.items():
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
         ax1.legend(loc='best')
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
         plt.close()
 
     elif plotstyle=="boxplot":
         fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
         ax1 = sns.boxplot(
             x="hitrate", y=quantity,
-            hue="machine.name", hue_order=machines,
+            hue="Site", hue_order=sites,
             data=df,
             orient="v",
             # whis=1.5, #[0.5,99.5],
             flierprops=dict(marker="x"),
-            palette=sns.color_palette("colorblind", n_colors=len(machines)),
+            palette=sns.color_palette("colorblind", n_colors=len(sites)),
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
@@ -226,21 +258,21 @@ for quantity, qstyle in QUANTITIES.items():
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
         ax1.legend(loc='best')
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
         plt.close()
 
     elif plotstyle =="boxenplot":
         fig = plt.figure("hitrate-walltime", figsize=(6,4))
         ax1 = sns.boxenplot(
             x="hitrate", y=quantity,
-            hue="machine.name", hue_order=machines,
+            hue="Site", hue_order=sites,
             data=df,
             orient="v",
             k_depth="proportion",
             linewidth=0.5,
             flier_kws=dict(marker="."),
-            palette=sns.color_palette("colorblind", n_colors=len(machines)),
+            palette=sns.color_palette("colorblind", n_colors=len(sites)),
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
@@ -249,20 +281,20 @@ for quantity, qstyle in QUANTITIES.items():
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
         ax1.legend(loc='best')
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
         plt.close()
 
     elif plotstyle =="violinplot":
         fig = plt.figure("hitrate-walltime", figsize=(6,4))
         ax1 = sns.violinplot(
             x="hitrate", y=quantity,
-            hue="machine.name", hue_order=machines,
+            hue="Site", hue_order=sites,
             data=df,
             orient="v",
             bw="scott", scale="count", inner="quartile",
             linewidth=0.5,
-            palette=sns.color_palette("colorblind", n_colors=len(machines)),
+            palette=sns.color_palette("colorblind", n_colors=len(sites)),
         )
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
@@ -271,27 +303,27 @@ for quantity, qstyle in QUANTITIES.items():
         if qstyle["ylim"]:
             ax1.set_ylim(qstyle["ylim"])
         ax1.legend(loc='best')
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
-        fig.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
+        fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
         plt.close()
 
     elif plotstyle == "jointplot":
         grid = sns.JointGrid(
             x="hitrate", y=quantity,
-            hue="machine.name", hue_order=machines,
+            hue="Site", hue_order=sites,
             data=df,
             xlim=[-0.1,1.1],
             ylim=qstyle["ylim"] if qstyle["ylim"] else None,
             marginal_ticks=True,
             height=7,
-            palette=sns.color_palette("colorblind", n_colors=len(machines)),
+            palette=sns.color_palette("colorblind", n_colors=len(sites)),
         )
         grid.plot_joint(sns.scatterplot)
         grid.plot_marginals(sns.histplot, multiple="layer", element="step", fill=True)
 
         grid.set_axis_labels(xlabel="hitrate", ylabel=qstyle["ylabel"], color="black")
-        grid.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.pdf")
-        grid.savefig(f"hitrate{quantity}_{scenario}jobs{suffix}.png")
+        grid.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
+        grid.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
         plt.close()
 
     else:

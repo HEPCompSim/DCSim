@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+import matplotlib
 from matplotlib import pyplot as plt
 import seaborn as sns
 import os.path
@@ -21,12 +22,15 @@ plt.rcParams['axes.spines.top'] = False
 plt.rcParams['axes.spines.bottom'] = True
 plt.rcParams['axes.grid'] = False
 plt.rcParams['axes.grid.axis'] = 'both'
-plt.rcParams['axes.labelcolor'] = '#555555'
+plt.rcParams['axes.labelcolor'] = 'black'
+plt.rcParams['axes.labelsize'] = 13
 plt.rcParams['text.color'] = 'black'
 plt.rcParams['figure.figsize'] = 6,4
 plt.rcParams['figure.dpi'] = 100
 plt.rcParams['figure.titleweight'] = 'normal'
 plt.rcParams['font.family'] = 'sans-serif'
+# plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.size'] = 13
 
 
 QUANTITIES = {
@@ -47,7 +51,7 @@ QUANTITIES = {
     },
     "CPUEfficiency": {
         "ident": "Efficiency",
-        "label": "CPU eff.",
+        "label": "CPU efficiency",
         "ylim": [0,1.05],
     },
     "Hitrate": {
@@ -144,13 +148,41 @@ def createDataframeFromCSVs(csvFiles: Iterable):
     return df
 
 
-def plotHistograms(
+def toEmptyBoxesStyle(ax: plt.Axes):
+    box_patches = [patch for patch in ax.patches if type(patch) == matplotlib.patches.PathPatch]
+    if len(box_patches) == 0:  # in matplotlib older than 3.5, the boxes are stored in ax2.artists
+        box_patches = ax.artists
+    num_patches = len(box_patches)
+    lines_per_boxplot = len(ax.lines) // num_patches
+    for i, patch in enumerate(box_patches):
+        # Set the linecolor on the patch to the facecolor, and set the facecolor to None
+        col = patch.get_facecolor()
+        patch.set_edgecolor(col)
+        patch.set_facecolor('None')
+
+        # Each box has associated Line2D objects (to make the whiskers, fliers, etc.)
+        # Loop over them here, and use the same color as above
+        for line in ax.lines[i * lines_per_boxplot: (i + 1) * lines_per_boxplot]:
+            line.set_color(col)
+            line.set_mfc(col)  # facecolor of fliers
+            line.set_mec(col)  # edgecolor of fliers
+
+    # Also fix the legend
+    for legpatch in ax.legend_.get_patches():
+        col = legpatch.get_facecolor()
+        legpatch.set_edgecolor(col)
+        legpatch.set_facecolor('None')
+    return ax
+
+
+def plotBoxes(
     df: pd.DataFrame,
     sites: 'list[str]',
     title="",
     quantities=QUANTITIES,
     prefix="", suffix="",
     figsize=(6,4),
+    emptyBoxes=False,
     plot_dir=os.path.join(os.path.dirname(__file__),"..","plots")
 ):
     plot_dir = os.path.abspath(plot_dir)
@@ -173,13 +205,15 @@ def plotHistograms(
             palette=sns.color_palette("colorblind", n_colors=len(sites))
         )
         ax1.set_title(title)
-        ax1.set_xlabel("prefetch-rate",color="black")
+        ax1.set_xlabel("fraction of prefetched files in cache",color="black")
         hitrateticks = [x*0.1 for x in range(0,11)]
         scale_xticks(ax1, hitrateticks)
         ax1.set_ylabel(dquantity["label"], color="black")
         if dquantity["ylim"]:
             ax1.set_ylim(dquantity["ylim"])
         ax1.legend(loc='best')
+        if emptyBoxes:
+            toEmptyBoxesStyle(ax1)
         fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.pdf"))
         fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.png"))
         plt.close()
@@ -215,8 +249,8 @@ def run(args=parser.parse_args()):
     data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
     #TODO: classify according to sites
     mapping = {
-        "Tier1": "T1",
-        "Tier2": "T2",
+        "Tier1": "Tier 1",
+        "Tier2": "Tier 2'",
     }
     data["Site"] = data["machine.name"].apply(lambda x: mapHostToSite(x,mapping))
     sites = sorted(data["Site"].unique())
@@ -225,9 +259,11 @@ def run(args=parser.parse_args()):
         suffix = args.scenario
     else:
         suffix = args.suffix
-    plotHistograms(data,
+    plotBoxes(data,
                    sites=sites,
                    title=args.scenario,
+                   emptyBoxes=False,
+                   plot_dir=out_dir,
                    suffix=suffix)
 
 
