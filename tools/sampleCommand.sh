@@ -1,0 +1,2 @@
+dc-sim --platform /home/jamcdonald/Documents/GitHub/DCSim/data/platform-files/cach_testing.xml --hitrate 1.0 --duplications 48 --xrd-blocksize 100000000 --output-file /home/jamcdonald/Documents/GitHub/DCSim/tmp/outputs/hitratescaling_fullstream_xrd100000000_1jobs_hitrate1.0.csv --cfg=network/loopback-bw:100000000000000 --no-caching --workload-configurations /home/jamcdonald/Documents/GitHub/DCSim/data/workload-configs/crown_ttbar_validation.json
+
