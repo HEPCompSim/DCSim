@@ -533,10 +533,15 @@ int main(int argc, char **argv) {
                         exit(EXIT_FAILURE);
                     }
                 }
+                std::vector<std::string> location{};
+                if (ds.value()["location"].type() == nlohmann::json::value_t::string)
+                    location = {ds.value()["location"]};
+                else
+                    location = ds.value()["location"].get<std::vector<std::string>>();
                 dataset_specs.push_back(
                     Dataset(
                         // TODO: support simple strings when only one host is required as location
-                        ds.value()["location"].get<std::vector<std::string>>(),
+                        location,
                         ds.value()["num_files"],
                         ds.value()["filesize"],
                         ds.key(),
@@ -596,7 +601,7 @@ int main(int argc, char **argv) {
                 if (wf.value()["infile_datasets"].type() == nlohmann::json::value_t::string)
                     infile_datasets = {wf.value()["infile_datasets"]};
                 else
-                    infile_datasets = wf.value()["infile_datasets"];
+                    infile_datasets = wf.value()["infile_datasets"].get<std::vector<std::string>>();
                 workload_specs.push_back(
                     Workload(
                         wf.value()["num_jobs"], wf.value()["infiles_per_job"],

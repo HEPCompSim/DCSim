@@ -9,7 +9,7 @@
     }
   },
   "second_dataset": {
-      "location":["RemoteStorage"],
+      "location":"RemoteStorage",
       "num_files": 100,
       "filesize": {
         "type": "gaussian",
