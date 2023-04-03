@@ -769,7 +769,7 @@ int main(int argc, char **argv) {
                 for (auto storage_service: grid_storage_services) {
                     if (std::find(dss.hostnames.begin(), dss.hostnames.end(), storage_service->getHostname()) == dss.hostnames.end() )
                         continue;
-                    simulation->createFile(wrench::FileLocation::LOCATION(storage_service, f));
+                    simulation->stageFile(wrench::FileLocation::LOCATION(storage_service, f));
                     SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
                 }
                 // Distribute the files on all caches until desired hitrate is reached
@@ -777,7 +777,7 @@ int main(int argc, char **argv) {
                 if (cached_files_size < hitrate*incr_infile_size) {
                     for (const auto& cache : cache_storage_services) {
                         // simulation->stageFile(f, cache);
-                        simulation->createFile(wrench::FileLocation::LOCATION(cache, f));
+                        simulation->stageFile(wrench::FileLocation::LOCATION(cache, f));
                         SimpleSimulator::global_file_map[cache].touchFile(f.get());
                     }
                     cached_files_size += f->getSize();
@@ -792,7 +792,6 @@ int main(int argc, char **argv) {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 0;
     }
-
     std::cerr << "Set destination of output files..." << std::endl;
     for (auto wms: workload_execution_controllers) {
         try {
