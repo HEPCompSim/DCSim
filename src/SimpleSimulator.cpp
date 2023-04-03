@@ -608,7 +608,7 @@ int main(int argc, char **argv) {
                             wf.value()["flops"], wf.value()["memory"],
                             wf.value()["outfilesize"],
                             get_workload_type(workload_type_lower), wf.key(),
-                            wf.value()["infile_dataset"],
+                            infile_datasets,
                             wf.value()["submission_time"],
                             SimpleSimulator::gen));
                 }
