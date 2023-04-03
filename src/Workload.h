@@ -62,7 +62,7 @@ class Workload {
             const double average_memory, const double sigma_memory,
             const double average_outfile_size, const double sigma_outfile_size,
             const WorkloadType workload_type, const std::string name_suffix,
-            const std::string infile_dataset, const double arrival_time,
+            const std::vector<std::string> infile_datasets, const double arrival_time,
             const std::mt19937& generator
         );
 
@@ -73,7 +73,7 @@ class Workload {
             nlohmann::json memory,
             nlohmann::json outfile_size,
             const WorkloadType workload_type, const std::string name_suffix,
-            const std::string infile_dataset, const double arrival_time,
+            const std::vector<std::string> infile_datasets, const double arrival_time,
             const std::mt19937& generator
         );
 
@@ -85,7 +85,7 @@ class Workload {
         // time offset until job submission relative to simulation start time (0)
         double submit_arrival_time;
         // infile dataset name
-        std::string infile_dataset;
+        std::vector<std::string> infile_datasets;
         void assignFiles(std::vector<Dataset> const &);
 
     private:

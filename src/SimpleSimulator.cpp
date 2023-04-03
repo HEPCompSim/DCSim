@@ -39,10 +39,8 @@ const std::vector<std::string> dataset_keys = {
     };
 const std::vector<std::string> workload_keys = {
         "num_jobs","infiles_per_job",
-        "average_flops","sigma_flops",
-        "average_memory", "sigma_memory",
-        "average_outfile_size", "sigma_outfile_size",
-        "infile_dataset",
+        "flops", "memory", "outfilesize",
+        "infile_datasets",
         "workload_type", "submission_time"
     };
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
@@ -566,7 +564,7 @@ int main(int argc, char **argv) {
                 average_memory,sigma_memory,
                 average_outfile_size, sigma_outfile_size,
                 vm["workload-type"].as<WorkloadTypeStruct>().get(), "",
-                "", submission_arrival_time,
+                {""}, submission_arrival_time,
                 SimpleSimulator::gen
             )
         );
@@ -581,7 +579,6 @@ int main(int argc, char **argv) {
 
             // Looping over the multiple workloads configured in the json file
             for (auto &wf: wfs_json.items()){
-
                 // Checking json syntax to match workload spec
                 for (auto &wf_key : workload_keys){
                     try {
@@ -595,6 +592,11 @@ int main(int argc, char **argv) {
                     }
                 }
                 std::string workload_type_lower = boost::to_lower_copy(std::string(wf.value()["workload_type"]));
+                std::vector<std::string> infile_datasets{};
+                if (wf.value()["infile_datasets"].type() == nlohmann::json::value_t::string)
+                    infile_datasets = {wf.value()["infile_datasets"]};
+                else
+                    infile_datasets = wf.value()["infile_datasets"];
                 workload_specs.push_back(
                     Workload(
                         wf.value()["num_jobs"], wf.value()["infiles_per_job"],
@@ -602,11 +604,9 @@ int main(int argc, char **argv) {
                         wf.value()["average_memory"], wf.value()["sigma_memory"],
                         wf.value()["average_outfile_size"], wf.value()["sigma_outfile_size"],
                         get_workload_type(workload_type_lower), wf.key(),
-                        wf.value()["infile_dataset"],
+                        infile_datasets,
                         wf.value()["submission_time"],
-                        SimpleSimulator::gen
-                    )
-                );
+                        SimpleSimulator::gen));
                 std::cerr << "\tThe workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
             }
         }

@@ -53,7 +53,7 @@ Workload::Workload(
         const double average_memory, const double sigma_memory,
         const double average_outfile_size, const double sigma_outfile_size,
         const enum WorkloadType workload_type, const std::string name_suffix,
-        const std::string infile_dataset, const double arrival_time,
+        const std::vector<std::string> infile_datasets, const double arrival_time,
         const std::mt19937& generator
 ) {
     this->generator = generator;
@@ -99,7 +99,7 @@ Workload::Workload(
     this->job_batch = batch;
     this->workload_type = workload_type;
     this->submit_arrival_time = arrival_time;
-    this->infile_dataset = infile_dataset;
+    this->infile_datasets = infile_datasets;
 }
 
 /**
@@ -128,7 +128,7 @@ Workload::Workload(
         nlohmann::json memory,
         nlohmann::json outfile_size,
         const enum WorkloadType workload_type, const std::string name_suffix,
-        const std::string infile_dataset, const double arrival_time,
+        const std::vector<std::string> infile_datasets, const double arrival_time,
         const std::mt19937& generator
 ) {
     this->generator = generator;
@@ -151,7 +151,7 @@ Workload::Workload(
     this->job_batch = batch;
     this->workload_type = workload_type;
     this->submit_arrival_time = arrival_time;
-    this->infile_dataset = infile_dataset;
+    this->infile_datasets = infile_datasets;
 }
 
 std::function<double(std::mt19937&)> Workload::initializeRNG(nlohmann::json json) {
@@ -206,21 +206,25 @@ JobSpecification Workload::sampleJob(size_t job_id, const size_t infiles_per_job
 
 void Workload::assignFiles(std::vector<Dataset> const &dataset_specs)
 {
-    auto ds_it = std::find_if(dataset_specs.begin(), dataset_specs.end(), [&](Dataset ds)
-                                { return ds.name == infile_dataset; });
-    if (ds_it == dataset_specs.end())
+    std::vector<Dataset> matching_ds{};
+    std::copy_if(dataset_specs.begin(), dataset_specs.end(), std::back_inserter(matching_ds), [&](Dataset ds)
+                              { return std::find(infile_datasets.begin(), infile_datasets.end(), ds.name) != infile_datasets.end(); });
+    if (matching_ds.empty())
         throw std::runtime_error("ERROR: no valid infile dataset name in workload configuration.");
-    auto ds = *ds_it;
+    std::vector<std::shared_ptr<wrench::DataFile>> all_files{};
+    for(auto const& ds: matching_ds){
+        std::copy(ds.files.begin(), ds.files.end(), std::back_inserter(all_files));
+    }
     int num_jobs = job_batch.size();
-    int num_files = ds.files.size();
+    int num_files = all_files.size();
     int k = num_files / num_jobs;
     std::cerr << "Assigning " << num_files << " files to "<< num_jobs << " jobs\n";
     for (auto j = 0; j < num_jobs; ++j)
     {
-        auto beg_it = ds.files.begin() + j * k;
-        if (std::distance(beg_it, ds.files.end()) < k)
+        auto beg_it = all_files.begin() + j * k;
+        if (std::distance(beg_it, all_files.end()) < k)
             {
-                std::copy(beg_it, ds.files.end(), std::back_inserter(job_batch[j].infiles));
+                std::copy(beg_it, all_files.end(), std::back_inserter(job_batch[j].infiles));
                 break;
             }
         std::copy_n(beg_it, k, std::back_inserter(job_batch[j].infiles));
