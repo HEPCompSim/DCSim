@@ -32,6 +32,26 @@
         },
         "workload_type": "streaming",
         "submission_time": 10,
-        "infile_datasets": "crown_ttbar"
+        "infile_dataset": "crown_ttbar"
+    },
+    "mc_workload": {
+        "num_jobs": 1,
+        "flops": {
+            "type": "gaussian",
+            "average": 2164428000000,
+            "sigma": 216442800000
+        },
+        "memory": {
+            "type": "gaussian",
+            "average": 2000000000,
+            "sigma": 200000000
+        },
+        "outfilesize": {
+            "type": "gaussian",
+            "average": 18000000000,
+            "sigma": 1800000000
+        },
+        "workload_type": "calculation",
+        "submission_time": 10000
     }
 }

@@ -154,6 +154,54 @@ Workload::Workload(
     this->infile_datasets = infile_datasets;
 }
 
+/**
+ * @brief Fill a Workload consisting of jobs with job specifications, 
+ * which include the inputfile and outputfile dependencies.
+ * It can be chosen between jobs streaming input data and perform computations simultaneously 
+ * or jobs copying the full input-data and compute afterwards.
+ *    
+ * @param num_jobs: number of tasks
+ * @param flops: json object containing type and parameters for the flops distribution
+ * @param memory: json object containing type and parameters for the memory distribution
+ * @param outfile_size: json object containing type and parameters for the output-file size distribution
+ * @param workload_type: flag to specifiy, whether the job should run with streaming or not
+ * @param name_suffix: part of job name to distinguish between different workloads
+ * @param arrival_time: submission time offset relative to simulation start
+ * @param generator: random number generator objects to draw from
+ * 
+ * @throw std::runtime_error
+ */
+Workload::Workload(
+        const size_t num_jobs,
+        nlohmann::json flops,
+        nlohmann::json memory,
+        nlohmann::json outfile_size,
+        const enum WorkloadType workload_type, const std::string name_suffix,
+        const double arrival_time,
+        const std::mt19937& generator
+) {
+    this->generator = generator;
+    // Map to store the workload specification
+    std::vector<JobSpecification> batch;
+    std::string potential_separator = "_";
+    if(name_suffix == ""){
+        potential_separator = "";
+    }
+
+    // Initialize random number generators
+    this->flops_dist = Workload::initializeRNG(flops);
+    this->mem_dist = Workload::initializeRNG(memory);
+    this->outsize_dist = Workload::initializeRNG(outfile_size);
+    for (size_t j = 0; j < num_jobs; j++)
+    {
+        batch.push_back(sampleJob(j, 0, name_suffix, potential_separator));
+    }
+
+    this->job_batch = batch;
+    this->workload_type = workload_type;
+    this->submit_arrival_time = arrival_time;
+}
+
 std::function<double(std::mt19937&)> Workload::initializeRNG(nlohmann::json json) {
     std::cerr << json["type"] << ": ";
     std::function<double(std::mt19937&)> dist;
