@@ -204,19 +204,37 @@ JobSpecification Workload::sampleJob(size_t job_id, const size_t infiles_per_job
     return job_specification;
 }
 
+template <class InputIt, class OutputIt, class Pred, class Fct>
+void transform_if(InputIt first, InputIt last, OutputIt dest, Pred pred, Fct transform)
+{
+   while (first != last) {
+      if (pred(*first))
+         *dest++ = transform(*first);
+
+      ++first;
+   }
+}
+
 void Workload::assignFiles(std::vector<Dataset> const &dataset_specs)
 {
-    std::vector<Dataset> matching_ds{};
-    std::copy_if(dataset_specs.begin(), dataset_specs.end(), std::back_inserter(matching_ds), [&](Dataset ds)
-                              { return std::find(infile_datasets.begin(), infile_datasets.end(), ds.name) != infile_datasets.end(); });
+    std::vector<Dataset const *> matching_ds{};
+    transform_if(
+        dataset_specs.begin(), dataset_specs.end(), std::back_inserter(matching_ds), [&](Dataset const& ds)
+        { return std::find(infile_datasets.begin(), infile_datasets.end(), ds.name) != infile_datasets.end(); },
+        [&](Dataset const& ds)
+        { return &ds; });
     if (matching_ds.empty())
         throw std::runtime_error("ERROR: no valid infile dataset name in workload configuration.");
+    int num_files = std::accumulate(matching_ds.begin(), matching_ds.end(), 0, [](int sum, Dataset const* ds)
+                                    { return sum + ds->files.size(); });
     std::vector<std::shared_ptr<wrench::DataFile>> all_files{};
-    for(auto const& ds: matching_ds){
-        std::copy(ds.files.begin(), ds.files.end(), std::back_inserter(all_files));
+    all_files.reserve(num_files);
+    for (auto const &ds : matching_ds)
+    {
+        std::copy(ds->files.begin(), ds->files.end(), std::back_inserter(all_files));
     }
     int num_jobs = job_batch.size();
-    int num_files = all_files.size();
+    // int num_files = all_files.size();
     int k = num_files / num_jobs;
     std::cerr << "Assigning " << num_files << " files to "<< num_jobs << " jobs\n";
     for (auto j = 0; j < num_jobs; ++j)
