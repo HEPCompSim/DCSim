@@ -124,9 +124,10 @@ int WorkloadExecutionController::main() {
             );
 
             //? Split this into a caching file read and a standard compute action?
+            // TODO: figure out what is the best value for the ability to parallelize HEP workloads on a CPU. Setting speedup to number of cores for now
             run_action = std::make_shared<MonitorAction>(
                 "copycompute_" + *job_name,
-                job_spec->total_mem, 1,
+                job_spec->total_mem, job_spec->cores,
                 *copy_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
                     WRENCH_INFO("Copy computation terminating");
@@ -139,9 +140,10 @@ int WorkloadExecutionController::main() {
                 new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops, SimpleSimulator::prefetching_on)
             );
 
+            // TODO: figure out what is the best value for the ability to parallelize HEP workloads on a CPU. Setting speedup to number of cores for now
             run_action = std::make_shared<MonitorAction>(
                 "streaming_" + *job_name,
-                job_spec->total_mem, 1,
+                job_spec->total_mem, job_spec->cores,
                 *streamed_computation,
                 [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
                     WRENCH_INFO("Streaming computation terminating");
@@ -151,8 +153,13 @@ int WorkloadExecutionController::main() {
             job->addCustomAction(run_action);
         }
         else if (this->workload_type == WorkloadType::Calculation) {
-            // TODO: figure out what is the best value for the ability tp parallelize HEP workloads on a CPU. Setting currently to 1.0.
-            compute_action = job->addComputeAction("calculation_" + *job_name,job_spec->total_flops, job_spec->total_mem, 1, 1, wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
+            // TODO: figure out what is the best value for the ability to parallelize HEP workloads on a CPU. Setting speedup to number of cores for now
+            compute_action = job->addComputeAction(
+                "calculation_" + *job_name,
+                job_spec->total_flops, job_spec->total_mem,
+                job_spec->cores, job_spec->cores,
+                wrench::ParallelModel::CONSTANTEFFICIENCY(1.0)
+            );
         }
         else {
             throw std::runtime_error("WorkloadType::" + workload_type_to_string(this->workload_type) + "not implemented!");
@@ -179,7 +186,7 @@ int WorkloadExecutionController::main() {
         // //     }
         // // );
 
-        // // Add necessary dependencies
+        // Add necessary dependencies
         if (this->workload_type == WorkloadType::Streaming || this->workload_type == WorkloadType::Copy) {
             job->addActionDependency(run_action, fw_action);
         }
