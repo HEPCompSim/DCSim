@@ -222,6 +222,7 @@ JobSpecification Workload::sampleJob(size_t job_id, const size_t infiles_per_job
 
     // Sample number of cores to run on
     int req_cores = this->core_dist(this->generator);
+    while (req_cores < 1) req_cores = this->core_dist(this->generator);
     job_specification.cores = req_cores;
 
     // Sample strictly positive task flops
