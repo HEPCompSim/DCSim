@@ -32,7 +32,7 @@ namespace po = boost::program_options;
  * all jobs.
  */
 const std::vector<std::string> workload_keys = {
-        "num_jobs","infiles_per_job",
+        "num_jobs", "infiles_per_job", "cores",
         "flops", "memory", "infilesize", "outfilesize",
         "workload_type", "submission_time"
     };
@@ -44,10 +44,6 @@ bool SimpleSimulator::prefetching_on = true;   // flag to enable prefetching dur
 bool SimpleSimulator::shuffle_jobs = false;   // flag to enable job shuffling during submission
 double SimpleSimulator::xrd_block_size = 1.*1000*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 // TODO: The initialized below is likely bogus (at compile time?)
-std::normal_distribution<double>* SimpleSimulator::flops_dist;
-std::normal_distribution<double>* SimpleSimulator::mem_dist;
-std::normal_distribution<double>* SimpleSimulator::insize_dist;
-std::normal_distribution<double>* SimpleSimulator::outsize_dist;
 std::set<std::string> SimpleSimulator::cache_hosts;
 std::set<std::string> SimpleSimulator::storage_hosts;
 std::set<std::string> SimpleSimulator::worker_hosts;
@@ -253,6 +249,7 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("workload-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with workload configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")
 
         ("njobs,n", po::value<size_t>()->default_value(60), "number of jobs to simulate")
+        ("ncores,c", po::value<int>()->default_value(1), "number of cores jobs run on")
         ("flops", po::value<double>()->default_value(average_flops), "amount of floating point operations jobs need to process")
         ("sigma-flops", po::value<double>()->default_value(sigma_flops), "jobs' distribution spread in FLOPS")
         ("mem,m", po::value<double>()->default_value(average_memory), "average size of memory needed for jobs to run")
@@ -453,6 +450,8 @@ int main(int argc, char **argv) {
     size_t infiles_per_job = vm["ninfiles"].as<size_t>();
     double hitrate = vm["hitrate"].as<double>();
 
+    int req_cores = vm["ncores"].as<int>();
+
     double average_flops = vm["flops"].as<double>();
     double sigma_flops = vm["sigma-flops"].as<double>();
     double average_memory = vm["mem"].as<double>();
@@ -461,6 +460,7 @@ int main(int argc, char **argv) {
     double sigma_infile_size = vm["sigma-insize"].as<double>();
     double average_outfile_size = vm["outsize"].as<double>();
     double sigma_outfile_size = vm["sigma-outsize"].as<double>();
+
     double submission_arrival_time = vm["submission-time"].as<double>();
 
     size_t duplications = vm["duplications"].as<size_t>();
@@ -505,6 +505,7 @@ int main(int argc, char **argv) {
         workload_specs.push_back(
             Workload(
                 num_jobs, infiles_per_job,
+                req_cores,
                 average_flops, sigma_flops,
                 average_memory,sigma_memory,
                 average_infile_size, sigma_infile_size,
@@ -542,6 +543,7 @@ int main(int argc, char **argv) {
                 workload_specs.push_back(
                     Workload(
                         wf.value()["num_jobs"], wf.value()["infiles_per_job"],
+                        wf.value()["cores"],
                         wf.value()["flops"], wf.value()["memory"],
                         wf.value()["infilesize"], wf.value()["outfilesize"],
                         get_workload_type(workload_type_lower), wf.key(),
