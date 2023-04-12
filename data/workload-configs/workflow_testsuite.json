@@ -2,6 +2,10 @@
     "calc_workload": {
         "num_jobs": 60,
         "infiles_per_job": 0,
+        "cores": {
+            "type": "poisson",
+            "mu": 1
+        },
         "flops": {
             "type": "histogram",
             "bins": [1164428000000,2164428000000,3164428000000],
@@ -28,6 +32,11 @@
     "mc_workload": {
         "num_jobs": 60,
         "infiles_per_job": 0,
+        "cores": {
+            "type": "histogram",
+            "bins": [-0.5,0.5,1.5],
+            "counts": [0,1]
+        },
         "flops": {
             "type": "gaussian",
             "average": 2164428000000,
@@ -54,6 +63,10 @@
     "copy_and_compute_workload": {
         "num_jobs": 60,
         "infiles_per_job": 10,
+        "cores": {
+            "type": "histogram",
+            "counts": [0,2]
+        },
         "flops": {
             "type": "gaussian",
             "average": 2164428000000,
@@ -80,6 +93,10 @@
     "stream_and_compute_workload": {
         "num_jobs": 60,
         "infiles_per_job": 10,
+        "cores": {
+            "type": "histogram",
+            "counts": [0,1]
+        },
         "flops": {
             "type": "gaussian",
             "average": 2164428000000,

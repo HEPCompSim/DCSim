@@ -49,6 +49,7 @@ std::string workload_type_to_string( WorkloadType workload )
 Workload::Workload(
         const size_t num_jobs,
         const size_t infiles_per_task,
+        const int request_cores,
         const double average_flops, const double sigma_flops,
         const double average_memory, const double sigma_memory,
         const double average_infile_size, const double sigma_infile_size,
@@ -75,6 +76,9 @@ Workload::Workload(
 
         // Create a job specification
         JobSpecification job_specification;
+
+        // Set number of requested cores
+        job_specification.cores = request_cores;
 
         // Sample strictly positive task flops
         double dflops = flops_dist(this->generator);
@@ -129,6 +133,7 @@ Workload::Workload(
 Workload::Workload(
         const size_t num_jobs,
         const size_t infiles_per_job,
+        nlohmann::json cores,
         nlohmann::json flops,
         nlohmann::json memory,
         nlohmann::json infile_size,
@@ -146,10 +151,11 @@ Workload::Workload(
     }
 
     // Initialize random number generators
-    this->flops_dist = Workload::initializeRNG(flops);
-    this->mem_dist = Workload::initializeRNG(memory);
-    this->insize_dist = Workload::initializeRNG(infile_size);
-    this->outsize_dist = Workload::initializeRNG(outfile_size);
+    this->core_dist = Workload::initializeIntRNG(cores);
+    this->flops_dist = Workload::initializeDoubleRNG(flops);
+    this->mem_dist = Workload::initializeDoubleRNG(memory);
+    this->insize_dist = Workload::initializeDoubleRNG(infile_size);
+    this->outsize_dist = Workload::initializeDoubleRNG(outfile_size);
 
     for (size_t j = 0; j < num_jobs; j++) {
         batch.push_back(sampleJob(j, infiles_per_job, name_suffix, potential_separator));
@@ -161,7 +167,7 @@ Workload::Workload(
 }
 
 
-std::function<double(std::mt19937&)> Workload::initializeRNG(nlohmann::json json) {
+std::function<double(std::mt19937&)> Workload::initializeDoubleRNG(nlohmann::json json) {
     // std::cerr << json["type"] << ": ";
     std::function<double(std::mt19937&)> dist;
     if(json["type"].get<std::string>()=="gaussian") {
@@ -179,7 +185,33 @@ std::function<double(std::mt19937&)> Workload::initializeRNG(nlohmann::json json
             return std::piecewise_constant_distribution<double>(bins.begin(),bins.end(),weights.begin())(generator);
         };
     } else {
-        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented!");
+        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented for real valued distributions!");
+    }
+    return dist;
+}
+
+std::function<int(std::mt19937&)> Workload::initializeIntRNG(nlohmann::json json) {
+    // std::cerr << json["type"] << ": ";
+    std::function<int(std::mt19937&)> dist;
+    if(json["type"].get<std::string>()=="poisson") {
+        int mu = json["mu"].get<int>();
+        // std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
+        dist = [mu](std::mt19937& generator){
+            return std::poisson_distribution<int>(mu)(generator);
+        };
+    } else if(json["type"].get<std::string>()=="histogram") {
+        try{
+            auto bins = json["bins"].get<std::vector<double>>();
+            WRENCH_WARN("Ignoring configured bins for integer distribution!");
+        }
+        catch(...) {}
+        auto weights = json["counts"].get<std::vector<int>>();
+        // std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
+        dist = [weights](std::mt19937& generator){
+            return std::discrete_distribution<int>(weights.begin(), weights.end())(generator);
+        };
+    } else {
+        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented for integer valued distributions!");
     }
     return dist;
 }
@@ -190,6 +222,11 @@ JobSpecification Workload::sampleJob(size_t job_id, const size_t infiles_per_job
     JobSpecification job_specification;
 
     size_t j = job_id;
+
+    // Sample number of cores to run on
+    int req_cores = this->core_dist(this->generator);
+    while (req_cores < 1) req_cores = this->core_dist(this->generator);
+    job_specification.cores = req_cores;
 
     // Sample strictly positive task flops
     double dflops = this->flops_dist(this->generator);

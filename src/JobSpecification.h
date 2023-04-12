@@ -21,6 +21,8 @@ public:
     std::shared_ptr<wrench::DataFile> outfile;
     // Desired destination of the output file to be written to
     std::shared_ptr<wrench::FileLocation> outfile_destination;
+    // Number of cores to run on
+    int cores;
     // Total number of FLOPS to be computed for the job to finish
     double total_flops;
     // Memory consumption of the job
