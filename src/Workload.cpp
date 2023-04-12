@@ -202,7 +202,7 @@ std::function<int(std::mt19937&)> Workload::initializeIntRNG(nlohmann::json json
     } else if(json["type"].get<std::string>()=="histogram") {
         auto bins = json["bins"].get<std::vector<double>>();
         if(!bins.empty()) WRENCH_WARN("Ignoring configured bins for integer distribution!");
-        auto weights = json["weights"].get<std::vector<int>>();
+        auto weights = json["counts"].get<std::vector<int>>();
         // std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
         dist = [weights](std::mt19937& generator){
             return std::discrete_distribution<int>(weights.begin(), weights.end())(generator);
