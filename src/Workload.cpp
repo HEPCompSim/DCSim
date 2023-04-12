@@ -200,8 +200,11 @@ std::function<int(std::mt19937&)> Workload::initializeIntRNG(nlohmann::json json
             return std::poisson_distribution<int>(mu)(generator);
         };
     } else if(json["type"].get<std::string>()=="histogram") {
-        auto bins = json["bins"].get<std::vector<double>>();
-        if(!bins.empty()) WRENCH_WARN("Ignoring configured bins for integer distribution!");
+        try{
+            auto bins = json["bins"].get<std::vector<double>>();
+            WRENCH_WARN("Ignoring configured bins for integer distribution!");
+        }
+        catch(...) {}
         auto weights = json["counts"].get<std::vector<int>>();
         // std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
         dist = [weights](std::mt19937& generator){
