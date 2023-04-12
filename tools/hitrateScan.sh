@@ -32,7 +32,7 @@ action() {
     local DUPLICATIONS=48
 
     local XRD_BLOCKSIZE=100000000
-    local STORAGE_BUFFER_SIZE="inf" #1048576
+    local STORAGE_BUFFER_SIZE=1048576
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
@@ -41,7 +41,7 @@ action() {
         mkdir -p $OUTDIR
     fi
 
-    for hitrate in $(LANG=en_US seq 0.0 0.1 1.0)
+    for hitrate in $(LANG=en_UK seq 0.0 0.1 1.0)
     do 
         dc-sim --platform "$PLATFORM" \
             --hitrate ${hitrate} \

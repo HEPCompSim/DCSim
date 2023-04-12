@@ -2,6 +2,11 @@
     "Analysis_T1": {
         "num_jobs": 32,
         "infiles_per_job": 10,
+        "cores": {
+            "type": "histogram",
+            "counts": [0, 206746, 35, 0, 3709, 0, 0, 0, 406],
+            "bins": [-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5]
+        },
         "flops": {
             "type": "histogram",
             "counts": [210623, 263, 4, 6, 0, 0, 0, 0, 0, 0],
@@ -28,6 +33,10 @@
     "Digi_T1": {
         "num_jobs": 33,
         "infiles_per_job": 10,
+        "cores": {
+            "type": "histogram",
+            "counts": [0, 30704, 101899, 0, 86729, 0, 0, 0, 626]
+        },
         "flops": {
             "type": "histogram",
             "counts": [74119, 141559, 3664, 38, 213, 317, 40, 8, 0, 0],
@@ -54,6 +63,10 @@
     "DataProcessing_T1": {
         "num_jobs": 8,
         "infiles_per_job": 10,
+        "cores": {
+            "type": "histogram",
+            "counts": [0, 0, 1776, 0, 54222, 0, 0, 0, 0]
+        },
         "flops": {
             "type":"histogram",
             "counts": [21063, 5534, 6066, 6909, 6006, 5984, 3002, 1030, 322, 57],
@@ -77,54 +90,32 @@
         "workload_type": "streaming",
         "submission_time": 10
     },
-    "MINIAOD_T1": {
+    "Others_T1": {
         "num_jobs": 0,
         "infiles_per_job": 10,
+        "cores": {
+            "type": "histogram",
+            "counts": [0, 0, 28, 0, 485, 0, 0, 0, 282]
+        },
         "flops": {
             "type":"histogram",
-            "counts": [618, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "counts": [789, 2, 0, 4, 0, 0, 0, 0, 0, 0],
             "bins": [0, 1.5e+14, 3e+14, 4.5e+14, 6e+14, 7.5e+14, 9e+14, 1.05e+15, 1.2e+15, 1.35e+15, 1.5e+15]
         },
         "memory": {
             "type":"histogram",
-            "counts": [38, 268, 312, 0, 0, 0, 0, 0, 0, 0],
+            "counts": [38, 270, 477, 10, 0, 0, 0, 0, 0, 0],
             "bins": [100, 1290, 2480, 3670, 4860, 6050, 7240, 8430, 9620, 10810, 12000]
         },
         "infilesize": {
             "type":"histogram",
-            "counts": [616, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+            "counts": [687, 102, 6, 0, 0, 0, 0, 0, 0, 0],
+            "bins": [0, 3e+09, 6e+09, 9e+09, 1.2e+10, 1.5e+10, 1.8e+10, 2.1e+10, 2.4e+10, 2.7e+10, 3e+10]
         },
         "outfilesize": {
             "type":"histogram",
-            "counts": [616, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 2e+09, 4e+09, 6e+09, 8e+09, 1e+10, 1.2e+10, 1.4e+10, 1.6e+10, 1.8e+10, 2e+10]
-        },
-        "workload_type": "streaming",
-        "submission_time": 10
-    },
-    "RECO_T1": {
-        "num_jobs": 0,
-        "infiles_per_job": 10,
-        "flops": {
-            "type":"histogram",
-            "counts": [171, 2, 0, 4, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 1.5e+14, 3e+14, 4.5e+14, 6e+14, 7.5e+14, 9e+14, 1.05e+15, 1.2e+15, 1.35e+15, 1.5e+15]
-        },
-        "memory": {
-            "type":"histogram",
-            "counts": [0, 2, 165, 10, 0, 0, 0, 0, 0, 0],
-            "bins": [100, 1290, 2480, 3670, 4860, 6050, 7240, 8430, 9620, 10810, 12000]
-        },
-        "infilesize": {
-            "type":"histogram",
-            "counts": [173, 4, 0, 0, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
-        },
-        "outfilesize": {
-            "type":"histogram",
-            "counts": [169, 4, 0, 4, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 2e+09, 4e+09, 6e+09, 8e+09, 1e+10, 1.2e+10, 1.4e+10, 1.6e+10, 1.8e+10, 2e+10]
+            "counts": [612, 175, 4, 0, 4, 0, 0, 0, 0, 0],
+            "bins": [0, 1.5e+09, 3e+09, 4.5e+09, 6e+09, 7.5e+09, 9e+09, 1.05e+10, 1.2e+10, 1.35e+10, 1.5e+10]
         },
         "workload_type": "streaming",
         "submission_time": 10
@@ -132,6 +123,10 @@
     "Merge_T1": {
         "num_jobs": 3,
         "infiles_per_job": 10,
+        "cores": {
+            "type": "histogram",
+            "counts": [0, 23054, 0, 0, 0, 0, 0, 0, 0]
+        },
         "flops": {
             "type":"histogram",
             "counts": [23054, 0, 0, 0, 0, 0, 0, 0, 0, 0],

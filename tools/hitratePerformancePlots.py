@@ -33,7 +33,7 @@ markers = ['o', '+', 'x', '*', '.', 'X']
 QUANTITIES = {
     "Walltime": {
         "ylabel": "jobtime / min",
-        "ylim": [0,65], # [0,65],
+        "ylim": [0,300], # [0,65],
     },
     "IOtime": {
         "ylabel": "transfer time / min",
