@@ -55,8 +55,8 @@ class Workload {
         // Constructor
         Workload(
             const size_t num_jobs,
-            const int request_cores,
             const size_t infiles_per_task,
+            const int request_cores,
             const double average_flops, const double sigma_flops,
             const double average_memory, const double sigma_memory,
             const double average_infile_size, const double sigma_infile_size,
