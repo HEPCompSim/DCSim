@@ -9,8 +9,24 @@ import glob
 import argparse
 
 
-plt.rcParams["figure.figsize"] = [4., 3.]
 plt.rcParams["figure.autolayout"] = True
+pd.set_option('display.max_columns',None)
+plt.rcParams['axes.facecolor'] = 'white'
+plt.rcParams['axes.spines.left'] = True
+plt.rcParams['axes.spines.right'] = True
+plt.rcParams['axes.spines.top'] = False
+plt.rcParams['axes.spines.bottom'] = True
+plt.rcParams['axes.grid'] = False
+plt.rcParams['axes.grid.axis'] = 'both'
+plt.rcParams['axes.labelcolor'] = 'black'
+plt.rcParams['axes.labelsize'] = 13
+plt.rcParams['text.color'] = 'black'
+plt.rcParams['figure.figsize'] = 6,4
+plt.rcParams['figure.dpi'] = 100
+plt.rcParams['figure.titleweight'] = 'normal'
+plt.rcParams['font.family'] = 'sans-serif'
+# plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.size'] = 13
 
 
 def valid_file(param):
@@ -21,6 +37,7 @@ def valid_file(param):
 
 
 scenario_plotlabel_dict = {
+    "": "",
     'withdump': "with JSON dump",
     'nodump': "without JSON dump",
     'private': "private improvements",
@@ -56,7 +73,7 @@ parser.add_argument(
     "--scenario", 
     type=str,
     choices=scenario_plotlabel_dict.keys(),
-    required=True,
+    default="",
     help="Choose a scenario, which sets the according plotting label and filename of the plot."
 )
 parser.add_argument(
@@ -74,7 +91,11 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-scenario = args.scenario
+if args.scenario != "":
+    scenario = "_"+args.scenario
+else:
+    scenario = ""
+
 
 
 # Create a data-frame holding all monitoring information
@@ -123,23 +144,23 @@ print("Filtered data:\n", runtimesdf)
 
 # Visualize the monitoring information
 fig, ax = plt.subplots()
-ax.set_title("Simulation scaling " + scenario_plotlabel_dict[scenario])
+ax.set_title(scenario_plotlabel_dict[scenario])
 
 # ax.set_xscale('log')
-ax.set_xlabel('$N_{jobs}$', loc='right')
-ax.set_ylabel('time / min', color='cornflowerblue')
+ax.set_xlabel('Number of Active Job Slots', loc='right')
+ax.set_ylabel('Time / min', color='cornflowerblue')
 ax.set_xlim([0,runtimesdf['NJobs'].iloc[-1]*1.05])
 # ax.set_ylim([0,400])
 
 ax.plot(runtimesdf['NJobs'], runtimesdf['TIME']/60, linestyle='dotted', color='cornflowerblue')
 ax.scatter(runtimesdf['NJobs'], runtimesdf['TIME']/60, color='cornflowerblue', marker='x', label='runtime')
-ax.grid(axis="y", linestyle = 'dotted', which='major')
+# ax.grid(axis="y", linestyle = 'dotted', which='major')
 
 secax = ax.twinx()
 secax.plot(memorydf['NJobs'], memorydf['RSS'],linestyle='dotted', color='orange')
 secax.scatter(memorydf['NJobs'], memorydf['RSS'], color='orange', marker='^', label='memory')
 # secax.xaxis.set_minor_locator(AutoMinorLocator())
-secax.set_ylabel('memory / GiB', color='orange')
+secax.set_ylabel('Memory / GiB', color='orange')
 # secax.set_ylim([0,12])
 
 h1, l1 = ax.get_legend_handles_labels()
@@ -150,7 +171,7 @@ njobs = np.linspace(runtimesdf['NJobs'].iloc[0], runtimesdf['NJobs'].iloc[-1], 1
 
 
 if args.extrapolate:
-    print("RUNTIME EXTRAPOLATIONS for 100k jobs:")
+    print("RUNTIME EXTRAPOLATIONS for 100k job slots:")
     start_params = (0.0, 0.0, 0.0, 0.0)
     params, cv = scipy.optimize.curve_fit(timeexp, runtimesdf['NJobs'], runtimesdf['TIME']/60, start_params)
     m, t, b, c = params
@@ -217,7 +238,7 @@ if args.extrapolate:
         print(f"\tQuadratic fit failed. Please check initial parameters.")
     print("")
 
-fig.savefig("scalingtest_"+ scenario +".pdf")
-fig.savefig("scalingtest_"+ scenario +".png")
+fig.savefig("scalingtest"+ scenario +".pdf")
+fig.savefig("scalingtest"+ scenario +".png")
 
 # plt.show()

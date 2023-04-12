@@ -17,15 +17,15 @@ DUPLICATIONS=1
 HITRATE=0.0
 XRDBLOCKSIZE=1000000000
 
-SCENARIO="ETPbatch"
+SCENARIO="wlcg"
 
 if [ ! -d "tmp/monitor/$SCENARIO" ]; then
     mkdir -p tmp/monitor/$SCENARIO
 fi
 
-for NJOBS in 10 20 50 100 200 500 700 1000 1100 1200 1300 1500 1700 2000 2500 3000 
+for NJOBS in 10 20 50 100 200 500 700 1000 1100 1200 1300 1500 1700 2000
 do
-    dc-sim --platform data/platform-files/ETPbatch.xml \
+    dc-sim --platform data/platform-files/WLCG_disklessTier2.xml \
         --njobs ${NJOBS} --ninfiles ${NINFILES} --insize ${AVGINSIZE} --sigma-insize ${SIGMAINSIZE} \
         --flops ${FLOPS} --sigma-flops ${SIGMAFLOPS} --mem ${MEM} \
         --outsize ${OUTSIZE} --sigma-outsize ${SIGMAOUTSIZE} \
