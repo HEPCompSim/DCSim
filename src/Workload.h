@@ -55,6 +55,7 @@ class Workload {
         // Constructor
         Workload(
             const size_t num_jobs,
+            const int request_cores,
             const size_t infiles_per_task,
             const double average_flops, const double sigma_flops,
             const double average_memory, const double sigma_memory,
@@ -68,6 +69,7 @@ class Workload {
         Workload(
             const size_t num_jobs,
             const size_t infiles_per_job,
+            nlohmann::json cores,
             nlohmann::json flops,
             nlohmann::json memory,
             nlohmann::json infile_size,
@@ -87,12 +89,14 @@ class Workload {
     private:
         /** @brief generator to shuffle jobs **/
         std::mt19937 generator;
+        std::function<int(std::mt19937&)> core_dist;
         std::function<double(std::mt19937&)> flops_dist;
         std::function<double(std::mt19937&)> mem_dist;
         std::function<double(std::mt19937&)> insize_dist;
         std::function<double(std::mt19937&)> outsize_dist;
 
-        std::function<double(std::mt19937&)> initializeRNG(nlohmann::json json);
+        std::function<int(std::mt19937&)> initializeIntRNG(nlohmann::json json);
+        std::function<double(std::mt19937&)> initializeDoubleRNG(nlohmann::json json);
 
         JobSpecification sampleJob(const size_t job_id, const size_t infiles_per_job, std::string name_suffix, std::string potential_separator);
 };
