@@ -561,8 +561,8 @@ int main(int argc, char **argv) {
     std::cerr << "Constructing workload specification..." << std::endl;
 
     std::vector<Workload> workload_specs = {};
-
-    if(workload_configurations.size() == 0){
+    if (workload_configurations.size() == 0)
+    {
         std::cerr << "Trying to create a single workload from CLI parameters, consider using a workload config instead..." << std::endl;
         workload_specs.push_back(
             Workload(
@@ -602,9 +602,15 @@ int main(int argc, char **argv) {
                 std::string workload_type_lower = boost::to_lower_copy(std::string(wf.value()["workload_type"]));
                 if (workload_type_lower != "calculation")
                 {
+                    std::vector<std::string> infile_datasets{};
+                    if (wf.value()["infile_datasets"].type() == nlohmann::json::value_t::string)
+                        infile_datasets = {wf.value()["infile_datasets"]};
+                    else
+                        infile_datasets = wf.value()["infile_datasets"].get<std::vector<std::string>>();                    
                     workload_specs.push_back(
                         Workload(
                             wf.value()["num_jobs"], wf.value()["infiles_per_job"],
+                            wf.value()["cores"],
                             wf.value()["flops"], wf.value()["memory"],
                             wf.value()["outfilesize"],
                             get_workload_type(workload_type_lower), wf.key(),
@@ -614,6 +620,7 @@ int main(int argc, char **argv) {
                 }
                 else
                 {
+                    std::cerr << "Here 2";
                     workload_specs.push_back(
                         Workload(
                             wf.value()["num_jobs"],

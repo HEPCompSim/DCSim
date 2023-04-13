@@ -140,9 +140,10 @@ Workload::Workload(
     }
 
     // Initialize random number generators
-    this->flops_dist = Workload::initializeRNG(flops);
-    this->mem_dist = Workload::initializeRNG(memory);
-    this->outsize_dist = Workload::initializeRNG(outfile_size);
+    this->core_dist = Workload::initializeIntRNG(cores);
+    this->flops_dist = Workload::initializeDoubleRNG(flops);
+    this->mem_dist = Workload::initializeDoubleRNG(memory);
+    this->outsize_dist = Workload::initializeDoubleRNG(outfile_size);
     for (size_t j = 0; j < num_jobs; j++)
     {
         batch.push_back(sampleJob(j, infiles_per_job, name_suffix, potential_separator));
