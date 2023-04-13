@@ -79,6 +79,7 @@ class Workload {
 
         Workload(
             const size_t num_jobs,
+            nlohmann::json cores,
             nlohmann::json flops,
             nlohmann::json memory,
             nlohmann::json outfile_size,
