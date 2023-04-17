@@ -157,6 +157,8 @@ void Workload::assignFiles(std::vector<Dataset> const &dataset_specs)
         std::copy(ds->files.begin(), ds->files.end(), std::back_inserter(all_files));
     }
     int num_jobs = job_batch.size();
+    if (num_jobs == 0)
+        return;
     // int num_files = all_files.size();
     int k = num_files / num_jobs;
     std::cerr << "Assigning " << num_files << " files to "<< num_jobs << " jobs\n";

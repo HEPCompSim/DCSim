@@ -1,0 +1,11 @@
+{
+  "sim_scaling": {
+      "location":["GridKA_dCache"],
+      "num_files": 10,
+      "filesize": {
+        "type": "gaussian",
+        "average": 3600000000,
+        "sigma": 360000000
+    }
+  }
+}
