@@ -259,20 +259,6 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("workload-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with workload configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")
         ("dataset-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with dataset configurations.")
 
-        ("njobs,n", po::value<size_t>()->default_value(60), "number of jobs to simulate")
-        ("ncores,c", po::value<int>()->default_value(1), "number of cores jobs run on")
-        ("flops", po::value<double>()->default_value(average_flops), "amount of floating point operations jobs need to process")
-        ("sigma-flops", po::value<double>()->default_value(sigma_flops), "jobs' distribution spread in FLOPS")
-        ("mem,m", po::value<double>()->default_value(average_memory), "average size of memory needed for jobs to run")
-        ("sigma-mem", po::value<double>()->default_value(sigma_memory), "jobs' sistribution spread in memory-needs")
-        ("ninfiles", po::value<size_t>()->default_value(infiles_per_job), "number of input-files each job has to process")
-        ("insize", po::value<double>()->default_value(average_infile_size), "average size of input-files jobs read")
-        ("sigma-insize", po::value<double>()->default_value(sigma_infile_size), "jobs' distribution spread in input-file size")
-        ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
-        ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
-        ("workload-type", po::value<WorkloadTypeStruct>()->default_value(WorkloadTypeStruct("streaming")), "switch to define the type of the workload. Please choose from 'calculation', 'streaming', or 'copy'")
-        ("submission-time", po::value<double>()->default_value(0.), "time to wait before submission of jobs")
-
         ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workload to feed into the simulation")
 
         ("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")
@@ -456,24 +442,10 @@ int main(int argc, char **argv) {
     // output-file name containing simulation information
     std::string filename = vm["output-file"].as<std::string>();
 
-    size_t num_jobs = vm["njobs"].as<size_t>();
-    size_t infiles_per_job = vm["ninfiles"].as<size_t>();
+    size_t duplications = vm["duplications"].as<size_t>();
+
     double hitrate = vm["hitrate"].as<double>();
 
-    int req_cores = vm["ncores"].as<int>();
-
-    double average_flops = vm["flops"].as<double>();
-    double sigma_flops = vm["sigma-flops"].as<double>();
-    double average_memory = vm["mem"].as<double>();
-    double sigma_memory = vm["sigma-mem"].as<double>();
-    double average_infile_size = vm["insize"].as<double>();
-    double sigma_infile_size = vm["sigma-insize"].as<double>();
-    double average_outfile_size = vm["outsize"].as<double>();
-    double sigma_outfile_size = vm["sigma-outsize"].as<double>();
-
-    double submission_arrival_time = vm["submission-time"].as<double>();
-
-    size_t duplications = vm["duplications"].as<size_t>();
     std::vector<std::string> workload_configurations = vm["workload-configurations"].as<std::vector<std::string>>();
 
     // dataset-configurations name containing datasets infomration
@@ -561,80 +533,88 @@ int main(int argc, char **argv) {
     std::cerr << "Constructing workload specification..." << std::endl;
 
     std::vector<Workload> workload_specs = {};
-    if (workload_configurations.size() == 0)
+    try
     {
-        std::cerr << "Trying to create a single workload from CLI parameters, consider using a workload config instead..." << std::endl;
-        workload_specs.push_back(
-            Workload(
-                num_jobs, infiles_per_job,
-                req_cores,
-                average_flops, sigma_flops,
-                average_memory,sigma_memory,
-                average_outfile_size, sigma_outfile_size,
-                vm["workload-type"].as<WorkloadTypeStruct>().get(), "",
-                {""}, submission_arrival_time,
-                SimpleSimulator::gen
-            )
-        );
-
-        std::cerr << "\tThe workload has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
+        if (workload_configurations.size() == 0)
+            throw std::invalid_argument("ERROR: the workload configuration loaded is invalid or empty.");
     }
-    else {
-        for(auto &wf_confpath : workload_configurations){
-            std::ifstream wf_conf(wf_confpath);
-            if(!wf_conf.is_open()) throw std::runtime_error("File " + wf_confpath + " could not be opened!");
-            nlohmann::json wfs_json = nlohmann::json::parse(wf_conf);
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
-            // Looping over the multiple workloads configured in the json file
-            for (auto &wf: wfs_json.items()){
-                // Checking json syntax to match workload spec
-                for (auto &wf_key : mandatory_workload_keys){
-                    try {
-                        if(!wf.value().contains(wf_key)){
-                            throw std::invalid_argument("ERROR: the workload configuration " + wf_confpath + " must contain " + wf_key + " as information.");
-                        }
-                    }
-                    catch(std::invalid_argument& e){
-                        std::cerr << e.what() << std::endl;
-                        exit(EXIT_FAILURE);
-                    }
-                }
-                std::string workload_type_lower = boost::to_lower_copy(std::string(wf.value()["workload_type"]));
-                if (workload_type_lower != "calculation")
+    for (auto &wf_confpath : workload_configurations)
+    {
+        std::ifstream wf_conf(wf_confpath);
+        try
+        {
+            if (!wf_conf.is_open())
+                throw std::runtime_error("File " + wf_confpath + " could not be opened!");
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        nlohmann::json wfs_json = nlohmann::json::parse(wf_conf);
+
+        // Looping over the multiple workloads configured in the json file
+        for (auto &wf : wfs_json.items())
+        {
+            // Checking json syntax to match workload spec
+            for (auto &wf_key : mandatory_workload_keys)
+            {
+                try
                 {
-                    std::vector<std::string> infile_datasets{};
-                    if (wf.value()["infile_datasets"].type() == nlohmann::json::value_t::string)
-                        infile_datasets = {wf.value()["infile_datasets"]};
-                    else
-                        infile_datasets = wf.value()["infile_datasets"].get<std::vector<std::string>>();                    
-                    workload_specs.push_back(
-                        Workload(
-                            wf.value()["num_jobs"], wf.value()["infiles_per_job"],
-                            wf.value()["cores"],
-                            wf.value()["flops"], wf.value()["memory"],
-                            wf.value()["outfilesize"],
-                            get_workload_type(workload_type_lower), wf.key(),
-                            infile_datasets,
-                            wf.value()["submission_time"],
-                            SimpleSimulator::gen));
+                    if (!wf.value().contains(wf_key))
+                    {
+                        throw std::invalid_argument("ERROR: the workload configuration " + wf_confpath + " must contain " + wf_key + " as information.");
+                    }
                 }
-                else
+                catch (std::invalid_argument &e)
                 {
-                    std::cerr << "Here 2";
-                    workload_specs.push_back(
-                        Workload(
-                            wf.value()["num_jobs"],
-                            wf.value()["flops"], wf.value()["memory"],
-                            wf.value()["outfilesize"],
-                            get_workload_type(workload_type_lower), wf.key(),
-                            wf.value()["submission_time"],
-                            SimpleSimulator::gen));
+                    std::cerr << e.what() << std::endl;
+                    exit(EXIT_FAILURE);
                 }
-                std::cerr << "\tThe workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
             }
+            std::string workload_type_lower = boost::to_lower_copy(std::string(wf.value()["workload_type"]));
+            if (workload_type_lower != "calculation")
+            {
+                std::vector<std::string> infile_datasets{};
+                if (wf.value()["infile_datasets"].type() == nlohmann::json::value_t::string)
+                    infile_datasets = {wf.value()["infile_datasets"]};
+                else
+                    infile_datasets = wf.value()["infile_datasets"].get<std::vector<std::string>>();
+                workload_specs.push_back(
+                    Workload(
+                        wf.value()["num_jobs"],
+                        wf.value()["cores"],
+                        wf.value()["flops"], wf.value()["memory"],
+                        wf.value()["outfilesize"],
+                        get_workload_type(workload_type_lower), wf.key(),
+                        wf.value()["submission_time"],
+                        SimpleSimulator::gen,
+                        infile_datasets));
+            }
+            else
+            {
+                workload_specs.push_back(
+                    Workload(
+                        wf.value()["num_jobs"],
+                        wf.value()["cores"],
+                        wf.value()["flops"], wf.value()["memory"],
+                        wf.value()["outfilesize"],
+                        get_workload_type(workload_type_lower), wf.key(),
+                        wf.value()["submission_time"],
+                        SimpleSimulator::gen));
+            }
+            std::cerr << "\tThe workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
         }
     }
-    std::cerr << "Created " << workload_specs.size() << " unique workloads!" << "\n";
+    std::cerr << "Created " << workload_specs.size() << " unique workloads!"
+              << "\n";
 
     /* Add infiles to worklaod */
 

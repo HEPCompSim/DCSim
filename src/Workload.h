@@ -56,36 +56,13 @@ class Workload {
         // Constructor
         Workload(
             const size_t num_jobs,
-            const size_t infiles_per_task,
-            const int request_cores,
-            const double average_flops, const double sigma_flops,
-            const double average_memory, const double sigma_memory,
-            const double average_outfile_size, const double sigma_outfile_size,
-            const WorkloadType workload_type, const std::string name_suffix,
-            const std::vector<std::string> infile_datasets, const double arrival_time,
-            const std::mt19937& generator
-        );
-
-        Workload(
-            const size_t num_jobs,
-            const size_t infiles_per_job,
-            nlohmann::json flops,
-            nlohmann::json memory,
-            nlohmann::json outfile_size,
-            const WorkloadType workload_type, const std::string name_suffix,
-            const std::vector<std::string> infile_datasets, const double arrival_time,
-            const std::mt19937& generator
-        );
-
-        Workload(
-            const size_t num_jobs,
             nlohmann::json cores,
             nlohmann::json flops,
             nlohmann::json memory,
             nlohmann::json outfile_size,
             const WorkloadType workload_type, const std::string name_suffix,
-            const double arrival_time,
-            const std::mt19937& generator
+            const double arrival_time, const std::mt19937& generator,
+            const std::vector<std::string> infile_datasets={} 
         );
 
         // job list with specifications
@@ -109,7 +86,7 @@ class Workload {
         std::function<int(std::mt19937&)> initializeIntRNG(nlohmann::json json);
         std::function<double(std::mt19937&)> initializeDoubleRNG(nlohmann::json json);
 
-        JobSpecification sampleJob(const size_t job_id, const size_t infiles_per_job, std::string name_suffix, std::string potential_separator);
+        JobSpecification sampleJob(const size_t job_id, std::string name_suffix, std::string potential_separator);
 };
 
 
