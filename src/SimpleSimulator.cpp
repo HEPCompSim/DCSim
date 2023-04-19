@@ -51,6 +51,7 @@ std::set<std::string> SimpleSimulator::scheduler_hosts;
 std::set<std::string> SimpleSimulator::executors;
 std::set<std::string> SimpleSimulator::file_registries;
 std::set<std::string> SimpleSimulator::network_monitors;
+std::set<std::string> SimpleSimulator::variable_links;
 std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_zones;
 bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
 
@@ -385,6 +386,29 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
         // }
     }
 }
+
+
+/**
+ * @brief Identify variable links based on configured "variation" property tag
+ * 
+ * @param simulation Simulation object with already instantiated hosts
+ * 
+ * @throw std::runtime_error, std::invalid_argument
+ */
+void SimpleSimulator::identifyVariableLinks(std::shared_ptr<wrench::Simulation> simulation){
+    std::vector<std::string> linkname_list = simulation->getLinknameList();
+    if (linkname_list.size() == 0) {
+        throw std::runtime_error("Empty linkname list! Have you instantiated the platform already?");
+    }
+    for (const auto& linkname: linkname_list) {
+        std::string linkProperty = simgrid::s4u::Link::by_name_or_null(linkname)->get_property("variation");
+        if (linkProperty == ""){
+            throw std::runtime_error("Configuration property \"variation\" missing for link " + linkname);
+        }
+        SimpleSimulator::variable_links.insert(linkname);
+    }
+}
+
 
 /**
  * @brief  Method to be executed once at simulation start,
