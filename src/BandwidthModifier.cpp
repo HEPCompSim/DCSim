@@ -51,7 +51,7 @@ int BandwidthModifier::main() {
     }
 
     // Get its (original) bandwidth
-    auto original_bandwidth = the_link->get_bandwidth();
+    const double original_bandwidth = the_link->get_bandwidth();
 
     // Create RNG
     std::mt19937 rng(this->seed);
@@ -59,10 +59,11 @@ int BandwidthModifier::main() {
     while (true) {
         // Sleep during the period
         wrench::Simulation::sleep(period);
-        // Sample bandwidth modification factor
-        double factor = (*this->distribution)(rng);
+        // Sample bandwidth modification subtrahend
+        double reduction = (*this->distribution)(rng);
+        while ((original_bandwidth - reduction < 0) || reduction < 0) reduction = (*this->distribution)(rng);
         // Update the link bandwidth
-        the_link->set_bandwidth(original_bandwidth * factor);
+        the_link->set_bandwidth(original_bandwidth - reduction);
     }
 }
 
