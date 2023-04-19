@@ -142,6 +142,8 @@ def createDataframeFromCSVs(csvFiles: Iterable):
                 dfs.append(df_tmp)
         # concatenate all dataframes
         df = pd.concat([df for df in dfs], ignore_index=True)
+        mask = ~df["job.tag"].str.contains("__")
+        df = df[mask]
         logger.debug(f"Raw data: \n{df.head()}")
     else:
         logger.error("Couldn't find CSV files")

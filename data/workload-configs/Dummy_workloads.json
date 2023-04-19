@@ -1,6 +1,6 @@
 {
     "_pre_inclusive": {
-        "num_jobs": 624,
+        "num_jobs": 312,
         "infiles_per_job": 10,
         "cores": {
             "type": "histogram",
@@ -31,7 +31,7 @@
         "submission_time": 0
     },
     "_post_inclusive": {
-        "num_jobs": 624,
+        "num_jobs": 312,
         "infiles_per_job": 10,
         "cores": {
             "type": "histogram",
