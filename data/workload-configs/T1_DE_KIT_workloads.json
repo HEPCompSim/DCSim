@@ -1,6 +1,6 @@
 {
     "Analysis_T1": {
-        "num_jobs": 95,
+        "num_jobs": 48,
         "infiles_per_job": 10,
         "cores": {
             "type": "histogram",
@@ -31,7 +31,7 @@
         "submission_time": 10
     },
     "Digi_T1": {
-        "num_jobs": 99,
+        "num_jobs": 50,
         "infiles_per_job": 10,
         "cores": {
             "type": "histogram",
@@ -61,7 +61,7 @@
         "submission_time": 10
     },
     "DataProcessing_T1": {
-        "num_jobs": 25,
+        "num_jobs": 13,
         "infiles_per_job": 10,
         "cores": {
             "type": "histogram",
@@ -121,7 +121,7 @@
         "submission_time": 10
     },
     "Merge_T1": {
-        "num_jobs": 10,
+        "num_jobs": 5,
         "infiles_per_job": 10,
         "cores": {
             "type": "histogram",
