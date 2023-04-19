@@ -17,7 +17,7 @@
 #include "JobSpecification.h"
 #include "LRU_FileList.h"
 
-#include "util/Enums.h"
+#include "util/Utils.h"
 
 class Simulation;
 
