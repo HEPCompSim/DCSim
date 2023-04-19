@@ -11,6 +11,7 @@
 #include "SimpleSimulator.h"
 #include "WorkloadExecutionController.h"
 #include "JobSpecification.h"
+#include "BandwidthModifier.h"
 
 #include "util/Utils.h"
 
@@ -19,6 +20,8 @@
 
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 
@@ -768,6 +771,37 @@ int main(int argc, char **argv) {
         num_total_jobs += new_workload_spec.size();
     }
     std::cerr << "The simulation now has " << std::to_string(num_total_jobs) << " jobs in total " << std::endl;
+
+
+    /* Identify the links which should be variied and add bandwidth modifiers to the simulation */
+    std::cerr << "Setting varied link bandwidths ... " << "\n";
+    std::set<std::shared_ptr<BandwidthModifier>> bandwidth_modifiers;
+    SimpleSimulator::identifyVariableLinks(simulation);
+    for (auto varied_link: SimpleSimulator::variable_links) {
+        auto the_link = simgrid::s4u::Link::by_name_or_null(varied_link);
+        std::string property = the_link->get_property("variation");
+        std::vector<std::string> parameters;
+        boost::split(parameters, property, boost::is_any_of("\t, "));
+        if (parameters.size() != 2) {
+            throw std::runtime_error(
+                "Property \"variation\":" + property + " for link " + varied_link + " misconfigured! Should only contain two splitable values!"
+            );
+        }
+        double mu = std::stod(parameters.at(0));
+        double sigma = std::stod(parameters.at(1));
+        std::normal_distribution<double> reduction(mu, sigma);
+        for (auto host: SimpleSimulator::executors) {
+            auto bm = simulation->add(
+                new BandwidthModifier(
+                    host,
+                    varied_link,
+                    3600.,
+                    &reduction,
+                    42
+                )
+            );
+        }
+    }
 
 
     /* Launch the simulation */
