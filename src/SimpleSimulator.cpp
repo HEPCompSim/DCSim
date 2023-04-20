@@ -418,7 +418,7 @@ void SimpleSimulator::identifyVariableLinks(std::shared_ptr<wrench::Simulation> 
             std::string linkProperties = getLinkProperty(linkname, "variation");
             SimpleSimulator::variable_links.insert(linkname);
         } catch (std::invalid_argument& e) {
-            std::cerr << e.what() << "\t->\t" << "Skip link " << linkname << "\n";
+            // std::cerr << e.what() << "\t->\t" << "Skip link " << linkname << "\n";
             continue;
         }
     }
