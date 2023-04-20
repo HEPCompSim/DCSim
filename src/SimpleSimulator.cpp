@@ -800,6 +800,7 @@ int main(int argc, char **argv) {
                     42
                 )
             );
+            std::cerr << "\t Created a BandwidthModifier on host " << host << " for link " << varied_link << "\n";
         }
     }
 
