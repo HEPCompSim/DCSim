@@ -390,6 +390,16 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
     }
 }
 
+std::string getLinkProperty(const std::string &linkname, const std::string &property_name) {
+        auto link = simgrid::s4u::Link::by_name_or_null(linkname);
+        if (link == nullptr) {
+            throw std::invalid_argument("getLinkProperty(): Unknown linkname " + linkname);
+        }
+        if (link->get_properties()->find(property_name) == link->get_properties()->end()) {
+            throw std::invalid_argument("getLinkProperty(): Unknown property \"" + property_name + "\" for link " + linkname);
+        }
+        return link->get_property(property_name);
+    }
 
 /**
  * @brief Identify variable links based on configured "variation" property tag
@@ -404,11 +414,13 @@ void SimpleSimulator::identifyVariableLinks(std::shared_ptr<wrench::Simulation> 
         throw std::runtime_error("Empty linkname list! Have you instantiated the platform already?");
     }
     for (const auto& linkname: linkname_list) {
-        std::string linkProperty = simgrid::s4u::Link::by_name_or_null(linkname)->get_property("variation");
-        if (linkProperty == ""){
-            throw std::runtime_error("Configuration property \"variation\" missing for link " + linkname);
+        try {
+            std::string linkProperties = getLinkProperty(linkname, "variation");
+            SimpleSimulator::variable_links.insert(linkname);
+        } catch (std::invalid_argument& e) {
+            std::cerr << e.what() << "\t->\t" << "Skip link " << linkname << "\n";
+            continue;
         }
-        SimpleSimulator::variable_links.insert(linkname);
     }
 }
 
@@ -778,8 +790,7 @@ int main(int argc, char **argv) {
     std::set<std::shared_ptr<BandwidthModifier>> bandwidth_modifiers;
     SimpleSimulator::identifyVariableLinks(simulation);
     for (auto varied_link: SimpleSimulator::variable_links) {
-        auto the_link = simgrid::s4u::Link::by_name_or_null(varied_link);
-        std::string property = the_link->get_property("variation");
+        std::string property = getLinkProperty(varied_link, "variation");
         std::vector<std::string> parameters;
         boost::split(parameters, property, boost::is_any_of("\t, "));
         if (parameters.size() != 2) {
