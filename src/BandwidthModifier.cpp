@@ -57,13 +57,13 @@ int BandwidthModifier::main() {
     std::mt19937 rng(this->seed);
 
     while (true) {
-        // Sleep during the period
-        wrench::Simulation::sleep(period);
         // Sample bandwidth modification subtrahend
         double reduction = (*this->distribution)(rng);
         while ((original_bandwidth - reduction < 0) || reduction < 0) reduction = (*this->distribution)(rng);
         // Update the link bandwidth
         the_link->set_bandwidth(original_bandwidth - reduction);
+        // Sleep during the period
+        wrench::Simulation::sleep(period);
     }
 }
 
