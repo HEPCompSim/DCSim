@@ -763,11 +763,7 @@ int main(int argc, char **argv) {
         {
             std::shuffle(dss.files.begin(), dss.files.end(), SimpleSimulator::gen);
             //TODO: Add total_file_size as dataset property
-            double incr_infile_size = 0.;
-            for (auto const &f : dss.files) {
-                incr_infile_size += f->getSize();
-            }
-            double cached_files_size = 0.;
+
             for (auto const &f : dss.files) {
                 // Distribute the dataset files on specified GRID storages
                 //TODO: Think of a more realistic distribution pattern and avoid duplications
@@ -777,21 +773,43 @@ int main(int argc, char **argv) {
                     simulation->stageFile(wrench::FileLocation::LOCATION(storage_service, f));
                     SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
                 }
-                // Distribute the files on all caches until desired hitrate is reached
-                //TODO: Rework the initialization of input files on caches
-                if (cached_files_size < hitrate*incr_infile_size) {
-                    for (const auto& cache : cache_storage_services) {
-                        // simulation->stageFile(f, cache);
-                        simulation->stageFile(wrench::FileLocation::LOCATION(cache, f));
-                        SimpleSimulator::global_file_map[cache].touchFile(f.get());
+
+            }
+
+          
+        }
+        for (auto wms : workload_execution_controllers)
+        {
+            for (auto &job_spec : wms->get_workload_spec())
+            {
+                double incr_infile_size = 0.;
+                double cached_files_size = 0.;
+                for (auto const &f : job_spec.second.infiles)
+                {
+                    incr_infile_size += f->getSize();
+                }
+
+                for (auto const &f : job_spec.second.infiles)
+                {
+
+                    // Distribute the files on all caches until desired hitrate is reached
+                    // TODO: Rework the initialization of input files on caches
+                    if (cached_files_size < hitrate * incr_infile_size)
+                    {
+                        for (const auto &cache : cache_storage_services)
+                        {
+                            // simulation->stageFile(f, cache);
+                            simulation->stageFile(wrench::FileLocation::LOCATION(cache, f));
+                            SimpleSimulator::global_file_map[cache].touchFile(f.get());
+                        }
+                        cached_files_size += f->getSize();
                     }
-                    cached_files_size += f->getSize();
+                }
+                if (cached_files_size / incr_infile_size < hitrate)
+                {
+                    throw std::runtime_error("Desired hitrate was not reached!");
                 }
             }
-            if (cached_files_size/incr_infile_size < hitrate) {
-                throw std::runtime_error("Desired hitrate was not reached!");
-            }
-          
         }
     } catch (std::runtime_error &e) {
         std::cerr << "Exception: " << e.what() << std::endl;
