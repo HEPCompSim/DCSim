@@ -37,17 +37,17 @@ QUANTITIES = {
     "Walltime": {
         "ident": "Walltime",
         "label": "jobtime / min",
-        "ylim": [0.,2000.],
+        "ylim": [0.,5500.],
     },
     "IOtime": {
         "ident": "IOtime",
         "label": "transfer time / min",
-        "ylim": [0.,1500.],
+        "ylim": [0.,4500.],
     },
     "CPUtime": {
         "ident": "CPUtime",
         "label": "CPU time / min",
-        "ylim": [0.,2000.]
+        "ylim": [0.,4000.]
     },
     "CPUEfficiency": {
         "ident": "Efficiency",
