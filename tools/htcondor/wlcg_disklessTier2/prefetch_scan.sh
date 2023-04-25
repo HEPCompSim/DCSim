@@ -47,7 +47,7 @@ SCENARIO="prefetchScanScaled50"
 
     dc-sim --platform "$PLATFORM" \
             --hitrate $PREFETCHRATE \
-            --xrd-blocksize $XRD_BLOCKSIZE \
+            --xrd-blocksize $XRDBLOCKSIZE \
             --output-file ${SCENARIO}_rate$PREFETCHRATE.csv \
             --cfg=network/loopback-bw:100000000000000 \
             --storage-buffer-size $STORAGE_BUFFER_SIZE \
