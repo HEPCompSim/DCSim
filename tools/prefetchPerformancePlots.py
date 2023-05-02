@@ -42,7 +42,7 @@ QUANTITIES = {
     "IOtime": {
         "ident": "IOtime",
         "label": "transfer time / min",
-        "ylim": [0.,5500.],
+        "ylim": [0.,3500.],
     },
     "CPUtime": {
         "ident": "CPUtime",
@@ -185,7 +185,8 @@ def plotBoxes(
     prefix="", suffix="",
     figsize=(6,4),
     emptyBoxes=False,
-    plot_dir=os.path.join(os.path.dirname(__file__),"..","plots")
+    plot_dir=os.path.join(os.path.dirname(__file__),"..","plots"),
+    boxplot_legend=False
 ):
     plot_dir = os.path.abspath(plot_dir)
     if not os.path.exists(plot_dir):
@@ -206,6 +207,17 @@ def plotBoxes(
             flierprops=dict(marker="x"),
             palette=sns.color_palette("colorblind", n_colors=len(sites))
         )
+        if boxplot_legend:
+            ax_in = ax1.inset_axes([0.36,0.67,0.3,0.3])
+            ax_in.boxplot(np.linspace(0.,4.,100), medianprops = dict(color="black"))
+            ax_in.axis("off")
+            ax_in.annotate("Q3 + 1.5IQR", xy=(1.1,4), xytext=(1.2,3.8), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+            ax_in.annotate("Q3 = 75 percentile", xy=(1.1,3), xytext=(1.2,2.8), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+            ax_in.annotate("median", xy=(1.1,2), xytext=(1.2,1.8), arrowprops=dict(arrowstyle="-", color="black",))
+            ax_in.annotate(f"Q1 = 25 percentile", xy=(1.1,1), xytext=(1.2,0.8), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+            ax_in.annotate(f"Q1 - 1.5IQR", xy=(1.1,0), xytext=(1.2,-0.2), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+            ax_in.set_yticklabels([])
+            ax_in.set_xticklabels([])
         ax1.set_title(title)
         ax1.set_xlabel("fraction of prefetched files in cache",color="black")
         hitrateticks = [x*0.1 for x in range(0,11)]
@@ -262,11 +274,11 @@ def run(args=parser.parse_args()):
     else:
         suffix = args.suffix
     plotBoxes(data,
-                   sites=sites,
-                   title=args.scenario,
-                   emptyBoxes=False,
-                   plot_dir=out_dir,
-                   suffix=suffix)
+              sites=sites,
+              title=args.scenario,
+              emptyBoxes=False,
+              plot_dir=out_dir,
+              suffix=suffix)
 
 
 if __name__ == "__main__":
