@@ -280,6 +280,11 @@ po::variables_map process_program_options(int argc, char** argv) {
         ("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data")
 
         ("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks")
+
+        ("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks")
+
+        ("platform-from-string", po::bool_switch()->default_value(false), "indicates that the --platform is given as a string, not a filepath")
+
     ;
 
     po::variables_map vm;
@@ -558,10 +563,14 @@ int main(int argc, char **argv) {
     }
     std::cerr << "Created " << workload_specs.size() << " unique workloads!" << "\n";
 
-    /* Read and parse the platform description file to instantiate a simulation platform */
-    std::cerr << "Instantiating SimGrid platform..." << std::endl;
-    simulation->instantiatePlatform(platform_file);
-
+    if(vm["platform-from-string"].as<bool>()){
+        std::cerr << "Instantiating SimGrid platform from string..." << std::endl;
+        simulation->instantiatePlatformFromString(platform_file);
+    }else{
+        /* Read and parse the platform description file to instantiate a simulation platform */
+        std::cerr << "Instantiating SimGrid platform from file..." << std::endl;
+        simulation->instantiatePlatform(platform_file);
+    }
 
     /* Identify demanded and create storage and compute services and add them to the simulation */
     SimpleSimulator::identifyHostTypes(simulation);

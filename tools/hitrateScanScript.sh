@@ -3,7 +3,7 @@
 # Bash script tu run simulations for several hitrate values.
 # The simulation monitoring outputs can be plotted using the hitrateperfromance.py plotting script.
 
-action() {
+action(PLATFORM) {
     # determine the directy of this file
     if [ ! -z "$ZSH_VERSION" ]; then
         local this_file="${(%):-%x}"
@@ -15,7 +15,7 @@ action() {
     local base="$( cd "$( dirname "$this_file" )" && pwd )"
     local parent="$( dirname "$base" )"
 
-    local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
+    #local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
     local WORKLOAD="$parent/data/workload-configs/crown_ttbar_validation.json"
 
     local NJOBS=1
@@ -43,6 +43,7 @@ action() {
     for hitrate in $(LANG=en_US seq 0.0 0.1 1.0)
     do 
         dc-sim --platform "$PLATFORM" \
+        	--platform-from-string
             --hitrate ${hitrate} \
             --duplications $DUPLICATIONS \
             --xrd-blocksize $XRD_BLOCKSIZE \
