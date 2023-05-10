@@ -307,8 +307,15 @@ po::variables_map process_program_options(int argc, char** argv) {
     }
 
     // Here, all options should be properly set
-    std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
+    if(vm["platform-from-string"].as<bool>()){
+        std::cerr << "Using platform from string"<< std::endl;
 
+
+    }else{
+        std::cerr << "Using platform " << vm["platform"].as<std::string>() << std::endl;
+
+
+    }
     return vm;
 }
 
