@@ -5,6 +5,7 @@
 
 action() {
 	local PLATFORM=${1}
+	local HITRATES=${2}
     # determine the directy of this file
     if [ ! -z "$ZSH_VERSION" ]; then
         local this_file="${(%):-%x}"
@@ -32,16 +33,19 @@ action() {
 
     local DUPLICATIONS=48
 
-    local XRD_BLOCKSIZE=100000000
+    local XRD_BLOCKSIZE=1000000000
+    local BUFFER_SIZE=100000000
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
     local OUTDIR="$parent/tmp/outputs"
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR
+    else
+    	rm $OUTDIR/*
     fi
 
-    for hitrate in $(LANG=en_US seq 0.0 0.1 1.0)
+    for hitrate in $HITRATES
     do 
         dc-sim --platform "$PLATFORM" \
         	--platform-from-string \
@@ -51,8 +55,8 @@ action() {
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
             --cfg=network/loopback-bw:100000000000000 \
             --no-caching \
-            --workload-configurations "$WORKLOAD" #\
-            
+            --workload-configurations "$WORKLOAD" \
+            --storage-buffer-size $BUFFER_SIZE
             # --njobs $NJOBS \
             # --ninfiles $NINFILES \
             # --insize $AVGINSIZE \
