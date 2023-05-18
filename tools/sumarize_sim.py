@@ -42,7 +42,9 @@ def extract(directory):
 	hitrate_data=defaultdict(dict)
 	for file in os.listdir(directory):
 		if file.endswith('.csv'):
-			hitrate = file.split('_')[4]
+			hitrate = file.split('_')[4][:-4]##remove .csv
+			if(hitrate=='hitrate1' or hitrate=='hitrate0'):
+				hitrate+=".0"
 			stats = parse_csv(os.path.join(directory, file))
 			for machine, machine_stats in stats.items():
 				hitrate_data[hitrate][machine.strip()] = calculate_stats(machine_stats)
