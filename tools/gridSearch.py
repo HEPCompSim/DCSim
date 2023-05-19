@@ -1,15 +1,15 @@
 #! /usr/bin/python3
+#./gridSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -n 1000 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32
+
+import multiprocessing
 import argparse
 from math import *
 from oneTest import oneEval, initEvaluator
-interpolations={}
 def interpolate(x,minV,maxV,c):
 	if minV>maxV:
 		minV,maxV=maxV,minV
-	if (minV,maxV) in interpolations:
-		a=interpolations[(minV,maxV)]
-	else:
-		return x*(maxV-minV)/c+minV
+	
+	return x*(maxV-minV)/c+minV
 parser = argparse.ArgumentParser(description='Grid Search in a logimetric grid.')
 parser.add_argument('-r', '--reference', type=str, help='Reference values file path', required=True)
 parser.add_argument('-p', '--platform', type=str, help='Template Platform file path', required=True)
@@ -25,41 +25,66 @@ import re
 args = parser.parse_args()
 hitrates=re.split(',|\s|;',args.hitrates)
 
-initEvaluator(args.reference)
-dimensionality=4
-dimDiv=int(pow(args.sims,1/dimensionality))
-ittrC=int(pow(dimDiv,dimensionality))
-print("Running Grid search with "+str(dimDiv)+" samples per dimension for a total of "+str(ittrC)+" test:")
+
 #print(args)
 best=None
 minV=0
+def evaluate_combination(args, dimDiv, i, hitrates):
+    carry = i
+    speedI = carry % dimDiv
+    carry //= dimDiv
+    readI = carry % dimDiv
+    carry //= dimDiv
+    inBandI = carry % dimDiv
+    carry //= dimDiv
+    reBandI = carry % dimDiv
+    speed = pow(2, interpolate(speedI, args.speed[0], args.speed[1], dimDiv))
+    read = pow(2, interpolate(readI, args.read_bandwidth[0], args.read_bandwidth[1], dimDiv))
+    inBand = pow(2, interpolate(inBandI, args.internal_link_bandwidth[0], args.internal_link_bandwidth[1], dimDiv))
+    reBand = pow(2, interpolate(reBandI, args.remote_bandwidth[0], args.remote_bandwidth[1], dimDiv))
+
+    #print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand), end=' ')
+    v = oneEval(args.platform, speed, read, inBand, reBand, hitrates,uniqueID=i)
+    #print(v)
+    return (v, (speed, read, inBand, reBand))
+
+def parallel_grid_search(args):
+    initEvaluator(args.reference)
+    dimensionality = 4
+    dimDiv = int(pow(args.sims, 1/dimensionality))
+    ittrC = int(pow(dimDiv, dimensionality))
+    print("Running Grid search with " + str(dimDiv) + " samples per dimension for a total of " + str(ittrC) + " test:")
+
+    best = None
+    minV = 0
+
+    
+    pool = multiprocessing.Pool()
+    results = []
+    for i in range(ittrC):
+        result = pool.apply_async(evaluate_combination, (args, dimDiv, i, hitrates))
+        results.append(result)
+
+    for result in results:
+        v, combination = result.get()
+        if best is None:
+            minV = v
+            best = combination
+        elif v < minV:
+            minV = v
+            best = combination
+            #print("New Best!")
+
+    pool.close()
+    pool.join()
+
+    print("Best " + str(minV) + " " + str(best))
+
+
+# Run the parallel grid search
 try:
-	for i in range(ittrC):#I figured it would be better to itterate this multidimensional space as a single loop and then unpack it to each requisit variable
-		carry=i
-		speedI=carry%dimDiv
-		carry//=dimDiv
-		readI=carry%dimDiv
-		carry//=dimDiv
-		inBandI=carry%dimDiv
-		carry//=dimDiv
-		reBandI=carry%dimDiv
-		speed=pow(2,interpolate(speedI,args.speed[0],args.speed[1],dimDiv))
-		read=pow(2,interpolate(readI,args.speed[0],args.read_bandwidth[1],dimDiv))
-		inBand=pow(2,interpolate(inBandI,args.speed[0],args.internal_link_bandwidth[1],dimDiv))
-		reBand=pow(2,interpolate(reBandI,args.speed[0],args.remote_bandwidth[1],dimDiv))
-		
-		print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand),end=' ')
-		v=oneEval(args.platform,speed, read, inBand, reBand,hitrates)
-		print(v)
-		if best is None:
-			minV=v
-			best=(speed, read, inBand, reBand)
-		elif v<minV:
-			minV=v
-			best=(speed, read, inBand, reBand)
-			print("New Best!")
-	print("Best "+str(minV)+" "+str(best))
+	parallel_grid_search(args)
 except KeyboardInterrupt:
-	pass
+    pass
 #weird theory question: more effienct compiled lookup table
 #Follow up, bidirectional map

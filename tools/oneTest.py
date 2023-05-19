@@ -3,7 +3,7 @@ from platformFromVector import pFromV
 from sumarize_sim import extract
 import sys
 import json
-
+import shutil
 import subprocess
 refferenceRun=None
 def initEvaluator(refferencePath):
@@ -26,13 +26,20 @@ def evaluate(run,refference=None):
 	if(count==0):
 		count=1
 	return ret/count
-def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates):
+def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,uniqueID=None):
 	hits=' '.join([str(i) for i in hitrates])
 	platform=pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed)
-	process = subprocess.run(["./hitrateScanScript.sh",platform,hits], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-	return extract("../tmp/outputs")
-def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,rff_run=None):
-	run=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,list(range(10)))
+	if(uniqueID):
+	
+		process = subprocess.run(["./hitrateScanScript.sh",platform,hits,str(uniqueID)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		ret=extract("../tmp/outputs/"+str(uniqueID))
+		shutil.rmtree("../tmp/outputs/"+str(uniqueID), ignore_errors=True)
+		return ret
+	else:
+		process = subprocess.run(["./hitrateScanScript.sh",platform,hits], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		return extract("../tmp/outputs")
+def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,uniqueID=None,rff_run=None):
+	run=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,list(range(10)),uniqueID=uniqueID)
 	return evaluate(run,rff_run)
 def main():
 	rff_run,xml_file_path, cpu_speed, read_speed, link_speed, net_speed = sys.argv[1:]

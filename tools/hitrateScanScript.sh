@@ -6,6 +6,7 @@
 action() {
 	local PLATFORM=${1}
 	local HITRATES=${2}
+	local UUID=${3}
     # determine the directy of this file
     if [ ! -z "$ZSH_VERSION" ]; then
         local this_file="${(%):-%x}"
@@ -38,7 +39,7 @@ action() {
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
-    local OUTDIR="$parent/tmp/outputs"
+    local OUTDIR="$parent/tmp/outputs/$UUID"
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR
     else
