@@ -6,15 +6,20 @@ import argparse
 from math import *
 from oneTest import oneEval, initEvaluator
 import random
+import time
+import concurrent.futures
+startTime = time.time()
 def randomSample(minV,maxV):
 	if minV>maxV:
 		minV,maxV=maxV,minV
 	return random.uniform(minV,maxV)
-parser = argparse.ArgumentParser(description='Grid Search in a logimetric grid.')
+parser = argparse.ArgumentParser(description='random Search in a logimetric grid.')
 parser.add_argument('-r', '--reference', type=str, help='Reference values file path', required=True)
 parser.add_argument('-p', '--platform', type=str, help='Template Platform file path', required=True)
-parser.add_argument('-n', '--sims', type=float, help='the maximum number of times the hitrate scan script should be ran.', required=True)
+parser.add_argument('-t', '--time', type=int, help='the time budget (in seconds) to run', required=True)
 parser.add_argument('-hr', '--hitrates', type=str, help='python array of hitrates to use', required=True)
+parser.add_argument('-xb', '--xblock', type=float, help='The xrootd blocksize',default=1000000000)
+parser.add_argument('-nb', '--nblock', type=float, help='the network blocksize',default=100000000)
 
 parser.add_argument('-s', '--speed', nargs=2,type=float, help='compute speed option with 3 values range',metavar=('min', 'max'), required=True)
 parser.add_argument('-rb', '--read-bandwidth', nargs=2,type=float, help='host read bandwidth range',metavar=('min', 'max'), required=True)
@@ -26,47 +31,57 @@ args = parser.parse_args()
 hitrates=re.split(',|\s|;',args.hitrates)
 
 #print(args)
-
-def randomItteration(args, dimDiv, i, hitrates):
+extractedResults=[]
+def randomItteration(args, i, hitrates,xblock,nblock):
 	speed = pow(2, randomSample(args.speed[0], args.speed[1]))
 	read = pow(2, randomSample(args.read_bandwidth[0], args.read_bandwidth[1]))
 	inBand = pow(2, randomSample(args.internal_link_bandwidth[0], args.internal_link_bandwidth[1]))
 	reBand = pow(2, randomSample(args.remote_bandwidth[0], args.remote_bandwidth[1]))
 
 	#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand), end=' ')
-	v = oneEval(args.platform, speed, read, inBand, reBand, hitrates,uniqueID=i)
+	v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="random")
 	#print(v)
-	return (v, (speed, read, inBand, reBand))
+	return v, (speed, read, inBand, reBand),allResults
 
 def parallel_random_search(args):
 	initEvaluator(args.reference)
 	dimensionality = 4
-	dimDiv = int(pow(args.sims, 1/dimensionality))
-	ittrC = int(pow(dimDiv, dimensionality))
 
-	print("Running Grid search with "+str(ittrC)+" test:")
 	best = None
 	minV = 0
 
 
-	pool = multiprocessing.Pool()
-	results = []
-	for i in range(ittrC):
-		result = pool.apply_async(randomItteration, (args, dimDiv, i, hitrates))
-		results.append(result)
+	with concurrent.futures.ProcessPoolExecutor() as executor:
+		results = []
+		i = 0
+		
+		while time.time() - startTime < args.time:
+			i += 1
+			result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock)
+			results.append(result)
+		
+		# Cancel remaining tasks
+		for result in results:
+			result.cancel()
 
-	for result in results:
-		v, combination = result.get()
-		if best is None:
-		    minV = v
-		    best = combination
-		elif v < minV:
-		    minV = v
-		    best = combination
-		    #print("New Best!")
+		best = None
+		minV = None
 
-	pool.close()
-	pool.join()
+		for result in results:
+			global extractedResults
+			if result.cancelled():
+				continue
+			
+			v, combination,allResults = result.result()
+			extractedResults+=allResults
+			
+			if best is None:
+				minV = v
+				best = combination
+			elif v < minV:
+				minV = v
+				best = combination
+
 
 	print("Best " + str(minV) + " " + str(best))
 
@@ -74,6 +89,10 @@ def parallel_random_search(args):
 # Run the parallel grid search
 try:
 	parallel_random_search(args)
+	with open("randomSearchResults.txt", 'a') as writer:
+		for result in extractedResults:
+			writer.write(str(result)+"\n")
+	#print(extractedResults)
 except KeyboardInterrupt:
     pass
 #weird theory question: more effienct compiled lookup table

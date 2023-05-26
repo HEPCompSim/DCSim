@@ -26,21 +26,21 @@ def evaluate(run,refference=None):
 	if(count==0):
 		count=1
 	return ret/count
-def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,uniqueID=None):
-	hits=' '.join([str(i) for i in hitrates])
+def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,runtype=None):
+	hits=' '.join([str(float(i)) for i in hitrates])
 	platform=pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed)
 	if(uniqueID):
 	
-		process = subprocess.run(["./hitrateScanScript.sh",platform,hits,str(uniqueID)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		ret=extract("../tmp/outputs/"+str(uniqueID))
+		process = subprocess.run(["./hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		ret=extract("../tmp/outputs/"+str(uniqueID),{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
 		shutil.rmtree("../tmp/outputs/"+str(uniqueID), ignore_errors=True)
 		return ret
 	else:
-		process = subprocess.run(["./hitrateScanScript.sh",platform,hits], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		return extract("../tmp/outputs")
-def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,uniqueID=None,rff_run=None):
-	run=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,list(range(10)),uniqueID=uniqueID)
-	return evaluate(run,rff_run)
+		process = subprocess.run(["./hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		return extract("../tmp/outputs",{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
+def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,rff_run=None,runtype=None):
+	run,allResults=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype)
+	return evaluate(run,rff_run),allResults
 def main():
 	rff_run,xml_file_path, cpu_speed, read_speed, link_speed, net_speed = sys.argv[1:]
 	initEvaluator(rff_run)

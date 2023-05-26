@@ -6,6 +6,7 @@ import json
 from collections import defaultdict
 from statistics import mean, stdev
 import sys 
+import atexit
 
 def parse_csv(file):
 	stats = defaultdict(list)
@@ -38,7 +39,8 @@ def write_output(output_file, data, csv_output=False,script=False):
 		json.dump(data, f, indent=4, sort_keys=True)
 	if not script:
 		f.close()
-def extract(directory):
+def extract(directory,log=None):
+	extractedResults=[]
 	hitrate_data=defaultdict(dict)
 	for file in os.listdir(directory):
 		if file.endswith('.csv'):
@@ -47,8 +49,15 @@ def extract(directory):
 				hitrate+=".0"
 			stats = parse_csv(os.path.join(directory, file))
 			for machine, machine_stats in stats.items():
+				if log:
+					
+					#for stat in machine_stats:
+					extractedResults.append((log,hitrate,machine_stats))
+					#print(((log,hitrate,machine_stats)))
 				hitrate_data[hitrate][machine.strip()] = calculate_stats(machine_stats)
-	return hitrate_data
+
+	return hitrate_data,extractedResults
+
 def main():
 	parser = argparse.ArgumentParser(description='Process CSV files in a directory to output hitrate/machine stats.')
 	parser.add_argument('directory', type=str, help='the directory containing the CSV files')
@@ -64,7 +73,7 @@ def main():
 			args.output = '../tmp/sim-summary.csv'
 		else:
 			args.output = '../tmp/sim-summary.json'
-
+	
 	write_output(args.output, hitrate_data, args.csv,args.script)
 	if not args.script:
 		print("output written to '"+os.path.abspath(args.output)+"'")
