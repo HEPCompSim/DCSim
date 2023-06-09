@@ -78,7 +78,7 @@ def evaluate_combination(args, val, i, hitrates,xblock,nblock):
 	#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand))
 	v,results = oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="grid")
 	#print(v)
-	return (v, (speed, read, inBand, reBand),results)
+	return (v, (speed, read, inBand, reBand),results,time.time())
 
 def parallel_grid_search(args):
 	initEvaluator(args.reference)
@@ -108,15 +108,17 @@ def parallel_grid_search(args):
 
 		best = None
 		minV = None
-
+		count=0
 		for result in results:
 			global extractedResults
 			if result.cancelled():
 				continue
 			
-			v, combination,allResults = result.result()
+			v, combination,allResults,time = result.result()
 			extractedResults+=allResults
-			
+			if time > startTime+args.time:
+				continue#discard overtime simulation
+			count+=1	
 			if best is None:
 				minV = v
 				best = combination
@@ -124,7 +126,7 @@ def parallel_grid_search(args):
 				minV = v
 				best = combination
 				# print("New Best!")
-
+	print(str(count)+" grid points sampled")
 	print("Best " + str(minV) + " " + str(best))
 
 

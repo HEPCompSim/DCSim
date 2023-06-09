@@ -41,7 +41,7 @@ def randomItteration(args, i, hitrates,xblock,nblock):
 	#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand), end=' ')
 	v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="random")
 	#print(v)
-	return v, (speed, read, inBand, reBand),allResults
+	return v, (speed, read, inBand, reBand),allResults,time.time()
 
 def parallel_random_search(args):
 	initEvaluator(args.reference)
@@ -66,15 +66,17 @@ def parallel_random_search(args):
 
 		best = None
 		minV = None
-
+		count=0
 		for result in results:
 			global extractedResults
 			if result.cancelled():
 				continue
 			
-			v, combination,allResults = result.result()
+			v, combination,allResults,time = result.result()
 			extractedResults+=allResults
-			
+			if time > startTime+args.time:
+				continue#discard overtime simulation
+			count+=1
 			if best is None:
 				minV = v
 				best = combination
@@ -82,7 +84,7 @@ def parallel_random_search(args):
 				minV = v
 				best = combination
 
-
+	print(str(count)+" Random samples searched")
 	print("Best " + str(minV) + " " + str(best))
 
 
