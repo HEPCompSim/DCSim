@@ -12,10 +12,14 @@ import threading
 import time
 import random
 from multiprocessing.managers import SyncManager
-
+def normalize(vector):
+	mag=sqrt(sum(x ** 2.0 for x in vector))
+	for i in range(len(vector)):
+		vector[i]/=mag
 def sampleHyperplane(x,ref,mag,vector,stepSize):
 	s=mag
 	for i in range(len(x)):
+		#print(x[i],ref[i],x[i]-ref[i],vector[i]/stepSize,(x[i]-ref[i])*vector[i]/stepSize)
 		s+=(x[i]-ref[i])*vector[i]/stepSize
 	return s
 class ObjectManager(SyncManager):
@@ -47,6 +51,7 @@ class GradMethod:
 		result=evaluate_combination(this.stop_signal,args, val, this.id, this.hitrates,this.xblock,this.nblock,runType)
 		this.short(result)
 		this.count+=1
+		#print("sampled "+str(result[0])+" "+str(val))
 		return result
 	def short(this,result):
 		if result is None:
@@ -65,6 +70,7 @@ class DynamicGrad(GradMethod):
 		this.vals=list(initialPoint)
 		this.eps=args.epsilon
 		this.delta=args.delta
+		print("\n\n\ngrad")
 		try:
 			res=this.internalEval(initialPoint,"dynamicSearch random")
 			this.currentResult=list(res)
@@ -74,44 +80,56 @@ class DynamicGrad(GradMethod):
 			pass 
 		
 	def descend(this):
+		#print("ittr")
+		print(this.currentResult[0],this.vals)
+		
 		try:
 			vector=[]
+			slope=[]
 			best=this.currentResult[0]
+			bVals=this.vals
 			bestArgs=list(this.currentResult[1])
-			
 			for i in range(len(this.vals)):
 				tvals=this.vals.copy()
 				tvals[i]+=this.eps
 				result=this.internalEval(tvals,"dynamicSearch gradient")
 				if(result[0]<best):
 					best=result[0]
+					bVals=tvals
 					bestArgs=result[1]
 				vector.append((result[0]-this.currentResult[0])/this.currentResult[0])
-			
-			
+				slope.append((result[0]-this.currentResult[0]))
+				#vector is the % change, NOT the actual value
+
+			normalize(vector)
 			
 			trial=10*this.eps
 			while True:
 				eVal=this.vals.copy()
 				
 				for i in range(len(this.vals)):
-					eVal[i]+=vector[i]
-				expected=sampleHyperplane(eVal,this.currentResult[1],this.currentResult[0],vector,this.eps)
+					eVal[i]-=vector[i]*trial
+				expected=sampleHyperplane(eVal,this.vals,this.currentResult[0],slope,this.eps)
 				result=this.internalEval(eVal,"dynamicSearch line")
-				
+				#print(trial,expected,result[0])
 				
 				if(result[0]<best):
 					best=result[0]
+					bVals=eVal
 					bestArgs=result[1]
-				if(result[0]<=expected):
+				if(result[0]-expected<=1): #we dont care about subsecond timing, and it is probiably just noise
 					this.eps=trial
 					break#this will happen eventually, when trial approaches 0
 				else:
+					if(abs(expected-this.currentResult[0])/this.currentResult[0]<args.delta):#we are underperforming expected, and even expected underperfroms delta, so it is time to stop looking for a better point in this line
+						break
 					trial/=2
 			improvement=(abs(best-this.currentResult[0])/this.currentResult[0])
-			
+			print(improvement)
 			this.currentResult[0]=best
 			this.currentResult[1]=tuple(bestArgs)
+			this.vals=bVals
+		
 			if improvement<args.delta:
 				return True
 			return False
@@ -262,7 +280,7 @@ def parallel_grad_search(args):
 		random.seed(args.seed)
 				
 
-		with concurrent.futures.ProcessPoolExecutor() as executor:
+		with concurrent.futures.ProcessPoolExecutor(1) as executor:
 			results = []
 			while not stop_signal.is_set():
 				results = []
