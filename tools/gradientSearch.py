@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 #./gradientSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -t 60 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32 --type dynamic -d 0.01 -e .0001 --seed 1
+#./gradientSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -t 60 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32 --type finite -d 0.0001 -e .001 -e2 .01 --seed 1
 
 import concurrent.futures
 import multiprocessing
@@ -10,6 +11,7 @@ from itertools import product
 from fractions import Fraction
 import threading
 import time
+import sys
 import random
 from multiprocessing.managers import SyncManager
 def normalize(vector):
@@ -69,8 +71,9 @@ class DynamicGrad(GradMethod):
 		this.ranges=(args.speed,args.read_bandwidth, args.internal_link_bandwidth, args.remote_bandwidth)
 		this.vals=list(initialPoint)
 		this.eps=args.epsilon
+		this.eps2=args.epsilon2
 		this.delta=args.delta
-		print("\n\n\ngrad")
+		#print("\n\n\ngrad")
 		try:
 			res=this.internalEval(initialPoint,"dynamicSearch random")
 			this.currentResult=list(res)
@@ -81,7 +84,7 @@ class DynamicGrad(GradMethod):
 		
 	def descend(this):
 		#print("ittr")
-		print(this.currentResult[0],this.vals)
+		#print(this.currentResult[0],this.vals)
 		
 		try:
 			vector=[]
@@ -101,15 +104,88 @@ class DynamicGrad(GradMethod):
 				slope.append((result[0]-this.currentResult[0]))
 				#vector is the % change, NOT the actual value
 
+			
 			normalize(vector)
 			
-			trial=10*this.eps
+			trial=10*this.eps2
 			while True:
 				eVal=this.vals.copy()
 				
 				for i in range(len(this.vals)):
 					eVal[i]-=vector[i]*trial
-				expected=sampleHyperplane(eVal,this.vals,this.currentResult[0],slope,this.eps)
+				expected = sampleHyperplane( eVal, this.vals, this.currentResult[0], slope,this.eps)
+				result=this.internalEval(eVal,"dynamicSearch line")
+				#print(trial,expected,result[0])
+				
+				if(result[0]<best):
+					best=result[0]
+					bVals=eVal
+					bestArgs=result[1]
+				if(result[0]-expected<=1): #we dont care about subsecond timing, and it is probiably just noise
+					this.eps2=trial
+					break#this will happen eventually, when trial approaches 0
+				else:
+					if(abs(expected-this.currentResult[0])/this.currentResult[0]<args.delta):#we are underperforming expected, and even expected underperfroms delta, so it is time to stop looking for a better point in this line
+						break
+					trial/=2
+			improvement=(abs(best-this.currentResult[0])/this.currentResult[0])
+			#print(improvement)
+			this.currentResult[0]=best
+			this.currentResult[1]=tuple(bestArgs)
+			this.vals=bVals
+		
+			if improvement<args.delta:
+				return True
+			return False
+		except(GeneratorExit):
+			return True
+class FiniteGrad(GradMethod):
+	def __init__(this,stop_signal,i,hitrates,args,initialPoint):
+		super().__init__(stop_signal,i,hitrates,args)
+		this.ranges=(args.speed,args.read_bandwidth, args.internal_link_bandwidth, args.remote_bandwidth)
+		this.vals=list(initialPoint)
+		this.eps=args.epsilon
+		
+		this.eps2=args.epsilon
+		this.delta=args.delta
+		print("\n\n\ngrad")
+		try:
+			res=this.internalEval(initialPoint,"finiteSearch random")
+			this.currentResult=list(res)
+			this.retArgs=res[1]
+			this.retResult=res[0]
+		except(GeneratorExit):
+			pass 
+		
+	def descend(this):
+		print(this.currentResult[0],this.vals)
+		try:
+			vector=[]
+			slope=[]
+			best=this.currentResult[0]
+			bVals=this.vals
+			bestArgs=list(this.currentResult[1])
+			
+			for i in range(len(this.vals)):
+				tvals=this.vals.copy()
+				tvals[i]+=this.eps2
+				result=this.internalEval(tvals,"finiteSearch gradient")
+				if(result[0]<best):
+					best=result[0]
+					bVals=tvals
+					bestArgs=result[1]
+				vector.append((result[0]-this.currentResult[0])/this.currentResult[0])
+				slope.append((result[0]-this.currentResult[0]))
+			
+			normalize(vector)
+			
+			trial=10*this.eps
+			while True:
+				eVal=this.vals.copy()
+				#print(trial,expected,result[0])
+				for i in range(len(this.vals)):
+					eVal[i]-=vector[i]*trial
+				expected=sampleHyperplane(eVal, this.vals, this.currentResult[0], slope,this.eps)
 				result=this.internalEval(eVal,"dynamicSearch line")
 				#print(trial,expected,result[0])
 				
@@ -129,72 +205,10 @@ class DynamicGrad(GradMethod):
 			this.currentResult[0]=best
 			this.currentResult[1]=tuple(bestArgs)
 			this.vals=bVals
-		
 			if improvement<args.delta:
 				return True
 			return False
-		except(GeneratorExit):
-			return True
-class FiniteGrad(GradMethod):
-	def __init__(this,stop_signal,i,hitrates,args,initialPoint):
-		super().__init__(stop_signal,i,hitrates,args)
-		this.ranges=(args.speed,args.read_bandwidth, args.internal_link_bandwidth, args.remote_bandwidth)
-		this.vals=list(initialPoint)
-		this.eps=args.epsilon
-		
-		this.eps2=args.epsilon
-		this.delta=args.delta
-		try:
-			res=this.internalEval(initialPoint,"finiteSearch random")
-			this.currentResult=list(res)
-			this.retArgs=res[1]
-			this.retResult=res[0]
-		except(GeneratorExit):
-			pass 
-		
-	def descend(this):
-		try:
-			vector=[]
-			best=this.currentResult[0]
-			bestArgs=list(this.currentResult[1])
-			
-			for i in range(len(this.vals)):
-				tvals=this.vals.copy()
-				tvals[i]+=this.eps2
-				result=this.internalEval(tvals,"finiteSearch gradient")
-				if(result[0]<best):
-					best=result[0]
-					bestArgs=result[1]
-				vector.append((result[0]-this.currentResult[0])/this.currentResult[0])
-			
-			
-			
-			trial=10*this.eps
-			while True:
-				eVal=this.vals.copy()
-				
-				for i in range(len(this.vals)):
-					eVal[i]+=vector[i]
-				expected=sampleHyperplane(eVal,this.currentResult[1],this.currentResult[0],vector,this.eps)
-				result=this.internalEval(eVal,"finiteSearch line")
-				
-				
-				if(result[0]<best):
-					best=result[0]
-					bestArgs=result[1]
-				if(result[0]<=expected):
-					this.eps=trial
-					break#this will happen eventually, when trial approaches 0
-				else:
-					trial/=2
-			improvement=(abs(best-this.currentResult[0])/this.currentResult[0])
-			
-			this.currentResult[0]=best
-			this.currentResult[1]=tuple(bestArgs)
-			if improvement<args.delta:
-				return True
-			return False
-		except(GeneratorExit):
+		except GeneratorExit:
 			return True
 def valid_type(value):
 	value=value.lower()
@@ -228,7 +242,7 @@ parser.add_argument( '--type', type=valid_type, help='Gradient search type.  \n\
 import re
 args = parser.parse_args()
 if args.type=='finite' and not args.epsilon2:  
-	sys.err.print("Epsilon 2 must be specified for finite")
+	print("Epsilon 2 must be specified for finite",file=sys.stderr)
 	sys.exit()
 hitrates=re.split(',|\s|;',args.hitrates)
 
@@ -262,6 +276,8 @@ def search_thread(stop_signal, args,val, i, hitrates):
 	search=None
 	if args.type=='dynamic':
 		search=DynamicGrad(stop_signal,i,hitrates,args,val)
+	if args.type=='finite':
+		search=FiniteGrad(stop_signal,i,hitrates,args,val)
 	while not stop_signal.is_set():
 		if search.descend():
 			break
