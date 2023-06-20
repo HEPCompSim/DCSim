@@ -40,7 +40,6 @@ def write_output(output_file, data, csv_output=False,script=False):
 	if not script:
 		f.close()
 def extract(directory,log=None):
-	print(directory)
 	extractedResults=[]
 	hitrate_data=defaultdict(dict)
 	for file in os.listdir(directory):
