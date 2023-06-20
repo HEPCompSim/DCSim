@@ -1,5 +1,5 @@
 #! /usr/bin/python3
-#./gridSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -n 1000 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32
+#./gridSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -t 60 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32
 import concurrent.futures
 import multiprocessing
 import argparse
@@ -114,9 +114,9 @@ def parallel_grid_search(args):
 			if result.cancelled():
 				continue
 			
-			v, combination,allResults,time = result.result()
+			v, combination,allResults,timeV = result.result()
 			extractedResults+=allResults
-			if time > startTime+args.time:
+			if timeV > startTime+args.time:
 				continue#discard overtime simulation
 			count+=1	
 			if best is None:
