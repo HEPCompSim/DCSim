@@ -35,12 +35,12 @@ def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates
 	if( not uniqueID is None):
 	
 		process = subprocess.run([file_path+"/hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		ret=extract("../tmp/outputs/"+str(uniqueID),{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
-		shutil.rmtree("../tmp/outputs/"+str(uniqueID), ignore_errors=True)
+		ret=extract(file_path+"/../tmp/outputs/"+str(uniqueID),{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
+		shutil.rmtree(file_path+"/../tmp/outputs/"+str(uniqueID), ignore_errors=True)
 		return ret
 	else:
 		process = subprocess.run([COMMAND,platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		return extract("../tmp/outputs",{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
+		return extract(file_path+"/../tmp/outputs",{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
 def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,rff_run=None,runtype=None):
 	run,allResults=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype)
 	return evaluate(run,rff_run),allResults
