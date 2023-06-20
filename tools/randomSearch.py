@@ -1,5 +1,5 @@
 #! /usr/bin/python3
-#./randomSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -n 1000 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32
+#./randomSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -t 60 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32
 
 import multiprocessing
 import argparse
