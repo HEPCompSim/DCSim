@@ -34,7 +34,7 @@ def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates
 	platform=pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed)
 	if( not uniqueID is None):
 	
-		process = subprocess.run([file_path+"hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		process = subprocess.run([file_path+"/hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		ret=extract("../tmp/outputs/"+str(uniqueID),{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
 		shutil.rmtree("../tmp/outputs/"+str(uniqueID), ignore_errors=True)
 		return ret
