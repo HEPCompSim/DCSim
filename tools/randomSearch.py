@@ -72,9 +72,9 @@ def parallel_random_search(args):
 			if result.cancelled():
 				continue
 			
-			v, combination,allResults,time = result.result()
+			v, combination,allResults,timeV = result.result()
 			extractedResults+=allResults
-			if time > startTime+args.time:
+			if timeV > startTime+args.time:
 				continue#discard overtime simulation
 			count+=1
 			if best is None:
