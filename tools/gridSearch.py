@@ -133,7 +133,7 @@ def parallel_grid_search(args):
 # Run the parallel grid search
 try:
 	parallel_grid_search(args)
-	with open("randomSearchResults.txt", 'a') as writer:
+	with open("gridSearchResults.txt", 'a') as writer:
 		for result in extractedResults:
 			writer.write(str(result)+"\n")
 except KeyboardInterrupt:
