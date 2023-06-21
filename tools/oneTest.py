@@ -45,8 +45,8 @@ def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates
 	run,allResults=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype)
 	return evaluate(run,rff_run),allResults
 def main():
-	rff_run,xml_file_path, cpu_speed, read_speed, link_speed, net_speed = sys.argv[1:]
+	rff_run,xml_file_path, cpu_speed, read_speed, link_speed, net_speed,xrootdBlock, nblock = sys.argv[1:]
 	initEvaluator(rff_run)
-	print(oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,list(range(10))))
+	print(oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,list(range(10)),xrootdBlock, nblock ))
 if __name__ == '__main__':
 	main()
