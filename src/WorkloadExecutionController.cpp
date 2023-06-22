@@ -278,6 +278,7 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
     double global_start_date = DBL_MAX;
     double global_end_date = DBL_MIN;
     double hitrate = DefaultValues::UndefinedDouble;
+    double flops = 0.;
 
     bool found_computation_action = false;
 
@@ -332,6 +333,7 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
                 else {
                     incr_compute_time += end_date - start_date;
                 }
+                flops += compute_action->getFlops();
             }
             else {
                 throw std::runtime_error(
@@ -360,7 +362,7 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
         // << /*TODO: find a way to get disk usage on scratch space */ << ", ";
         this->filedump << execution_host << ", " << hitrate << ", ";
         this->filedump << std::to_string(global_start_date) << ", " << std::to_string(global_end_date) << ", ";
-        this->filedump << std::to_string(incr_compute_time) << ", ";
+        this->filedump << std::to_string(incr_compute_time) << ", " << std::to_string(flops) << ", " ;
         this->filedump << std::to_string(incr_infile_transfertime) << ", " << std::to_string(incr_infile_size) << ", " ;
         this->filedump << std::to_string(incr_outfile_transfertime) << ", " << std::to_string(incr_outfile_size) << std::endl;
 

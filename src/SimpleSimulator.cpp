@@ -754,7 +754,7 @@ int main(int argc, char **argv) {
             filedump << "job.tag" << ", "; // << "job.ncpu" << ", " << "job.memory" << ", " << "job.disk" << ", ";
             filedump << "machine.name" << ", ";
             filedump << "hitrate" << ", ";
-            filedump << "job.start" << ", " << "job.end" << ", " << "job.computetime" << ", ";
+            filedump << "job.start" << ", " << "job.end" << ", " << "job.computetime" << ", "<< "job.flops" << ", ";
             filedump << "infiles.transfertime" << ", " << "infiles.size" << ", " << "outfiles.transfertime" << ", " << "outfiles.size" << "\n";
             filedump.close();
             std::cerr << "Wrote header of the output dump into file " << filename << std::endl;
