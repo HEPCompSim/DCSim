@@ -148,7 +148,7 @@ class FiniteGrad(GradMethod):
 		
 		this.eps2=args.epsilon
 		this.delta=args.delta
-		print("\n\n\ngrad")
+		#print("\n\n\ngrad")
 		try:
 			res=this.internalEval(initialPoint,"finiteSearch random")
 			this.currentResult=list(res)
@@ -158,7 +158,7 @@ class FiniteGrad(GradMethod):
 			pass 
 		
 	def descend(this):
-		print(this.currentResult[0],this.vals)
+		#print(this.currentResult[0],this.vals)
 		try:
 			vector=[]
 			slope=[]
@@ -201,7 +201,7 @@ class FiniteGrad(GradMethod):
 						break
 					trial/=2
 			improvement=(abs(best-this.currentResult[0])/this.currentResult[0])
-			print(improvement)
+			#print(improvement)
 			this.currentResult[0]=best
 			this.currentResult[1]=tuple(bestArgs)
 			this.vals=bVals
