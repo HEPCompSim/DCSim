@@ -107,7 +107,7 @@ class DynamicGrad(GradMethod):
 			
 			normalize(vector)
 			
-			trial=10*this.eps2
+			trial=10*this.eps
 			while True:
 				eVal=this.vals.copy()
 				
