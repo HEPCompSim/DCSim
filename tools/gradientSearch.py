@@ -296,7 +296,7 @@ def parallel_grad_search(args):
 		random.seed(args.seed)
 				
 
-		with concurrent.futures.ProcessPoolExecutor(1) as executor:
+		with concurrent.futures.ProcessPoolExecutor() as executor:
 			results = []
 			while not stop_signal.is_set():
 				results = []
@@ -323,7 +323,7 @@ def parallel_grad_search(args):
 					count+=1
 					exCount+=subcount
 					if v is None:
-						print(resultSet)
+						#print(resultSet)
 					if best is None or minV is None:
 							minV = v
 							best = combination
