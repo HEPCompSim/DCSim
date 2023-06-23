@@ -33,10 +33,10 @@ def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates
 	hits=' '.join([str(float(i)) for i in hitrates])
 	platform=pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed)
 	if( not uniqueID is None):
-	
-		process = subprocess.run([file_path+"/hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		ret=extract(file_path+"/../tmp/outputs/"+str(uniqueID),{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
-		shutil.rmtree(file_path+"/../tmp/outputs/"+str(uniqueID), ignore_errors=True)
+		uniqueID=str(os.getpid())+"_"+str(uniqueID)
+		process = subprocess.run([file_path+"/hitrateScanScript.sh",platform,hits,uniqueID,str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		ret=extract(file_path+"/../tmp/outputs/"+uniqueID,{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
+		shutil.rmtree(file_path+"/../tmp/outputs/"+uniqueID, ignore_errors=True)
 		return ret
 	else:
 		process = subprocess.run([file_path+"/hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
