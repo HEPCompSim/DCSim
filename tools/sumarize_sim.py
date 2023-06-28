@@ -4,7 +4,8 @@ import argparse
 import csv
 import json
 from collections import defaultdict
-from statistics import mean, stdev
+from statistics import mean, stdev, StatisticsError
+
 import sys 
 import atexit
 
@@ -20,9 +21,16 @@ def parse_csv(file):
 	return stats
 
 def calculate_stats(stats):
+	try:
+		avg=mean(stats)
+		std=stdev(stats)
+	except StatisticsError:
+		if 'avg' not in locals():
+			avg=float('inf')
+		std=0
 	return {
-		'average': mean(stats),
-		'stdev': stdev(stats)
+		'average': avg,
+		'stdev':std 
 	}
 
 def write_output(output_file, data, csv_output=False,script=False):
