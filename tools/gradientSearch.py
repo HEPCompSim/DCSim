@@ -41,7 +41,7 @@ class GradMethod:
 		this.nblock=args.nblock
 		this.args=args
 		this.retArgs=None
-		this.retResult=None
+		this.retResult=float('inf')
 	def normalize(array,mag=1):
 		s=sum(array)/mag
 		for i in range(len(array)):
@@ -64,6 +64,8 @@ class GradMethod:
 		if  this.stop_signal.is_set():
 			raise (GeneratorExit)
 	def collect(this):
+		if this.retResult is None:
+			this.retResult=float('inf')
 		return this.retResult, this.retArgs, this.results, this.count
 class DynamicGrad(GradMethod):
 	def __init__(this,stop_signal,i,hitrates,args,initialPoint):
@@ -323,7 +325,7 @@ def parallel_grad_search(args):
 					count+=1
 					exCount+=subcount
 					if v is None:
-						#print(resultSet)
+						print("V is none"+str(resultSet))
 					if best is None or minV is None:
 							minV = v
 							best = combination
