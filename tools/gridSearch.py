@@ -96,36 +96,39 @@ def parallel_grid_search(args):
 		ittr = iter(gridItterator(dimensionality))
 		ittr = next(ittr)
 		
-		while time.time() - startTime < args.time:
-			i += 1
-			val = next(ittr)
-			result = executor.submit(evaluate_combination, args, val, i, hitrates, args.xblock, args.nblock)
-			results.append(result)
+		ongoing=True
+		while ongoing:
+			for iii in range(multiprocessing.cpu_count()*100):
+				i += 1
+				val = next(ittr)
+				result = executor.submit(evaluate_combination, args, val, i, hitrates, args.xblock, args.nblock)
+				results.append(result)
 		
-		# Cancel remaining tasks
-		for result in results:
-			result.cancel()
+			if time.time() - startTime < args.time:
+					for result in results:
+						result.cancel()
+					ongoing=False
 
-		best = None
-		minV = None
-		count=0
-		for result in results:
-			global extractedResults
-			if result.cancelled():
-				continue
-			
-			v, combination,allResults,timeV = result.result()
-			extractedResults+=allResults
-			if timeV > startTime+args.time:
-				continue#discard overtime simulation
-			count+=1	
-			if best is None:
-				minV = v
-				best = combination
-			elif v < minV:
-				minV = v
-				best = combination
-				# print("New Best!")
+			best = None
+			minV = None
+			count=0
+			for result in results:
+				global extractedResults
+				if result.cancelled():
+					continue
+				
+				v, combination,allResults,timeV = result.result()
+				extractedResults+=allResults
+				if timeV > startTime+args.time:
+					continue#discard overtime simulation
+				count+=1	
+				if best is None:
+					minV = v
+					best = combination
+				elif v < minV:
+					minV = v
+					best = combination
+					# print("New Best!")
 	print(str(count)+" grid points sampled")
 	print("Best " + str(minV) + " " + str(best))
 

@@ -50,40 +50,41 @@ def parallel_random_search(args):
 	best = None
 	minV = 0
 
-
 	with concurrent.futures.ProcessPoolExecutor() as executor:
 		results = []
 		i = 0
-		
-		while time.time() - startTime < args.time:
-			i += 1
-			result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock)
-			results.append(result)
-		
-		# Cancel remaining tasks
-		for result in results:
-			result.cancel()
-
-		best = None
-		minV = None
-		count=0
-		for result in results:
-			global extractedResults
-			if result.cancelled():
-				continue
+		ongoing=True
+		while ongoing:
+			for iii in range(multiprocessing.cpu_count()*100):
+				i += 1
+				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock)
+				results.append(result)
 			
-			v, combination,allResults,timeV = result.result()
-			extractedResults+=allResults
-			if timeV > startTime+args.time:
-				continue#discard overtime simulation
-			count+=1
-			if best is None:
-				minV = v
-				best = combination
-			elif v < minV:
-				minV = v
-				best = combination
+			if time.time() - startTime < args.time:
+				for result in results:
+					result.cancel()
+				ongoing=False
 
+			best = None
+			minV = None
+			count=0
+			for result in results:
+				global extractedResults
+				if result.cancelled():
+					continue
+				
+				v, combination,allResults,timeV = result.result()
+				extractedResults+=allResults
+				if timeV > startTime+args.time:
+					continue#discard overtime simulation
+				count+=1
+				if best is None:
+					minV = v
+					best = combination
+				elif v < minV:
+					minV = v
+					best = combination
+		
 	print(str(count)+" Random samples searched")
 	print("Best " + str(minV) + " " + str(best))
 
