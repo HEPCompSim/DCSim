@@ -128,17 +128,21 @@ def parallel_grid_search(args):
 				elif v < minV:
 					minV = v
 					best = combination
-					# print("New Best!")
+					print(str(time.time())+"New Best " + str(minV) + " " + str(best))
+					print(str(count)+" grid points sampled")
+			with open("gridSearchResults.txt", 'a') as writer:
+				extractedResultsB=extractedResults
+				extractedResults=[]
+				for result in extractedResultsB:
+					writer.write(str(result)+"\n")
+	print("Final Best " + str(minV) + " " + str(best))
 	print(str(count)+" grid points sampled")
-	print("Best " + str(minV) + " " + str(best))
 
 
 # Run the parallel grid search
 try:
 	parallel_grid_search(args)
-	with open("gridSearchResults.txt", 'a') as writer:
-		for result in extractedResults:
-			writer.write(str(result)+"\n")
+	
 except KeyboardInterrupt:
 	pass
 #weird theory question: more effienct compiled lookup table

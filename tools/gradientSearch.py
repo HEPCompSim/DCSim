@@ -332,9 +332,18 @@ def parallel_grad_search(args):
 					elif v < minV:
 						minV = v
 						best = combination
+						print(str(time.time())+"New Best " + str(minV) + " " + str(best))
+						print(str(count)+" grid points sampled")
 					for thingToAppend in allResults:
 						extractedResults+=thingToAppend
-						
+				with open("randomSearchResults.txt", 'a') as writer:
+					extractedResultsB=extractedResults
+					extractedResults=[]
+					for result in extractedResultsB:
+						writer.write(str(result)+"\n")
+	print("Final Best " + str(minV) + " " + str(best))
+	print(str(count)+" grid points sampled")
+
 						
 							# print("New Best!")
 	print(str(count)+" gradients followed sampling "+str(exCount)+" points")
