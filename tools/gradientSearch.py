@@ -297,7 +297,8 @@ def parallel_grad_search(args):
 		signal_timer.start()
 		random.seed(args.seed)
 				
-
+		count=0
+		exCount=0
 		with concurrent.futures.ProcessPoolExecutor() as executor:
 			results = []
 			while not stop_signal.is_set():
@@ -312,8 +313,7 @@ def parallel_grad_search(args):
 
 				best = None
 				minV = None
-				count=0
-				exCount=0
+				
 				for resultSet in results:
 					global extractedResults
 					if resultSet.cancelled():
@@ -336,7 +336,7 @@ def parallel_grad_search(args):
 						print(str(count)+" grid points sampled")
 					for thingToAppend in allResults:
 						extractedResults+=thingToAppend
-				with open("randomSearchResults.txt", 'a') as writer:
+				with open(args.type+"GradientSearchResults.txt", 'a') as writer:
 					extractedResultsB=extractedResults
 					extractedResults=[]
 					for result in extractedResultsB:

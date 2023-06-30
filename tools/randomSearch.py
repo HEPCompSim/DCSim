@@ -50,6 +50,7 @@ def parallel_random_search(args):
 	best = None
 	minV = 0
 
+	count=0
 	with concurrent.futures.ProcessPoolExecutor() as executor:
 		results = []
 		i = 0
@@ -67,7 +68,6 @@ def parallel_random_search(args):
 
 			best = None
 			minV = None
-			count=0
 			for result in results:
 				global extractedResults
 				if result.cancelled():

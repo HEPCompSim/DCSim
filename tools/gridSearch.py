@@ -95,7 +95,7 @@ def parallel_grid_search(args):
 		i = 0
 		ittr = iter(gridItterator(dimensionality))
 		ittr = next(ittr)
-		
+		count=0
 		ongoing=True
 		while ongoing:
 			for iii in range(multiprocessing.cpu_count()*100):
@@ -111,7 +111,7 @@ def parallel_grid_search(args):
 
 			best = None
 			minV = None
-			count=0
+			
 			for result in results:
 				global extractedResults
 				if result.cancelled():
