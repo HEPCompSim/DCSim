@@ -298,6 +298,7 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
         double elapsed = end_date - start_date;
         WRENCH_DEBUG("Analyzing action: %s, started in s: %.2f, ended in s: %.2f, elapsed in s: %.2f", action->getName().c_str(), start_date, end_date, elapsed);
 
+        flops += this->workload_spec[event->job->getName()].total_flops;
         if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
             incr_infile_transfertime += elapsed;
         } else if (auto monitor_action = std::dynamic_pointer_cast<MonitorAction>(action)) {
@@ -333,7 +334,6 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
                 else {
                     incr_compute_time += end_date - start_date;
                 }
-                flops += compute_action->getFlops();
             }
             else {
                 throw std::runtime_error(
