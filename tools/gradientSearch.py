@@ -311,9 +311,7 @@ def parallel_grad_search(args):
 					result = executor.submit(search_thread, stop_signal,args, val, i, hitrates)
 					results.append(result)
 
-				best = None
-				minV = None
-				
+
 				for resultSet in results:
 					global extractedResults
 					if resultSet.cancelled():
@@ -332,7 +330,7 @@ def parallel_grad_search(args):
 					elif v < minV:
 						minV = v
 						best = combination
-						print(str(time.time())+"New Best " + str(minV) + " " + str(best))
+						print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))
 						print(str(count)+" grid points sampled")
 					for thingToAppend in allResults:
 						extractedResults+=thingToAppend

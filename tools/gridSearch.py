@@ -104,14 +104,11 @@ def parallel_grid_search(args):
 				result = executor.submit(evaluate_combination, args, val, i, hitrates, args.xblock, args.nblock)
 				results.append(result)
 		
-			if time.time() - startTime < args.time:
+			if time.time() - startTime > args.time:
 					for result in results:
 						result.cancel()
 					ongoing=False
 
-			best = None
-			minV = None
-			
 			for result in results:
 				global extractedResults
 				if result.cancelled():
@@ -128,7 +125,7 @@ def parallel_grid_search(args):
 				elif v < minV:
 					minV = v
 					best = combination
-					print(str(time.time())+"New Best " + str(minV) + " " + str(best))
+					print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))
 					print(str(count)+" grid points sampled")
 			with open("gridSearchResults.txt", 'a') as writer:
 				extractedResultsB=extractedResults

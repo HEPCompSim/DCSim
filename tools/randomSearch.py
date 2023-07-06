@@ -47,9 +47,6 @@ def parallel_random_search(args):
 	initEvaluator(args.reference)
 	dimensionality = 4
 
-	best = None
-	minV = 0
-
 	count=0
 	with concurrent.futures.ProcessPoolExecutor() as executor:
 		results = []
@@ -61,7 +58,7 @@ def parallel_random_search(args):
 				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock)
 				results.append(result)
 			
-			if time.time() - startTime < args.time:
+			if time.time() - startTime > args.time:
 				for result in results:
 					result.cancel()
 				ongoing=False
@@ -84,7 +81,7 @@ def parallel_random_search(args):
 				elif v < minV:
 					minV = v
 					best = combination
-					print(str(time.time())+"New Best " + str(minV) + " " + str(best))
+					print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))
 					print(str(count)+" grid points sampled")
 
 			with open("randomSearchResults.txt", 'a') as writer:
