@@ -8,11 +8,12 @@ from oneTest import oneEval, initEvaluator
 import random
 import time
 import concurrent.futures
+from random import SystemRandom
 startTime = time.time()
-def randomSample(minV,maxV):
+def randomSample(minV,maxV,generator):
 	if minV>maxV:
 		minV,maxV=maxV,minV
-	return random.uniform(minV,maxV)
+	return generator.uniform(minV,maxV)
 parser = argparse.ArgumentParser(description='random Search in a logimetric grid.')
 parser.add_argument('-r', '--reference', type=str, help='Reference values file path', required=True)
 parser.add_argument('-p', '--platform', type=str, help='Template Platform file path', required=True)
@@ -32,11 +33,11 @@ hitrates=re.split(',|\s|;',args.hitrates)
 
 #print(args)
 extractedResults=[]
-def randomItteration(args, i, hitrates,xblock,nblock):
-	speed = pow(2, randomSample(args.speed[0], args.speed[1]))
-	read = pow(2, randomSample(args.read_bandwidth[0], args.read_bandwidth[1]))
-	inBand = pow(2, randomSample(args.internal_link_bandwidth[0], args.internal_link_bandwidth[1]))
-	reBand = pow(2, randomSample(args.remote_bandwidth[0], args.remote_bandwidth[1]))
+def randomItteration(args, i, hitrates,xblock,nblock,generator):
+	speed = pow(2, randomSample(args.speed[0], args.speed[1],generator))
+	read = pow(2, randomSample(args.read_bandwidth[0], args.read_bandwidth[1],generator))
+	inBand = pow(2, randomSample(args.internal_link_bandwidth[0], args.internal_link_bandwidth[1],generator))
+	reBand = pow(2, randomSample(args.remote_bandwidth[0], args.remote_bandwidth[1],generator))
 
 	#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand), end=' ')
 	v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="random")
@@ -46,16 +47,18 @@ def randomItteration(args, i, hitrates,xblock,nblock):
 def parallel_random_search(args):
 	initEvaluator(args.reference)
 	dimensionality = 4
-
+	best = None
+	minV = None
 	count=0
 	with concurrent.futures.ProcessPoolExecutor() as executor:
 		results = []
 		i = 0
 		ongoing=True
 		while ongoing:
+			generator=random.SystemRandom()
 			for iii in range(multiprocessing.cpu_count()*100):
 				i += 1
-				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock)
+				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock,generator)
 				results.append(result)
 			
 			if time.time() - startTime > args.time:
@@ -63,8 +66,7 @@ def parallel_random_search(args):
 					result.cancel()
 				ongoing=False
 
-			best = None
-			minV = None
+			
 			for result in results:
 				global extractedResults
 				if result.cancelled():
