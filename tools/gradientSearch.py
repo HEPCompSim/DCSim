@@ -250,8 +250,6 @@ hitrates=re.split(',|\s|;',args.hitrates)
 
 
 #print(args)
-best=None
-minV=0
 def interpolate(x,minV,maxV):
 	if minV>maxV:
 		minV,maxV=maxV,minV
@@ -327,7 +325,8 @@ def parallel_grad_search(args):
 					if best is None or minV is None:
 							minV = v
 							best = combination
-					elif v < minV:
+					elif float(v) < float(minV):
+						print("old minV"+str(minV))
 						minV = v
 						best = combination
 						print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))

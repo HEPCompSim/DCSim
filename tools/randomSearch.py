@@ -80,7 +80,8 @@ def parallel_random_search(args):
 				if best is None:
 					minV = v
 					best = combination
-				elif v < minV:
+				elif float(v) < float(minV):
+					print("old minV"+str(minV))
 					minV = v
 					best = combination
 					print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))

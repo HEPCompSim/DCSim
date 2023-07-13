@@ -7,6 +7,9 @@ action() {
 	local PLATFORM=${1}
 	local HITRATES=${2}
 	local UUID=${3}
+	
+    local XRD_BLOCKSIZE=${4}
+    local BUFFER_SIZE=${5}
     # determine the directy of this file
     if [ ! -z "$ZSH_VERSION" ]; then
         local this_file="${(%):-%x}"
@@ -34,8 +37,6 @@ action() {
 
     local DUPLICATIONS=48
 
-    local XRD_BLOCKSIZE=1000000000
-    local BUFFER_SIZE=100000000
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 

@@ -66,8 +66,6 @@ hitrates=re.split(',|\s|;',args.hitrates)
 
 
 #print(args)
-best=None
-minV=0
 def evaluate_combination(args, val, i, hitrates,xblock,nblock):
 	
 	speedI,readI,inBandI, reBandI = val
@@ -122,7 +120,8 @@ def parallel_grid_search(args):
 				if best is None:
 					minV = v
 					best = combination
-				elif v < minV:
+				elif float(v) < float(minV):
+					print("old minV"+str(minV))
 					minV = v
 					best = combination
 					print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))
