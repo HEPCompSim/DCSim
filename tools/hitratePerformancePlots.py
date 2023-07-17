@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib.lines as mlines
 import seaborn as sns
 import os.path
 import argparse
@@ -219,16 +220,25 @@ for quantity, qstyle in QUANTITIES.items():
         markers = markers[0:len(sites)]
         fig = plt.figure(f"hitrate-{quantity}", figsize=(6,4))
         ax1 = fig.add_subplot(1,1,1)
+        percentileinterval=95
         sns.pointplot(
             x="hitrate", y=quantity,
             hue="Site", hue_order=sites,
             data=df,
-            estimator="median", errorbar=("pi",95), # ci = Confidence Interval, pi = Percentile Interval, sd = Standard Deviation, se = Standard Error of Mean
+            estimator="median", errorbar=("pi",percentileinterval), # ci = Confidence Interval, pi = Percentile Interval, sd = Standard Deviation, se = Standard Error of Mean
             dodge=True, join=False,
             markers=markers, capsize=0.5/len(sites), errwidth=1.,
             palette=sns.color_palette("colorblind", n_colors=len(sites)),
             ax=ax1
         )
+        ax_in = ax1.inset_axes([0.56,0.03,0.15,0.15])
+        ax_in.errorbar(1,1,1, marker="o", linestyle="none", capsize=5, color="black")
+        ax_in.axis("off")
+        ax_in.annotate(f"{(0.5*percentileinterval)+50} percentile", xy=(1.01,2), xytext=(1.05,1.8), arrowprops=dict(arrowstyle="-|>", color="black",), ha="left")
+        ax_in.annotate("median", xy=(1.01,1), xytext=(1.05,0.8), arrowprops=dict(arrowstyle="-|>", color="black",))
+        ax_in.annotate(f"{0.5*(100-percentileinterval)} percentile", xy=(1.01,0), xytext=(1.05,-0.2), arrowprops=dict(arrowstyle="-|>", color="black",), ha="left")
+        ax_in.set_yticklabels([])
+        ax_in.set_xticklabels([])
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right", color="black")
         scale_xticks(ax1, hitrateticks)
@@ -251,6 +261,16 @@ for quantity, qstyle in QUANTITIES.items():
             flierprops=dict(marker="x"),
             palette=sns.color_palette("colorblind", n_colors=len(sites)),
         )
+        ax_in = ax1.inset_axes([0.56,0.03,0.3,0.3])
+        ax_in.boxplot(np.linspace(0.,4.,100), medianprops = dict(color="black"))
+        ax_in.axis("off")
+        ax_in.annotate("Q3 + 1.5IQR", xy=(1.1,4), xytext=(1.2,3.8), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+        ax_in.annotate("Q3 = 75 percentile", xy=(1.1,3), xytext=(1.2,2.8), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+        ax_in.annotate("median", xy=(1.1,2), xytext=(1.2,1.8), arrowprops=dict(arrowstyle="-", color="black",))
+        ax_in.annotate(f"Q1 = 25 percentile", xy=(1.1,1), xytext=(1.2,0.8), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+        ax_in.annotate(f"Q1 - 1.5IQR", xy=(1.1,0), xytext=(1.2,-0.2), arrowprops=dict(arrowstyle="-", color="black",), ha="left")
+        ax_in.set_yticklabels([])
+        ax_in.set_xticklabels([])
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
         scale_xticks(ax1, hitrateticks)

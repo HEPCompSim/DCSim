@@ -22,6 +22,8 @@ include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/
 set(SOURCE_FILES
         src/WorkloadExecutionController.h
         src/WorkloadExecutionController.cpp
+        src/BandwidthModifier.h
+        src/BandwidthModifier.cpp
         src/SimpleSimulator.h
         src/SimpleSimulator.cpp
         src/JobSpecification.h

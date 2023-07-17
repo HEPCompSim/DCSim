@@ -12,9 +12,9 @@
             <zone id="GridKA" routing="Floyd">
 
                 <!-- <host id="Tier1" speed="3194Mf" core="42400"> -->
-                <cluster id="Tier1" prefix="Tier1" radical="0-9" suffix="" speed="2555Mf" core="42" bw="1150Mbps" lat="0us">
+                <cluster id="Tier1" prefix="Tier1" radical="0-19" suffix="" speed="2555Mf" core="42" bw="1150Mbps" lat="0us">
                     <prop id="type" value="worker"/>
-                    <prop id="ram" value="1187.20GiB"/>
+                    <prop id="ram" value="2.3744TiB"/>
                     <!-- <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
                         <prop id="size" value="1PB"/>
                         <prop id="mount" value="/"/>
@@ -26,7 +26,7 @@
                 
                     <host id="GridKA_dCache" speed="1000Gf" core="10">
                         <prop id="type" value="storage"/>
-                        <disk id="hard_drive" read_bw="920Mbps" write_bw="920Mbps">
+                        <disk id="hard_drive" read_bw="1.84Gbps" write_bw="1.84Gbps">
                             <prop id="size" value="7PB"/>
                             <prop id="mount" value="/"/>
                         </disk>
@@ -39,15 +39,15 @@
 
                     <router id="GridKAgateway"/>
 
-                    <link id="GridKA_sched" bandwidth="115Mbps" latency="0us"/>
+                    <link id="GridKA_sched" bandwidth="230Mbps" latency="0us"/>
 
-                    <link id="GridKA_Tier1_FATPIPE" bandwidth="1150Mbps" latency="0us" sharing_policy="FATPIPE"/>
-                    <link id="GridKA_Tier1" bandwidth="2300Mbps" latency="0us"/>
+                    <link id="GridKA_Tier1_FATPIPE" bandwidth="2.3Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                    <link id="GridKA_Tier1" bandwidth="4.6Gbps" latency="0us"/>
 
                     <!-- <link id="GridKA_dcache" bandwidth="100Gbps" latency="0us"/> -->
 
-                    <link id="GridKA_dcachepool_FATPIPE" bandwidth="460Mbps" latency="0us" sharing_policy="FATPIPE"/>
-                    <link id="GridKA_dcachepool" bandwidth="920Mbps" latency="0us"/>
+                    <link id="GridKA_dcachepool_FATPIPE" bandwidth="0.92Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                    <link id="GridKA_dcachepool" bandwidth="1.84Gbps" latency="0us"/>
 
                     <route src="GridKAgateway" dst="WMSHost">
                         <link_ctn id="GridKA_sched"/>
@@ -71,9 +71,9 @@
 
                 <router id="KITgateway"/>
 
-                <link id="GridKA_to_KIT" bandwidth="1150Mbps" latency="0us"/>
-                <link id="KIT_to_DESY" bandwidth="1150Mbps" latency="0us">
-                    <prop id="variation" value="100000000,50000000"/>
+                <link id="GridKA_to_KIT" bandwidth="2.3Gbps" latency="0us"/>
+                <link id="KIT_to_DESY" bandwidth="2.3Gbps" latency="0us">
+                    <!-- <prop id="variation" value="1000000000,500000000"/> -->
                 </link>
             
             </zone>
@@ -91,14 +91,14 @@
             <zone id="DESYGrid" routing="Floyd">
 
                 <!-- <host id="Tier2" speed="2761Mf" core="200"> -->
-                <host id="Tier2" speed="2209Mf" core="200">
+                <host id="Tier2" speed="2209Mf" core="400">
                     <prop id="type" value="worker"/>
-                    <prop id="ram" value="500GiB"/>
+                    <prop id="ram" value="5.0TiB"/>
                 </host>
 
                 <host id="DESY_dCache" speed="1000Gf" core="10">
                     <prop id="type" value="cache"/>
-                    <disk id="hard_drive" read_bw="920Mbps" write_bw="920Mbps">
+                    <disk id="hard_drive" read_bw="1.84Gbps" write_bw="1.84Gbps">
                         <prop id="size" value="7PB"/>
                         <prop id="mount" value="/"/>
                     </disk>
@@ -106,9 +106,9 @@
 
                 <router id="DESYGridgateway"/>
 
-                <link id="DESY_Tier2" bandwidth="460Mbps" latency="0us"/>
+                <link id="DESY_Tier2" bandwidth="0.92Gbps" latency="0us"/>
 
-                <link id="DESY_dCachepool" bandwidth="460Mbps" latency="0us"/>
+                <link id="DESY_dCachepool" bandwidth="0.92Gbps" latency="0us"/>
 
                 <route src="DESYGridgateway" dst="Tier2">
                     <link_ctn id="DESY_Tier2"/>
@@ -124,7 +124,7 @@
 
                 <router id="DESYgateway"/>
 
-                <link id="DESYGrid_to_DESY" bandwidth="1150Mbps" latency="0us"/>
+                <link id="DESYGrid_to_DESY" bandwidth="2.3Gbps" latency="0us"/>
             
             </zone>
 

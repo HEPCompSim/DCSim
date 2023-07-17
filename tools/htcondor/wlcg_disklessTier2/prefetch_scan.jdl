@@ -1,0 +1,31 @@
+# submit multiple simulations and harvest scaling and job information
+
+executable = ./prefetch_scan.sh
+arguments = $(PREFETCHRATE)
+
+should_transfer_files = YES
+transfer_input_files = ../../../data/platform-files/WLCG_disklessTier2_reduced50.xml, ../../../data/workload-configs/T1_DE_KIT_workloads.json, ../../../data/workload-configs/T2_DE_DESY_workloads.json
+transfer_output_files = scaling_dump_WLCG_disklessTier2_reduced50.xml_rate$(PREFETCHRATE).txt, prefetchScanScaled50_rate$(PREFETCHRATE).csv
+when_to_transfer_output = ON_EXIT
+
+log = logs/log.$(ClusterId).$(ProcId)
+output = logs/out.$(ClusterId).$(ProcId)
+error = logs/err.$(ClusterId).$(ProcId)
+
+
+accounting_group=cms.production
+Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="mdm1.ekp.kit.edu")
++RemoteJob = True
+
+universe = docker
+docker_image = mschnepf/slc7-condocker
+
++RequestWalltime = 3600 + (24*3600*NumJobStarts)
+request_cpus = 1
+RequestMemory = 4000
+periodic_release = (HoldReasonCode == 34)
+RequestDisk = 4000000
+
+x509userproxy = $ENV(X509_USER_PROXY)
+
+queue PREFETCHRATE in 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0

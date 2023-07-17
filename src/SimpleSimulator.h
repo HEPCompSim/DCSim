@@ -11,6 +11,7 @@ class SimpleSimulator {
 public:
 
     static void identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation);
+    static void identifyVariableLinks(std::shared_ptr<wrench::Simulation> simulation);
 
     static std::set<std::string> cache_hosts;       // hosts configured to provide a cache
     static std::set<std::string> storage_hosts;     // hosts configured to provide GRID storage
@@ -19,6 +20,8 @@ public:
     static std::set<std::string> executors;         // hosts configured to provide manage job activities
     static std::set<std::string> file_registries;   // hosts configured to manage a file registry
     static std::set<std::string> network_monitors;  // hosts configured to monitor network
+
+    static std::set<std::string> variable_links;    // links configured to randomly vary their bandwidth
 
     static void fillHostsInSiblingZonesMap(bool include_subzones);
     static bool local_cache_scope;

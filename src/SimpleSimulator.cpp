@@ -11,6 +11,7 @@
 #include "SimpleSimulator.h"
 #include "WorkloadExecutionController.h"
 #include "JobSpecification.h"
+#include "BandwidthModifier.h"
 
 #include "util/Utils.h"
 
@@ -19,6 +20,8 @@
 
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 
@@ -51,6 +54,7 @@ std::set<std::string> SimpleSimulator::scheduler_hosts;
 std::set<std::string> SimpleSimulator::executors;
 std::set<std::string> SimpleSimulator::file_registries;
 std::set<std::string> SimpleSimulator::network_monitors;
+std::set<std::string> SimpleSimulator::variable_links;
 std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_zones;
 bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
 
@@ -385,6 +389,41 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
         // }
     }
 }
+
+std::string getLinkProperty(const std::string &linkname, const std::string &property_name) {
+        auto link = simgrid::s4u::Link::by_name_or_null(linkname);
+        if (link == nullptr) {
+            throw std::invalid_argument("getLinkProperty(): Unknown linkname " + linkname);
+        }
+        if (link->get_properties()->find(property_name) == link->get_properties()->end()) {
+            throw std::invalid_argument("getLinkProperty(): Unknown property \"" + property_name + "\" for link " + linkname);
+        }
+        return link->get_property(property_name);
+    }
+
+/**
+ * @brief Identify variable links based on configured "variation" property tag
+ * 
+ * @param simulation Simulation object with already instantiated hosts
+ * 
+ * @throw std::runtime_error, std::invalid_argument
+ */
+void SimpleSimulator::identifyVariableLinks(std::shared_ptr<wrench::Simulation> simulation){
+    std::vector<std::string> linkname_list = simulation->getLinknameList();
+    if (linkname_list.size() == 0) {
+        throw std::runtime_error("Empty linkname list! Have you instantiated the platform already?");
+    }
+    for (const auto& linkname: linkname_list) {
+        try {
+            std::string linkProperties = getLinkProperty(linkname, "variation");
+            SimpleSimulator::variable_links.insert(linkname);
+        } catch (std::invalid_argument& e) {
+            // std::cerr << e.what() << "\t->\t" << "Skip link " << linkname << "\n";
+            continue;
+        }
+    }
+}
+
 
 /**
  * @brief  Method to be executed once at simulation start,
@@ -744,6 +783,38 @@ int main(int argc, char **argv) {
         num_total_jobs += new_workload_spec.size();
     }
     std::cerr << "The simulation now has " << std::to_string(num_total_jobs) << " jobs in total " << std::endl;
+
+
+    /* Identify the links which should be variied and add bandwidth modifiers to the simulation */
+    std::cerr << "Setting varied link bandwidths ... " << "\n";
+    std::set<std::shared_ptr<BandwidthModifier>> bandwidth_modifiers;
+    SimpleSimulator::identifyVariableLinks(simulation);
+    for (auto varied_link: SimpleSimulator::variable_links) {
+        std::string property = getLinkProperty(varied_link, "variation");
+        std::vector<std::string> parameters;
+        boost::split(parameters, property, boost::is_any_of("\t, "));
+        if (parameters.size() != 2) {
+            throw std::runtime_error(
+                "Property \"variation\":" + property + " for link " + varied_link + " misconfigured! Should only contain two splitable values!"
+            );
+        }
+        double mu = std::stod(parameters.at(0));
+        double sigma = std::stod(parameters.at(1));
+        std::normal_distribution<double> reduction(mu, sigma);
+        for (auto host: SimpleSimulator::executors) {
+            auto bm = simulation->add(
+                new BandwidthModifier(
+                    host,
+                    varied_link,
+                    3600.,
+                    &reduction,
+                    42
+                )
+            );
+            bm->setDaemonized(true);
+            std::cerr << "\t Created a BandwidthModifier on host " << host << " for link " << varied_link << "\n";
+        }
+    }
 
 
     /* Launch the simulation */

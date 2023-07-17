@@ -26,13 +26,15 @@ action() {
     local SCENARIO="prefetchScanScaled100"
     # local SCENARIO="prefetchScanScaled1000"
 
+    local DUPLICATIONS=1
+
     local OUTDIR="$parent/tmp/outputs/WLCG"
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR
     fi
 
-    for prefetchrate in $(LANG=en_US seq 0.0 0.1 1.0)
-    do 
+    for prefetchrate in $(LANG=en seq 0.0 0.1 1.0)
+    do
         dc-sim --platform "$PLATFORM" \
             --hitrate ${prefetchrate} \
             --xrd-blocksize $XRD_BLOCKSIZE \
@@ -41,6 +43,7 @@ action() {
             --storage-buffer-size $STORAGE_BUFFER_SIZE \
             --cache-scope network \
             --no-caching \
+            --duplications $DUPLICATIONS \
             --workload-configurations $WORKLOADS #\
             # --no-streaming \
             # --wrench-full-log
