@@ -17,6 +17,7 @@ action() {
 
     local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
     local WORKLOAD="$parent/data/workload-configs/crown_ttbar_validation.json"
+    local DATASET="$parent/data/dataset-configs/sample.json"
 
     # local NJOBS=1
     # local NINFILES=20 #10
@@ -51,10 +52,11 @@ action() {
         --storage-buffer-size $STORAGE_BUFFER_SIZE \
         --no-caching \
         --workload-configurations "$WORKLOAD" \
+        --dataset-configurations "$DATASET" \
         --log=simple_wms.threshold=debug \
         --log=streamed_computation.threshold=debug \
         --wrench-no-color \
-        &> hitratelog-flops
+        &> hitratelog
         # --wrench-full-log
         # --no-streaming \
         # --log=cache_computation.threshold=debug
