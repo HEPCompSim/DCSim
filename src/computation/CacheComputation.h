@@ -33,7 +33,7 @@ protected:
     std::vector<std::shared_ptr<wrench::DataFile>> files; //? does this need to be ordered?
     double total_flops;
 
-    std::map<std::shared_ptr<wrench::DataFile>, std::shared_ptr<wrench::FileLocation>> file_sources;
+    std::vector<std::pair<std::shared_ptr<wrench::DataFile>, std::shared_ptr<wrench::FileLocation>>> file_sources;
 
     double determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files);
     double total_data_size;
