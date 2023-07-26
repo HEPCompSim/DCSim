@@ -52,7 +52,9 @@ action() {
         --no-caching \
         --workload-configurations "$WORKLOAD" \
         --log=simple_wms.threshold=debug \
-        &> hitratelog
+        --log=streamed_computation.threshold=debug \
+        --wrench-no-color \
+        &> hitratelog-flops
         # --wrench-full-log
         # --no-streaming \
         # --log=cache_computation.threshold=debug
