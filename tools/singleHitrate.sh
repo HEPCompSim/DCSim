@@ -56,7 +56,7 @@ action() {
         --log=simple_wms.threshold=debug \
         --log=streamed_computation.threshold=debug \
         --wrench-no-color \
-        &> hitratelog
+        &> hitratelog-dataset
         # --wrench-full-log
         # --no-streaming \
         # --log=cache_computation.threshold=debug

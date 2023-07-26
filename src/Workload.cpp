@@ -83,19 +83,45 @@ std::function<double(std::mt19937&)> Workload::initializeDoubleRNG(nlohmann::jso
     if(json["type"].get<std::string>()=="gaussian") {
         double ave = json["average"].get<double>();
         double sigma = json["sigma"].get<double>();
-        std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
+        // std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
         dist = [ave, sigma](std::mt19937& generator){
             return std::normal_distribution<double>(ave, sigma)(generator);
         };
     } else if(json["type"].get<std::string>()=="histogram") {
         auto bins = json["bins"].get<std::vector<double>>();
         auto weights = json["counts"].get<std::vector<int>>();
-        std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
+        // std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
         dist = [bins, weights](std::mt19937& generator){
             return std::piecewise_constant_distribution<double>(bins.begin(),bins.end(),weights.begin())(generator);
         };
     } else {
-        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented!");
+        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented for real valued distributions!");
+    }
+    return dist;
+}
+
+std::function<int(std::mt19937&)> Workload::initializeIntRNG(nlohmann::json json) {
+    // std::cerr << json["type"] << ": ";
+    std::function<int(std::mt19937&)> dist;
+    if(json["type"].get<std::string>()=="poisson") {
+        int mu = json["mu"].get<int>();
+        // std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
+        dist = [mu](std::mt19937& generator){
+            return std::poisson_distribution<int>(mu)(generator);
+        };
+    } else if(json["type"].get<std::string>()=="histogram") {
+        try{
+            auto bins = json["bins"].get<std::vector<double>>();
+            WRENCH_WARN("Ignoring configured bins for integer distribution!");
+        }
+        catch(...) {}
+        auto weights = json["counts"].get<std::vector<int>>();
+        // std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
+        dist = [weights](std::mt19937& generator){
+            return std::discrete_distribution<int>(weights.begin(), weights.end())(generator);
+        };
+    } else {
+        throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented for integer valued distributions!");
     }
     return dist;
 }
@@ -106,6 +132,11 @@ JobSpecification Workload::sampleJob(size_t job_id, std::string name_suffix, std
     JobSpecification job_specification;
 
     size_t j = job_id;
+
+    // Sample number of cores to run on
+    int req_cores = this->core_dist(this->generator);
+    while (req_cores < 1) req_cores = this->core_dist(this->generator);
+    job_specification.cores = req_cores;
 
     // Sample strictly positive task flops
     double dflops = this->flops_dist(this->generator);
