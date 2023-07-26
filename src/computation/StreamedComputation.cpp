@@ -46,7 +46,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
     // Incremental size of all input files to be processed
     auto total_data_size = this->total_data_size;
     for (auto const &fs : this->file_sources) {
-        WRENCH_INFO("Streaming computation for input file %s", fs.first->getID().c_str());
+        WRENCH_INFO("Streaming computation for input file %s in location %s", fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
         double data_to_process = fs.first->getSize();
 
         // Compute the number of blocks
