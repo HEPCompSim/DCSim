@@ -27,6 +27,8 @@ set(SOURCE_FILES
         src/JobSpecification.h
         src/Workload.h
         src/Workload.cpp
+        src/Dataset.h
+        src/Dataset.cpp
         src/LRU_FileList.h
         src/MonitorAction.h
         src/MonitorAction.cpp

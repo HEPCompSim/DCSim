@@ -4,6 +4,7 @@
 
 #include "JobSpecification.h"
 #include "util/Utils.h"
+#include "Dataset.h"
 
 // #include <variant>
 
@@ -55,28 +56,13 @@ class Workload {
         // Constructor
         Workload(
             const size_t num_jobs,
-            const size_t infiles_per_task,
-            const int request_cores,
-            const double average_flops, const double sigma_flops,
-            const double average_memory, const double sigma_memory,
-            const double average_infile_size, const double sigma_infile_size,
-            const double average_outfile_size, const double sigma_outfile_size,
-            const WorkloadType workload_type, const std::string name_suffix,
-            const double arrival_time,
-            const std::mt19937& generator
-        );
-
-        Workload(
-            const size_t num_jobs,
-            const size_t infiles_per_job,
             nlohmann::json cores,
             nlohmann::json flops,
             nlohmann::json memory,
-            nlohmann::json infile_size,
             nlohmann::json outfile_size,
             const WorkloadType workload_type, const std::string name_suffix,
-            const double arrival_time,
-            const std::mt19937& generator
+            const double arrival_time, const std::mt19937& generator,
+            const std::vector<std::string> infile_datasets={} 
         );
 
         // job list with specifications
@@ -85,6 +71,9 @@ class Workload {
         WorkloadType workload_type;
         // time offset until job submission relative to simulation start time (0)
         double submit_arrival_time;
+        // infile dataset name
+        std::vector<std::string> infile_datasets;
+        void assignFiles(std::vector<Dataset> const &);
 
     private:
         /** @brief generator to shuffle jobs **/
@@ -92,13 +81,12 @@ class Workload {
         std::function<int(std::mt19937&)> core_dist;
         std::function<double(std::mt19937&)> flops_dist;
         std::function<double(std::mt19937&)> mem_dist;
-        std::function<double(std::mt19937&)> insize_dist;
         std::function<double(std::mt19937&)> outsize_dist;
 
         std::function<int(std::mt19937&)> initializeIntRNG(nlohmann::json json);
         std::function<double(std::mt19937&)> initializeDoubleRNG(nlohmann::json json);
 
-        JobSpecification sampleJob(const size_t job_id, const size_t infiles_per_job, std::string name_suffix, std::string potential_separator);
+        JobSpecification sampleJob(const size_t job_id, std::string name_suffix, std::string potential_separator);
 };
 
 

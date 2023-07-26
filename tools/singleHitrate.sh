@@ -42,23 +42,24 @@ action() {
         mkdir -p $OUTDIR
     fi
 
-    for hitrate in $(LANG=en_UK seq 0.0 0.1 1.0)
-    do 
-        dc-sim --platform "$PLATFORM" \
-            --hitrate ${hitrate} \
-            --duplications $DUPLICATIONS \
-            --xrd-blocksize $XRD_BLOCKSIZE \
-            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
-            --cfg=network/loopback-bw:100000000000000 \
-            --storage-buffer-size $STORAGE_BUFFER_SIZE \
-            --no-caching \
-            --workload-configurations "$WORKLOAD" \
-            --dataset-configurations "$DATASET" #\
-            # --no-streaming \
-            # --wrench-full-log
-            # --log=simple_wms.threshold=debug \
-            # --log=cache_computation.threshold=debug
-    done
+    local hitrate=0.5
+    dc-sim --platform "$PLATFORM" \
+        --hitrate ${hitrate} \
+        --duplications $DUPLICATIONS \
+        --xrd-blocksize $XRD_BLOCKSIZE \
+        --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
+        --cfg=network/loopback-bw:100000000000000 \
+        --storage-buffer-size $STORAGE_BUFFER_SIZE \
+        --no-caching \
+        --workload-configurations "$WORKLOAD" \
+        --dataset-configurations "$DATASET" \
+        --log=simple_wms.threshold=debug \
+        --log=streamed_computation.threshold=debug \
+        --wrench-no-color \
+        &> hitratelog-dataset
+        # --wrench-full-log
+        # --no-streaming \
+        # --log=cache_computation.threshold=debug
 }
 
 action "$@"

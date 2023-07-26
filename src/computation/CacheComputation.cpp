@@ -90,7 +90,8 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         // If yes, we're done
         if (source_ss) {
             SimpleSimulator::global_file_map[source_ss].touchFile(f.get());
-            this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
+            // this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
+            file_sources.emplace_back(std::make_pair(f, wrench::FileLocation::LOCATION(source_ss, f)));
             continue;
         }
         // If not, then we have to copy the file from some GRID source to some reachable cache storage service
@@ -148,7 +149,8 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
 
         }
 
-        this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
+        // this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
+        file_sources.emplace_back(std::make_pair(f, wrench::FileLocation::LOCATION(source_ss, f)));
     }
 
     // Fill monitoring information

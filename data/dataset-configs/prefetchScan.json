@@ -1,0 +1,92 @@
+{
+  "Analysis_T1":{
+    "location":"GridKA_dCache",
+    "num_files":480,
+    "filesize": {
+            "type": "histogram",
+            "counts": [208159, 967, 701, 447, 270, 154, 72, 31, 38, 6],
+            "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  },
+  "Digi_T1":{
+    "location":"GridKA_dCache",
+    "num_files":500,
+    "filesize": {
+        "type": "histogram",
+        "counts": [157564, 3767, 32275, 353, 25151, 89, 0, 0, 759, 0],
+        "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  },
+  "DataProcessing_T1":{
+    "location":"GridKA_dCache",
+    "num_files":130,
+    "filesize": {
+        "type":"histogram",
+        "counts": [54197, 1801, 0, 0, 0, 0, 0, 0, 0, 0],
+        "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  },
+  "Others_T1":{
+    "location":"GridKA_dCache",
+    "num_files":10,
+    "filesize": {
+        "type":"histogram",
+        "counts": [687, 102, 6, 0, 0, 0, 0, 0, 0, 0],
+        "bins": [0, 3e+09, 6e+09, 9e+09, 1.2e+10, 1.5e+10, 1.8e+10, 2.1e+10, 2.4e+10, 2.7e+10, 3e+10]
+    }
+  },
+  "Merge_T1":{
+    "location":"GridKA_dCache",
+    "num_files":50,
+    "filesize": {
+        "type":"histogram",
+        "counts": [23054, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  },
+  "Analysis_T2":{
+    "location":"GridKA_dCache",
+    "num_files":1080,
+    "filesize": {
+        "type": "histogram",
+        "counts": [456792, 10442, 1316, 6796, 581, 121, 91, 0, 19, 19],
+        "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  },
+  "Digi_T2":{
+    "location":"GridKA_dCache",
+    "num_files":740,
+    "filesize": {
+        "type": "histogram",
+        "counts": [323934, 2694, 91, 0, 0, 0, 0, 0, 0, 0],
+        "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  },
+  "DataProcessing_T2":{
+    "location":"GridKA_dCache",
+    "num_files":110,
+    "filesize": {
+        "type":"histogram",
+        "counts": [48846, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  },
+  "Others_T2":{
+    "location":"GridKA_dCache",
+    "num_files":10,
+    "filesize": {
+        "type":"histogram",
+        "counts": [1733, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "bins": [0, 3e+09, 6e+09, 9e+09, 1.2e+10, 1.5e+10, 1.8e+10, 2.1e+10, 2.4e+10, 2.7e+10, 3e+10]
+    }
+  },
+  "Merge_T2":{
+    "location":"GridKA_dCache",
+    "num_files":40,
+    "filesize": {
+        "type":"histogram",
+        "counts": [18627, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
+    }
+  }
+}
