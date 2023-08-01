@@ -33,17 +33,20 @@ hitrates=re.split(',|\s|;',args.hitrates)
 
 #print(args)
 extractedResults=[]
-def randomItteration(args, i, hitrates,xblock,nblock,generator):
-	speed = pow(2, randomSample(args.speed[0], args.speed[1],generator))
-	read = pow(2, randomSample(args.read_bandwidth[0], args.read_bandwidth[1],generator))
-	inBand = pow(2, randomSample(args.internal_link_bandwidth[0], args.internal_link_bandwidth[1],generator))
-	reBand = pow(2, randomSample(args.remote_bandwidth[0], args.remote_bandwidth[1],generator))
+def randomItteration(args, i, hitrates,xblock,nblock,startTime):
+	if(time.time() - startTime < args.time):
+		generator=random.SystemRandom()
+		speed = pow(2, randomSample(args.speed[0], args.speed[1],generator))
+		read = pow(2, randomSample(args.read_bandwidth[0], args.read_bandwidth[1],generator))
+		inBand = pow(2, randomSample(args.internal_link_bandwidth[0], args.internal_link_bandwidth[1],generator))
+		reBand = pow(2, randomSample(args.remote_bandwidth[0], args.remote_bandwidth[1],generator))
 
-	#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand), end=' ')
-	v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="random")
-	#print(v)
-	return v, (speed, read, inBand, reBand),allResults,time.time()
-
+		#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand), end=' ')
+		v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="random")
+		#print(v)
+		return v, (speed, read, inBand, reBand),allResults,time.time()
+	else:
+		return float('inf'),(0,0,0,0),[],time.time()
 def parallel_random_search(args):
 	initEvaluator(args.reference)
 	dimensionality = 4
@@ -55,10 +58,10 @@ def parallel_random_search(args):
 		i = 0
 		ongoing=True
 		while ongoing:
-			generator=random.SystemRandom()
+
 			for iii in range(multiprocessing.cpu_count()*100):
 				i += 1
-				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock,generator)
+				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock,startTime)
 				results.append(result)
 			
 			if time.time() - startTime > args.time:
@@ -66,12 +69,11 @@ def parallel_random_search(args):
 					result.cancel()
 				ongoing=False
 
-			
+			allResults=0
 			for result in results:
 				global extractedResults
 				if result.cancelled():
 					continue
-				
 				v, combination,allResults,timeV = result.result()
 				extractedResults+=allResults
 				if timeV > startTime+args.time:
@@ -87,11 +89,11 @@ def parallel_random_search(args):
 					print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))
 					print(str(count)+" grid points sampled")
 
-			with open("randomSearchResults.txt", 'a') as writer:
-				extractedResultsB=extractedResults
-				extractedResults=[]
-				for result in extractedResultsB:
-					writer.write(str(result)+"\n")
+			#with open("randomSearchResults.txt", 'a') as writer:
+			#	extractedResultsB=extractedResults
+			extractedResults=[]
+			#	for result in extractedResultsB:
+			#		writer.write(str(result)+"\n")
 	print("Final Best " + str(minV) + " " + str(best))
 	print(str(count)+" grid points sampled")
 

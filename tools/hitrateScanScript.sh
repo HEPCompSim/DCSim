@@ -40,7 +40,7 @@ action() {
 
     local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
-    local OUTDIR="$parent/tmp/outputs/$UUID"
+    local OUTDIR="$UUID"
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR
     else

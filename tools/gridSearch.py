@@ -66,18 +66,20 @@ hitrates=re.split(',|\s|;',args.hitrates)
 
 
 #print(args)
-def evaluate_combination(args, val, i, hitrates,xblock,nblock):
+def evaluate_combination(args, val, i, hitrates,xblock,nblock,startTime):
+	if(time.time() - startTime < args.time):
 	
-	speedI,readI,inBandI, reBandI = val
-	speed = pow(2, interpolate(speedI, args.speed[0], args.speed[1]))
-	read = pow(2, interpolate(readI, args.read_bandwidth[0], args.read_bandwidth[1]))
-	inBand = pow(2, interpolate(inBandI, args.internal_link_bandwidth[0], args.internal_link_bandwidth[1]))
-	reBand = pow(2, interpolate(reBandI, args.remote_bandwidth[0], args.remote_bandwidth[1]))
-	#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand))
-	v,results = oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="grid")
-	#print(v)
-	return (v, (speed, read, inBand, reBand),results,time.time())
-
+		speedI,readI,inBandI, reBandI = val
+		speed = pow(2, interpolate(speedI, args.speed[0], args.speed[1]))
+		read = pow(2, interpolate(readI, args.read_bandwidth[0], args.read_bandwidth[1]))
+		inBand = pow(2, interpolate(inBandI, args.internal_link_bandwidth[0], args.internal_link_bandwidth[1]))
+		reBand = pow(2, interpolate(reBandI, args.remote_bandwidth[0], args.remote_bandwidth[1]))
+		#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand))
+		v,results = oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="grid")
+		#print(v)
+		return (v, (speed, read, inBand, reBand),results,time.time())
+	else:
+		return float('inf'),(0,0,0,0),[],time.time()
 def parallel_grid_search(args):
 	initEvaluator(args.reference)
 	dimensionality = 4
@@ -99,7 +101,7 @@ def parallel_grid_search(args):
 			for iii in range(multiprocessing.cpu_count()*100):
 				i += 1
 				val = next(ittr)
-				result = executor.submit(evaluate_combination, args, val, i, hitrates, args.xblock, args.nblock)
+				result = executor.submit(evaluate_combination, args, val, i, hitrates, args.xblock, args.nblock,startTime)
 				results.append(result)
 		
 			if time.time() - startTime > args.time:
@@ -126,11 +128,11 @@ def parallel_grid_search(args):
 					best = combination
 					print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))
 					print(str(count)+" grid points sampled")
-			with open("gridSearchResults.txt", 'a') as writer:
-				extractedResultsB=extractedResults
-				extractedResults=[]
-				for result in extractedResultsB:
-					writer.write(str(result)+"\n")
+			#with open("gridSearchResults.txt", 'a') as writer:
+			#	extractedResultsB=extractedResults
+			extractedResults=[]
+			#	for result in extractedResultsB:
+			#		writer.write(str(result)+"\n")
 	print("Final Best " + str(minV) + " " + str(best))
 	print(str(count)+" grid points sampled")
 

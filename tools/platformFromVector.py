@@ -20,4 +20,4 @@ def pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed):
 
 if __name__ == '__main__':
 	xml_file_path, cpu_speed, read_speed, link_speed, net_speed = sys.argv[1:]
-	print(pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed))
+	print(pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed)) 

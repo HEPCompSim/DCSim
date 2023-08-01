@@ -73,7 +73,7 @@ class DynamicGrad(GradMethod):
 		this.ranges=(args.speed,args.read_bandwidth, args.internal_link_bandwidth, args.remote_bandwidth)
 		this.vals=list(initialPoint)
 		this.eps=args.epsilon
-		this.eps2=args.epsilon2
+		this.eps2=args.epsilon
 		this.delta=args.delta
 		#print("\n\n\ngrad")
 		try:
@@ -148,7 +148,7 @@ class FiniteGrad(GradMethod):
 		this.vals=list(initialPoint)
 		this.eps=args.epsilon
 		
-		this.eps2=args.epsilon
+		this.eps2=args.epsilon2
 		this.delta=args.delta
 		#print("\n\n\ngrad")
 		try:
@@ -330,16 +330,16 @@ def parallel_grad_search(args):
 						minV = v
 						best = combination
 						print(str(time.time()-startTime)+" New Best " + str(minV) + " " + str(best))
-						print(str(count)+" grid points sampled")
+						print(str(count)+" gradients searched "+str(exCount)+" points sampled")
 					for thingToAppend in allResults:
 						extractedResults+=thingToAppend
-				with open(args.type+"GradientSearchResults.txt", 'a') as writer:
-					extractedResultsB=extractedResults
-					extractedResults=[]
-					for result in extractedResultsB:
-						writer.write(str(result)+"\n")
+				#with open(args.type+"GradientSearchResults.txt", 'a') as writer:
+				#	extractedResultsB=extractedResults
+				extractedResults=[]
+				#	for result in extractedResultsB:
+				#		writer.write(str(result)+"\n")
 	print("Final Best " + str(minV) + " " + str(best))
-	print(str(count)+" grid points sampled")
+	print(str(count)+" gradients searched "+str(exCount)+" points sampled")
 
 						
 							# print("New Best!")
@@ -350,9 +350,9 @@ def parallel_grad_search(args):
 # Run the parallel grad search
 try:
 	parallel_grad_search(args)
-	with open(args.type+"GradientSearchResults.txt", 'a') as writer:
-		for result in extractedResults:
-			writer.write(str(result)+"\n")
+	#with open(args.type+"GradientSearchResults.txt", 'a') as writer:
+	#	for result in extractedResults:
+	#		writer.write(str(result)+"\n")
 except KeyboardInterrupt:
 	pass
 #weird theory question: more effienct compiled lookup table
