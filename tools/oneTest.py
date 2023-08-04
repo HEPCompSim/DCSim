@@ -30,7 +30,7 @@ def evaluate(run,refference=None):
 	if(count==0):
 		return float('inf')
 	return ret/count
-def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,runtype=None):
+def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,runtype=None,remove=True):
 	hits=' '.join([str(float(i)) for i in hitrates])
 	platform=pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed)
 	if( not uniqueID is None):
@@ -45,18 +45,19 @@ def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates
 		#	print([file_path+"/hitrateScanScript.sh", "platform", hits, uniqueID, str(xblock), str(nblock)])
 		runend=time.time()
 		ret=extract(uniqueID,{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype,"clock_time":(runend-runstart)})
-		shutil.rmtree(uniqueID, ignore_errors=True)
+		if(remove):
+			shutil.rmtree(uniqueID, ignore_errors=True)
 		return ret
 	else:
 		process = subprocess.run([file_path+"/hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		return extract(file_path+"/../tmp/outputs",{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
-def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,rff_run=None,runtype=None):
-	run,allResults=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype)
+def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,rff_run=None,runtype=None,remove=True):
+	run,allResults=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype,remove)
 
 	return evaluate(run,rff_run),allResults
 def main():
 	rff_run,xml_file_path, cpu_speed, read_speed, link_speed, net_speed,xrootdBlock, nblock = sys.argv[1:]
 	initEvaluator(rff_run)
-	print(oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,list([x/10 for x in range(11)]),xrootdBlock, nblock,1)[0])
+	print(oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,list([x/10 for x in range(11)]),xrootdBlock, nblock,1,None,None,False)[0])
 if __name__ == '__main__':
 	main()
