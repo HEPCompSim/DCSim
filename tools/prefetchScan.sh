@@ -32,7 +32,7 @@ action() {
         mkdir -p $OUTDIR
     fi
 
-    for prefetchrate in $(LANG=en_US seq 0.0 0.1 1.0)
+    for prefetchrate in $(LANG=en seq 0.0 0.1 1.0)
     do 
         dc-sim --platform "$PLATFORM" \
             --hitrate ${prefetchrate} \
