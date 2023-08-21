@@ -72,7 +72,7 @@
                 <router id="KITgateway"/>
 
                 <link id="GridKA_to_KIT" bandwidth="1150Mbps" latency="0us"/>
-                <link id="KIT_to_DESY" bandwidth="1150Mbps" latency="0us"/>
+                <link id="KIT_to_DESY" bandwidth="115Mbps" latency="0us"/>
             
             </zone>
 
