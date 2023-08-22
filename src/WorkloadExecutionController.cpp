@@ -35,16 +35,15 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(simple_wms, "Log category for WorkloadExecutionCont
  *  
  */
 WorkloadExecutionController::WorkloadExecutionController(
-        const Workload& workload_spec,
-        const std::set<std::shared_ptr<wrench::HTCondorComputeService>>& htcondor_compute_services,
-        const std::set<std::shared_ptr<wrench::StorageService>>& grid_storage_services,
-        const std::set<std::shared_ptr<wrench::StorageService>>& cache_storage_services,
-        const std::string& hostname,
-        const std::string& outputdump_name,
-        const bool& shuffle_jobs, const std::mt19937& generator) : wrench::ExecutionController(
-        hostname,
-        "condor-simple") {
-    for (auto& job_spec: workload_spec.job_batch) {
+        const Workload &workload_spec,
+        const std::set<std::shared_ptr<wrench::HTCondorComputeService>> &htcondor_compute_services,
+        const std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+        const std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+        const std::string &hostname,
+        const std::string &outputdump_name,
+        const bool &shuffle_jobs, const std::mt19937 &generator) : wrench::ExecutionController(hostname,
+                                                                                               "condor-simple") {
+    for (auto &job_spec: workload_spec.job_batch) {
         this->workload_spec[job_spec.jobid] = job_spec;
     }
     this->arrival_time = workload_spec.submit_arrival_time;
@@ -98,12 +97,12 @@ int WorkloadExecutionController::main() {
 
 
     // Shuffle jobs for submission
-    std::vector<const std::string*> job_spec_keys;
+    std::vector<const std::string *> job_spec_keys;
     job_spec_keys.reserve(this->workload_spec.size());
     for (const auto &job_name_spec: this->workload_spec) {
         job_spec_keys.push_back(&(job_name_spec.first));
     }
-    if (this->shuffle_jobs){
+    if (this->shuffle_jobs) {
         std::shuffle(job_spec_keys.begin(), job_spec_keys.end(), generator);
     }
 
@@ -120,56 +119,47 @@ int WorkloadExecutionController::main() {
         std::shared_ptr<wrench::ComputeAction> compute_action;
         if (this->workload_type == WorkloadType::Copy) {
             auto copy_computation = std::shared_ptr<CopyComputation>(
-                new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops)
-            );
+                    new CopyComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops));
 
             //? Split this into a caching file read and a standard compute action?
             // TODO: figure out what is the best value for the ability to parallelize HEP workloads on a CPU. Setting speedup to number of cores for now
             run_action = std::make_shared<MonitorAction>(
-                "copycompute_" + *job_name,
-                job_spec->total_mem, job_spec->cores,
-                *copy_computation,
-                [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                    WRENCH_INFO("Copy computation terminating");
-                }
-            );
+                    "copycompute_" + *job_name,
+                    job_spec->total_mem, job_spec->cores,
+                    *copy_computation,
+                    [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                        WRENCH_INFO("Copy computation terminating");
+                    });
             job->addCustomAction(run_action);
-        }
-        else if (this->workload_type == WorkloadType::Streaming){
+        } else if (this->workload_type == WorkloadType::Streaming) {
             auto streamed_computation = std::shared_ptr<StreamedComputation>(
-                new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops, SimpleSimulator::prefetching_on)
-            );
+                    new StreamedComputation(this->cache_storage_services, this->grid_storage_services, job_spec->infiles, job_spec->total_flops, SimpleSimulator::prefetching_on));
 
             // TODO: figure out what is the best value for the ability to parallelize HEP workloads on a CPU. Setting speedup to number of cores for now
             run_action = std::make_shared<MonitorAction>(
-                "streaming_" + *job_name,
-                job_spec->total_mem, job_spec->cores,
-                *streamed_computation,
-                [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
-                    WRENCH_INFO("Streaming computation terminating");
-                    // Do nothing
-                }
-            );
+                    "streaming_" + *job_name,
+                    job_spec->total_mem, job_spec->cores,
+                    *streamed_computation,
+                    [](std::shared_ptr<wrench::ActionExecutor> action_executor) {
+                        WRENCH_INFO("Streaming computation terminating");
+                        // Do nothing
+                    });
             job->addCustomAction(run_action);
-        }
-        else if (this->workload_type == WorkloadType::Calculation) {
+        } else if (this->workload_type == WorkloadType::Calculation) {
             // TODO: figure out what is the best value for the ability to parallelize HEP workloads on a CPU. Setting speedup to number of cores for now
             compute_action = job->addComputeAction(
-                "calculation_" + *job_name,
-                job_spec->total_flops, job_spec->total_mem,
-                job_spec->cores, job_spec->cores,
-                wrench::ParallelModel::CONSTANTEFFICIENCY(1.0)
-            );
-        }
-        else {
+                    "calculation_" + *job_name,
+                    job_spec->total_flops, job_spec->total_mem,
+                    job_spec->cores, job_spec->cores,
+                    wrench::ParallelModel::CONSTANTEFFICIENCY(1.0));
+        } else {
             throw std::runtime_error("WorkloadType::" + workload_type_to_string(this->workload_type) + "not implemented!");
         }
 
         // Create the file write action
         auto fw_action = job->addFileWriteAction(
-            "file_write_" + *job_name,
-            job_spec->outfile_destination
-        );
+                "file_write_" + *job_name,
+                job_spec->outfile_destination);
         // //TODO: Think of a determination of storage_service to hold output data
         // // auto fw_action = job->addCustomAction(
         // //     "file_write_" + *job_name,
@@ -189,8 +179,7 @@ int WorkloadExecutionController::main() {
         // Add necessary dependencies
         if (this->workload_type == WorkloadType::Streaming || this->workload_type == WorkloadType::Copy) {
             job->addActionDependency(run_action, fw_action);
-        }
-        else if (this->workload_type == WorkloadType::Calculation) {
+        } else if (this->workload_type == WorkloadType::Calculation) {
             job->addActionDependency(compute_action, fw_action);
         }
 
@@ -198,13 +187,11 @@ int WorkloadExecutionController::main() {
         //TODO: generalize to arbitrary numbers of htcondor services
         job_manager->submitJob(job, htcondor_compute_service);
         WRENCH_INFO("Submitted job %s", job->getName().c_str());
-
     }
 
     WRENCH_INFO(
-        "Job manager %s: Done with creation/submission of all compound jobs on host %s", 
-        job_manager->getName().c_str(), job_manager->getHostname().c_str()
-    );
+            "Job manager %s: Done with creation/submission of all compound jobs on host %s",
+            job_manager->getName().c_str(), job_manager->getHostname().c_str());
 
 
     this->num_completed_jobs = 0;
@@ -225,9 +212,9 @@ int WorkloadExecutionController::main() {
     wrench::Simulation::sleep(10);
 
     WRENCH_INFO("--------------------------------------------------------");
-    if (this->workload_spec.size() == 0){
+    if (this->workload_spec.size() == 0) {
         WRENCH_INFO("Workload execution on %s is complete!", this->getHostname().c_str());
-    } else{
+    } else {
         WRENCH_INFO("Workload execution on %s is incomplete!", this->getHostname().c_str());
     }
 
@@ -283,17 +270,16 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
     bool found_computation_action = false;
 
     // Figure out timings
-    for (auto const &action : event->job->getActions()) {
+    for (auto const &action: event->job->getActions()) {
         double start_date = action->getStartDate();
         double end_date = action->getEndDate();
         global_start_date = std::min<double>(global_start_date, start_date);
         global_end_date = std::max<double>(global_end_date, end_date);
         if (start_date < 0. || end_date < 0.) {
             throw std::runtime_error(
-                "Start date " + std::to_string(start_date) +
-                " or end date " + std::to_string(end_date) + 
-                " of action " + action->getName() + " out of scope!"
-            );
+                    "Start date " + std::to_string(start_date) +
+                    " or end date " + std::to_string(end_date) +
+                    " of action " + action->getName() + " out of scope!");
         }
         double elapsed = end_date - start_date;
         WRENCH_DEBUG("Analyzing action: %s, started in s: %.2f, ended in s: %.2f, elapsed in s: %.2f", action->getName().c_str(), start_date, end_date, elapsed);
@@ -312,39 +298,33 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
                 hitrate = monitor_action->get_hitrate();
             } else {
                 throw std::runtime_error(
-                    "Some of the job information for action " + monitor_action->getName() +
-                    " has already been filled. Abort!"
-                );
+                        "Some of the job information for action " + monitor_action->getName() +
+                        " has already been filled. Abort!");
             }
         } else if (auto file_write_action = std::dynamic_pointer_cast<wrench::FileWriteAction>(action)) {
             if (end_date >= start_date) {
                 incr_outfile_transfertime += end_date - start_date;
             } else {
                 throw std::runtime_error(
-                    "Writing outputfile " + this->workload_spec[event->job->getName()].outfile->getID() + 
-                    " for job " + event->job->getName() + " finished before start!"
-                );
+                        "Writing outputfile " + this->workload_spec[event->job->getName()].outfile->getID() +
+                        " for job " + event->job->getName() + " finished before start!");
             }
-        }
-        else if (auto compute_action = std::dynamic_pointer_cast<wrench::ComputeAction>(action)) {
+        } else if (auto compute_action = std::dynamic_pointer_cast<wrench::ComputeAction>(action)) {
             if (end_date >= start_date) {
-                if(incr_compute_time == DefaultValues::UndefinedDouble){
+                if (incr_compute_time == DefaultValues::UndefinedDouble) {
                     incr_compute_time = end_date - start_date;
-                }
-                else {
+                } else {
                     incr_compute_time += end_date - start_date;
                 }
-            }
-            else {
+            } else {
                 throw std::runtime_error(
-                    "Computation for job " + event->job->getName() + " finished before start!"
-                );
+                        "Computation for job " + event->job->getName() + " finished before start!");
             }
         }
     }
 
     // Figure out file sizes
-    for (auto const &f : this->workload_spec[event->job->getName()].infiles) {
+    for (auto const &f: this->workload_spec[event->job->getName()].infiles) {
         incr_infile_size += f->getSize();
     }
     incr_outfile_size += this->workload_spec[event->job->getName()].outfile->getSize();
@@ -356,22 +336,20 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
     this->filedump.open(this->filename, ios::out | ios::app);
     if (this->filedump.is_open()) {
 
-        this->filedump << event->job->getName() << ", "; 
-        // << std::to_string(job->getMinimumRequiredNumCores()) << ", " 
-        // << std::to_string(job->getMinimumRequiredMemory()) << ", " 
+        this->filedump << event->job->getName() << ", ";
+        // << std::to_string(job->getMinimumRequiredNumCores()) << ", "
+        // << std::to_string(job->getMinimumRequiredMemory()) << ", "
         // << /*TODO: find a way to get disk usage on scratch space */ << ", ";
         this->filedump << execution_host << ", " << hitrate << ", ";
         this->filedump << std::to_string(global_start_date) << ", " << std::to_string(global_end_date) << ", ";
-        this->filedump << std::to_string(incr_compute_time) << ", " << std::to_string(flops) << ", " ;
-        this->filedump << std::to_string(incr_infile_transfertime) << ", " << std::to_string(incr_infile_size) << ", " ;
+        this->filedump << std::to_string(incr_compute_time) << ", " << std::to_string(flops) << ", ";
+        this->filedump << std::to_string(incr_infile_transfertime) << ", " << std::to_string(incr_infile_size) << ", ";
         this->filedump << std::to_string(incr_outfile_transfertime) << ", " << std::to_string(incr_outfile_size) << std::endl;
 
         this->filedump.close();
 
         WRENCH_INFO("Information for job %s has been dumped into file %s", event->job->getName().c_str(), this->filename.c_str());
-    }
-    else {
+    } else {
         throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
     }
-
 }

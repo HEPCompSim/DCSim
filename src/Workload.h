@@ -13,32 +13,29 @@
 #include <boost/algorithm/string/case_conv.hpp>
 
 
-#define WORKLOAD_TYPES( F ) \
-    F(Calculation) \
-    F(Streaming) \
+#define WORKLOAD_TYPES(F) \
+    F(Calculation)        \
+    F(Streaming)          \
     F(Copy)
 
-#define F(type) type ,
-enum WorkloadType { WORKLOAD_TYPES( F ) NumWorkloadTypes };
+#define F(type) type,
+enum WorkloadType { WORKLOAD_TYPES(F) NumWorkloadTypes };
 #undef F
 
-std::string workload_type_to_string( WorkloadType );
+std::string workload_type_to_string(WorkloadType);
 // WorkloadType string_to_workload_type( const std::string& );
 
 
 // enum class WorkloadType {Calculation, Streaming, Copy};
 
 inline WorkloadType get_workload_type(std::string wfname) {
-    if(wfname == "calculation") {
+    if (wfname == "calculation") {
         return WorkloadType::Calculation;
-    }
-    else if (wfname == "streaming") {
+    } else if (wfname == "streaming") {
         return WorkloadType::Streaming;
-    }
-    else if (wfname == "copy") {
+    } else if (wfname == "copy") {
         return WorkloadType::Copy;
-    }
-    else {
+    } else {
         throw std::runtime_error("Workload type " + wfname + " invalid. Please choose 'calculation', 'streaming', or 'copy'");
     }
 }
@@ -52,42 +49,41 @@ inline WorkloadType get_workload_type(std::string wfname) {
 
 
 class Workload {
-    public:
-        // Constructor
-        Workload(
+public:
+    // Constructor
+    Workload(
             const size_t num_jobs,
             nlohmann::json cores,
             nlohmann::json flops,
             nlohmann::json memory,
             nlohmann::json outfile_size,
             const WorkloadType workload_type, const std::string name_suffix,
-            const double arrival_time, const std::mt19937& generator,
-            const std::vector<std::string> infile_datasets={} 
-        );
+            const double arrival_time, const std::mt19937 &generator,
+            const std::vector<std::string> infile_datasets = {});
 
-        // job list with specifications
-        std::vector<JobSpecification> job_batch;
-        // Usage of block streaming
-        WorkloadType workload_type;
-        // time offset until job submission relative to simulation start time (0)
-        double submit_arrival_time;
-        // infile dataset name
-        std::vector<std::string> infile_datasets;
-        void assignFiles(std::vector<Dataset> const &);
+    // job list with specifications
+    std::vector<JobSpecification> job_batch;
+    // Usage of block streaming
+    WorkloadType workload_type;
+    // time offset until job submission relative to simulation start time (0)
+    double submit_arrival_time;
+    // infile dataset name
+    std::vector<std::string> infile_datasets;
+    void assignFiles(std::vector<Dataset> const &);
 
-    private:
-        /** @brief generator to shuffle jobs **/
-        std::mt19937 generator;
-        std::function<int(std::mt19937&)> core_dist;
-        std::function<double(std::mt19937&)> flops_dist;
-        std::function<double(std::mt19937&)> mem_dist;
-        std::function<double(std::mt19937&)> outsize_dist;
+private:
+    /** @brief generator to shuffle jobs **/
+    std::mt19937 generator;
+    std::function<int(std::mt19937 &)> core_dist;
+    std::function<double(std::mt19937 &)> flops_dist;
+    std::function<double(std::mt19937 &)> mem_dist;
+    std::function<double(std::mt19937 &)> outsize_dist;
 
-        std::function<int(std::mt19937&)> initializeIntRNG(nlohmann::json json);
-        std::function<double(std::mt19937&)> initializeDoubleRNG(nlohmann::json json);
+    std::function<int(std::mt19937 &)> initializeIntRNG(nlohmann::json json);
+    std::function<double(std::mt19937 &)> initializeDoubleRNG(nlohmann::json json);
 
-        JobSpecification sampleJob(const size_t job_id, std::string name_suffix, std::string potential_separator);
+    JobSpecification sampleJob(const size_t job_id, std::string name_suffix, std::string potential_separator);
 };
 
 
-#endif //S_WORKLOAD_H
+#endif//S_WORKLOAD_H

@@ -13,14 +13,13 @@
  * @throw std::runtime_error
  */
 Dataset::Dataset(
-    const std::vector<std::string> hostnames, const double num_files,
-    nlohmann::json file_size,
-    const std::string name_suffix,
-    const std::mt19937 &generator)
-{
+        const std::vector<std::string> hostnames, const double num_files,
+        nlohmann::json file_size,
+        const std::string name_suffix,
+        const std::mt19937 &generator) {
     this->generator = generator;
-        std::string potential_separator = "_";
-    if(name_suffix == ""){
+    std::string potential_separator = "_";
+    if (name_suffix == "") {
         potential_separator = "";
     }
 
@@ -35,22 +34,22 @@ Dataset::Dataset(
     this->name = name_suffix;
 }
 
-std::function<double(std::mt19937&)> Dataset::initializeRNG(nlohmann::json json) {
+std::function<double(std::mt19937 &)> Dataset::initializeRNG(nlohmann::json json) {
     std::cerr << json["type"] << ": ";
-    std::function<double(std::mt19937&)> dist;
-    if(json["type"].get<std::string>()=="gaussian") {
+    std::function<double(std::mt19937 &)> dist;
+    if (json["type"].get<std::string>() == "gaussian") {
         double ave = json["average"].get<double>();
         double sigma = json["sigma"].get<double>();
-        std::cerr << "ave: "<< ave << ", stddev: " << sigma << std::endl;
-        dist = [ave, sigma](std::mt19937& generator){
+        std::cerr << "ave: " << ave << ", stddev: " << sigma << std::endl;
+        dist = [ave, sigma](std::mt19937 &generator) {
             return std::normal_distribution<double>(ave, sigma)(generator);
         };
-    } else if(json["type"].get<std::string>()=="histogram") {
+    } else if (json["type"].get<std::string>() == "histogram") {
         auto bins = json["bins"].get<std::vector<double>>();
         auto weights = json["counts"].get<std::vector<int>>();
         std::cerr << "bins: " << json["bins"] << ", weights: " << json["counts"] << std::endl;
-        dist = [bins, weights](std::mt19937& generator){
-            return std::piecewise_constant_distribution<double>(bins.begin(),bins.end(),weights.begin())(generator);
+        dist = [bins, weights](std::mt19937 &generator) {
+            return std::piecewise_constant_distribution<double>(bins.begin(), bins.end(), weights.begin())(generator);
         };
     } else {
         throw std::runtime_error("Random number generation for type " + json["type"].get<std::string>() + " not implemented!");

@@ -11,16 +11,14 @@ class CopyComputation : public CacheComputation {
 
 public:
     CopyComputation(
-        std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
-        std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
-        std::vector<std::shared_ptr<wrench::DataFile>> &files,
-        double total_flops
-    );
+            std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+            std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+            std::vector<std::shared_ptr<wrench::DataFile>> &files,
+            double total_flops);
 
     void performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) override;
 
 private:
-
 };
 
-#endif //S_COPYCOMPUTATION_H
+#endif//S_COPYCOMPUTATION_H

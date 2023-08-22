@@ -13,7 +13,7 @@ public:
      * 
      * @param file 
      */
-    void touchFile(wrench::DataFile  *file) {
+    void touchFile(wrench::DataFile *file) {
         // If the file is new, then it's easy
         if (this->indexed_files.find(file) == this->indexed_files.end()) {
             this->indexed_files[file] = 0;
@@ -56,7 +56,6 @@ private:
     std::map<wrench::DataFile *, ssize_t> indexed_files;
     // Ordered list of files in file collection -- front is most recently used.
     std::vector<wrench::DataFile *> lru_list;
-
 };
 
-#endif //S_LRU_FILELIST_H
+#endif//S_LRU_FILELIST_H

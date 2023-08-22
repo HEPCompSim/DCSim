@@ -15,15 +15,13 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(copy_computation, "Log category for CopyComputation
  * @param total_flops Total #FLOPS of the whole compute action of the job
  */
 CopyComputation::CopyComputation(
-    std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
-    std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
-    std::vector<std::shared_ptr<wrench::DataFile>> &files,
-    double total_flops) : CacheComputation::CacheComputation(
-        cache_storage_services,
-        grid_storage_services,
-        files,
-        total_flops
-    ) {}
+        std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+        std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+        std::vector<std::shared_ptr<wrench::DataFile>> &files,
+        double total_flops) : CacheComputation::CacheComputation(cache_storage_services,
+                                                                 grid_storage_services,
+                                                                 files,
+                                                                 total_flops) {}
 
 /**
  * @brief Perform the computation within the simulation of the job.
@@ -33,7 +31,7 @@ CopyComputation::CopyComputation(
  */
 void CopyComputation::performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) {
 
-    auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction()); // executed action
+    auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction());// executed action
 
     double infile_transfer_time = 0.;
     double compute_time = 0.;
@@ -43,7 +41,7 @@ void CopyComputation::performComputation(std::shared_ptr<wrench::ActionExecutor>
     double total_data_size = this->total_data_size;
     // Read all input files before computation
     double data_size = 0;
-    for (auto const &fs : this->file_sources) {
+    for (auto const &fs: this->file_sources) {
         WRENCH_INFO("Reading file %s from storage service on host %s",
                     fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
 
@@ -56,11 +54,10 @@ void CopyComputation::performComputation(std::shared_ptr<wrench::ActionExecutor>
             infile_transfer_time += read_end_time - read_start_time;
         } else {
             throw std::runtime_error(
-                "Reading file " + fs.first->getID() + " finished before it started!"
-            );
+                    "Reading file " + fs.first->getID() + " finished before it started!");
         }
     }
-    if (! (std::abs(data_size-total_data_size) < 1.)) {
+    if (!(std::abs(data_size - total_data_size) < 1.)) {
         throw std::runtime_error("Something went wrong in the data size computation!");
     }
 
@@ -75,12 +72,10 @@ void CopyComputation::performComputation(std::shared_ptr<wrench::ActionExecutor>
         compute_time += compute_end_time - compute_start_time;
     } else {
         throw std::runtime_error(
-            "Computing job " + the_action->getJob()->getName() + " finished before it started!"
-        );
+                "Computing job " + the_action->getJob()->getName() + " finished before it started!");
     }
 
     // Fill monitoring information
     the_action->set_infile_transfer_time(infile_transfer_time);
     the_action->set_calculation_time(compute_time);
 }
-
