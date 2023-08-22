@@ -61,24 +61,18 @@ to see all possible execution options.
 
 Mandatory parameters are a platform file and a path and name for the resulting simulation output CSV-file:
 ```bash
-dc-sim -p <platform-file> -o <output-path>
+dc-sim -p <platform-file> -o <output-path> --workload-configurations <path_to_workload_json> --dataset-configurations <path_to_dataset_json>
 ```
 The platform file has to follow the [SimGrid-defined DTD](https://simgrid.org/doc/latest/Platform.html).
 Example files can be found in `data/platform-files`.
 The output-path can be any relative or absolute path of your file-system where you are allowed to write to.
-Instead of manually setting up all workload parameters via command line options, 
-there is also the option to provide a JSON file, which contains all necessary information about one or multiple workloads by adding the option:
-```bash
---workload-configurations <path_to_workload_json>
-```
-The workloads have to contain the full information. 
-Opposed to as it would be set via the command line, where only gaussian distributed job characteristics are supported, in the workload file also distributions according to a histogram can be used.
-An example for a workload mixing both gaussian and histogram distributions of its job characteristics would be, e.g.:
+Instead of manually setting up all workload and dataset parameters, JSON files can be provided, which contains all necessary information
+
+An example for a workload mixing both gaussian and histogram distributions for its job characteristics would be, e.g.:
 ```json
 {
     "calc_workload": {
         "num_jobs": 60,
-        "infiles_per_job": 0,
         "flops": {
             "type": "histogram",
             "bins": [1164428000000,2164428000000,3164428000000],
@@ -89,20 +83,44 @@ An example for a workload mixing both gaussian and histogram distributions of it
             "average": 2000000000,
             "sigma": 200000000
         },
-        "infilesize": {
-            "type": "gaussian",
-            "average": 0,
-            "sigma": 0
-        },
         "outfilesize": {
             "type": "gaussian",
             "average": 18000000,
             "sigma": 1800000
         },
         "workload_type": "calculation",
-        "submission_time": 0
+        "submission_time": 0,
+        "infile_dataset": "calc_dataset"
     }
 }
 ```
 It is also possible to give a list of workload configuration files and configure more than one workload per file, which enables to simulate the execution of multiple sets of workloads in the same simulation run.
-Example configurations covering different workload-types is given in `data/workload-configs/workload_testsuite.json`.
+Example configurations covering different workload-types is given in `data/workload-configs/`.
+
+The dataset configuration file must contain location of the data, number of files in the dataset and file size, defined as a distribution.
+An example for a dataset mixing would be, e.g.:
+
+```json
+{
+  "calc_dataset": {
+      "location":["RemoteStorage"],
+      "num_files": 0,
+      "filesize": {
+        "type": "gaussian",
+        "average": 0,
+        "sigma": 0
+    }
+  },
+  "second_dataset": {
+      "location":["FirstHost", "SecondHost"],
+      "num_files": 100,
+      "filesize": {
+        "type": "histogram",
+        "counts": [210319, 577, 0],
+        "bins": [0, 20, 40, 60]
+    }
+  }
+}
+```
+
+Example configurations covering different dataset-types are given in `data/dataset-configs/`.
