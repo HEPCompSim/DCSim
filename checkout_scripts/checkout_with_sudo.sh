@@ -135,3 +135,5 @@ cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j "$num_procs"; sudo make install
 popd
+
+sudo ldconfig
