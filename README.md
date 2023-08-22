@@ -66,7 +66,7 @@ dc-sim -p <platform-file> -o <output-path> --workload-configurations <path_to_wo
 The platform file has to follow the [SimGrid-defined DTD](https://simgrid.org/doc/latest/Platform.html).
 Example files can be found in `data/platform-files`.
 The output-path can be any relative or absolute path of your file-system where you are allowed to write to.
-Instead of manually setting up all workload and dataset parameters, JSON files can be provided, which contains all necessary information
+Instead of manually setting up all workload and dataset parameters, JSON files can be provided, which contain all necessary information
 
 An example for a workload mixing both gaussian and histogram distributions for its job characteristics would be, e.g.:
 ```json
@@ -95,9 +95,9 @@ An example for a workload mixing both gaussian and histogram distributions for i
 }
 ```
 It is also possible to give a list of workload configuration files and configure more than one workload per file, which enables to simulate the execution of multiple sets of workloads in the same simulation run.
-Example configurations covering different workload-types is given in `data/workload-configs/`.
+Example configurations covering different workload-types are given in `data/workload-configs/`.
 
-The dataset configuration file must contain location of the data, number of files in the dataset and file size, defined as a distribution.
+The dataset configuration file must contain locations of the data, number of files in the dataset and file sizes, defined via a probability distribution.
 An example for a dataset mixing would be, e.g.:
 
 ```json
