@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/397257162.svg)](https://zenodo.org/badge/latestdoi/397257162)
+
 # DistCacheSim
 
 Simulator for the simulation of high energy physics workloads on distributed computing systems with caching.
