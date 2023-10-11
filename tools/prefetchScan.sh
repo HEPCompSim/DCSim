@@ -15,43 +15,33 @@ action() {
     local base="$( cd "$( dirname "$this_file" )" && pwd )"
     local parent="$( dirname "$base" )"
 
-    local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
-    local WORKLOAD="$parent/data/workload-configs/crown_ttbar_validation.json"
-
-    # local NJOBS=1
-    # local NINFILES=20 #10
-    # local AVGINSIZE=$(bc -l <<< "8554379000 / ${NINFILES}")
-    # local AVGOUTSIZE=16000000
-    # local FLOPS=$(bc -l <<< "1.95*1480*1000*1000*1000")
-    # local MEM=2400
-    # local SIGMA_FLOPS=0
-    # local SIGMA_MEM=0
-    # local SIGMA_INSIZE=0
-    # local SIGMA_OUTSIZE=0
-
-    local DUPLICATIONS=48
+    local PLATFORM="$parent/data/platform-files/WLCG_disklessTier2_reduced100.xml"
+    # local PLATFORM="$parent/data/platform-files/WLCG_disklessTier2_reduced1000.xml"
+    # local WORKLOADS="$parent/data/workload-configs/Dummy_workloads.json $parent/data/workload-configs/T?_DE_*_workloads.json"
+    local WORKLOADS="$parent/data/workload-configs/T?_DE_*_workloads.json"
 
     local XRD_BLOCKSIZE=100000000
-    local STORAGE_BUFFER_SIZE=1048576
+    local STORAGE_BUFFER_SIZE=0 #1048576
 
-    local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
+    local SCENARIO="prefetchScanScaled100"
+    # local SCENARIO="prefetchScanScaled1000"
 
-    local OUTDIR="$parent/tmp/outputs"
+    local OUTDIR="$parent/tmp/outputs/WLCG"
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR
     fi
 
-    for hitrate in $(LANG=en_UK seq 0.0 0.1 1.0)
+    for prefetchrate in $(LANG=en_US seq 0.0 0.1 1.0)
     do 
         dc-sim --platform "$PLATFORM" \
-            --hitrate ${hitrate} \
-            --duplications $DUPLICATIONS \
+            --hitrate ${prefetchrate} \
             --xrd-blocksize $XRD_BLOCKSIZE \
-            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
+            --output-file ${OUTDIR}/${SCENARIO}_rate${prefetchrate}.csv \
             --cfg=network/loopback-bw:100000000000000 \
             --storage-buffer-size $STORAGE_BUFFER_SIZE \
+            --cache-scope network \
             --no-caching \
-            --workload-configurations "$WORKLOAD" #\
+            --workload-configurations $WORKLOADS #\
             # --no-streaming \
             # --wrench-full-log
             # --log=simple_wms.threshold=debug \

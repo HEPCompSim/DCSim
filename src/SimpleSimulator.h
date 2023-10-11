@@ -32,6 +32,8 @@ public:
     static double xrd_block_size;
     static std::mt19937 gen;
 
+    // Cores required
+    static int req_cores;
     // Flops distribution
     static double mean_flops;
     static double sigma_flops;

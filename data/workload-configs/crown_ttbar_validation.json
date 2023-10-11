@@ -2,6 +2,10 @@
     "crown_ttbar_validation": {
         "num_jobs": 1,
         "infiles_per_job": 20,
+        "cores": {
+            "type": "histogram",
+            "counts": [0,1]
+        },
         "flops": {
             "type": "gaussian",
             "average": 2886000000000,
