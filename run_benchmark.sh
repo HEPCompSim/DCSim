@@ -14,4 +14,6 @@ PLATFORM="${2}"
         --outsize 50000000 --sigma-outsize 1000000 \
         --xrd-blocksize 1000000 \
         --storage-buffer-size 0 \
-        --output-file /dev/null
+        --output-file /dev/null \
+	--wrench-default-control-message-size=0
+
