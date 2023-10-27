@@ -244,6 +244,8 @@ po::variables_map process_program_options(int argc, char **argv) {
     double xrd_block_size = 1000. * 1000 * 1000;
     std::string storage_service_buffer_size = "1048576";// 1MiB
 
+    unsigned int random_seed = 42;
+
     po::options_description desc("Allowed options");
     auto op = desc.add_options();
     op("help,h", "show brief usage message\n");
@@ -254,6 +256,7 @@ po::variables_map process_program_options(int argc, char **argv) {
     op("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation");
     op("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data");
     op("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks");
+    op("random-seed,s", po::value<unsigned int>()->default_value(random_seed), "Set the seed for the random generation");
 
     po::variables_map vm;
     po::store(
@@ -460,6 +463,11 @@ int main(int argc, char **argv) {
             rec_netzone_caches = true;
         }
     }
+
+    /* Set random seed */
+
+    unsigned int random_seed = vm["random-seed"].as<unsigned int>();
+    SimpleSimulator::gen.seed(random_seed);
 
     /* Create datasets */
 
