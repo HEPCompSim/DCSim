@@ -58,7 +58,8 @@ action() {
             --cfg=network/loopback-bw:100000000000000 \
             --no-caching \
             --workload-configurations "$WORKLOAD" \
-            --storage-buffer-size $BUFFER_SIZE
+            --storage-buffer-size $BUFFER_SIZE \
+	    --wrench-default-control-message-size=0
             # --njobs $NJOBS \
             # --ninfiles $NINFILES \
             # --insize $AVGINSIZE \
