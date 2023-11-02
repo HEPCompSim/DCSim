@@ -7,7 +7,10 @@ add_definitions("-Wall -Wno-unused-variable -Wno-unused-private-field")
 
 set(CMAKE_CXX_STANDARD 17)
 
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
+
+add_definitions("-DBOOST_ALLOW_DEPRECATED_HEADERS")
 
 find_package(SimGrid REQUIRED)
 find_package(Boost COMPONENTS program_options regex REQUIRED)
@@ -59,6 +62,7 @@ find_library(SimGrid_LIBRARY NAMES simgrid)
 
 # generating the executable
 add_executable(dc-sim ${SOURCE_FILES})
+set_property(TARGET dc-sim PROPERTY CXX_STANDARD 17)
 
 if (ENABLE_BATSCHED)
 target_link_libraries(dc-sim
