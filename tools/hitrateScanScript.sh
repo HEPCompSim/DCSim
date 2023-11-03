@@ -10,10 +10,10 @@ action() {
 	
     local XRD_BLOCKSIZE=${4}
     local BUFFER_SIZE=${5}
-	if [ $# -lt 3 ]; then
+	if [ $# -lt 5 ]; then
 	  echo 1>&2 "$0: not enough arguments, we do not recommend running this script manually as it requires a full platform description (not path) as one of its args"
 	  exit 2
-	elif [ $# -gt 3 ]; then
+	elif [ $# -gt 5 ]; then
 	  echo 1>&2 "$0: too many arguments, we do not recommend running this script manually as it requires a full platform description (not path) as one of its args"
 	  exit 2
 	fi
