@@ -51,7 +51,7 @@ action() {
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR
     else
-    	rm $OUTDIR/*
+    	rm $OUTDIR/*.csv
     fi
 
     for hitrate in $HITRATES
