@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import os
 import time
-
+debugMode =False
 file_path = os.path.dirname(os.path.realpath(__file__))
 refferenceRun=None
 def initEvaluator(refferencePath):
@@ -36,13 +36,16 @@ def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates
 	if( not uniqueID is None):
 		uniqueID=str(os.getpid())+"_"+str(uniqueID)+"_outputs"
 		runstart=time.time()
-		process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		#process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		#if process.stderr:
-		#	print(process.stdout.decode())
-		#	print(process.stderr.decode())
-		#	print((xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype))
-		#	print([file_path+"/hitrateScanScript.sh", "platform", hits, uniqueID, str(xblock), str(nblock)])
+		if debugMode:
+			process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			if process.stderr:
+				print(process.stdout.decode())
+				print(process.stderr.decode())
+				print((xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype))
+				print([file_path+"/hitrateScanScript.sh", "platform", hits, uniqueID, str(xblock), str(nblock)])
+		else:
+			process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 		runend=time.time()
 		ret=extract(uniqueID,{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype,"clock_time":(runend-runstart)})
 		if(remove):
