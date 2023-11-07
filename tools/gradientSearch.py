@@ -72,9 +72,9 @@ class DynamicGrad(GradMethod):
 		super().__init__(stop_signal,i,hitrates,args)
 		this.ranges=(args.speed,args.read_bandwidth, args.internal_link_bandwidth, args.remote_bandwidth)
 		this.vals=list(initialPoint)
-		this.eps=args.epsilon
-		this.eps2=args.epsilon
 		this.delta=args.delta
+		this.delta2=args.delta
+		this.epsilon=args.epsilon
 		#print("\n\n\ngrad")
 		try:
 			res=this.internalEval(initialPoint,"dynamicSearch random")
@@ -96,7 +96,7 @@ class DynamicGrad(GradMethod):
 			bestArgs=list(this.currentResult[1])
 			for i in range(len(this.vals)):
 				tvals=this.vals.copy()
-				tvals[i]+=this.eps
+				tvals[i]+=this.delta
 				result=this.internalEval(tvals,"dynamicSearch gradient")
 				if(result[0]<best):
 					best=result[0]
@@ -109,13 +109,13 @@ class DynamicGrad(GradMethod):
 			
 			normalize(vector)
 			
-			trial=10*this.eps
+			trial=10*this.delta
 			while True:
 				eVal=this.vals.copy()
 				
 				for i in range(len(this.vals)):
 					eVal[i]-=vector[i]*trial
-				expected = sampleHyperplane( eVal, this.vals, this.currentResult[0], slope,this.eps)
+				expected = sampleHyperplane( eVal, this.vals, this.currentResult[0], slope,this.delta)
 				result=this.internalEval(eVal,"dynamicSearch line")
 				#print(trial,expected,result[0])
 				
@@ -124,10 +124,10 @@ class DynamicGrad(GradMethod):
 					bVals=eVal
 					bestArgs=result[1]
 				if(result[0]-expected<=1): #we dont care about subsecond timing, and it is probiably just noise
-					this.eps2=trial
+					this.delta2=trial
 					break#this will happen eventually, when trial approaches 0
 				else:
-					if(abs(expected-this.currentResult[0])/this.currentResult[0]<args.delta):#we are underperforming expected, and even expected underperfroms delta, so it is time to stop looking for a better point in this line
+					if(abs(expected-this.currentResult[0])/this.currentResult[0]<args.epsilon):#we are underperforming expected, and even expected underperfroms epsilon, so it is time to stop looking for a better point in this line
 						break
 					trial/=2
 			improvement=(abs(best-this.currentResult[0])/this.currentResult[0])
@@ -136,7 +136,7 @@ class DynamicGrad(GradMethod):
 			this.currentResult[1]=tuple(bestArgs)
 			this.vals=bVals
 		
-			if improvement<args.delta:
+			if improvement<args.epsilon:
 				return True
 			return False
 		except(GeneratorExit):
@@ -146,10 +146,10 @@ class FiniteGrad(GradMethod):
 		super().__init__(stop_signal,i,hitrates,args)
 		this.ranges=(args.speed,args.read_bandwidth, args.internal_link_bandwidth, args.remote_bandwidth)
 		this.vals=list(initialPoint)
-		this.eps=args.epsilon
-		
-		this.eps2=args.epsilon2
 		this.delta=args.delta
+		
+		this.delta2=args.delta2
+		this.epsilon=args.epsilon
 		#print("\n\n\ngrad")
 		try:
 			res=this.internalEval(initialPoint,"finiteSearch random")
@@ -170,7 +170,7 @@ class FiniteGrad(GradMethod):
 			
 			for i in range(len(this.vals)):
 				tvals=this.vals.copy()
-				tvals[i]+=this.eps2
+				tvals[i]+=this.delta2
 				result=this.internalEval(tvals,"finiteSearch gradient")
 				if(result[0]<best):
 					best=result[0]
@@ -181,13 +181,13 @@ class FiniteGrad(GradMethod):
 			
 			normalize(vector)
 			
-			trial=10*this.eps
+			trial=10*this.delta
 			while True:
 				eVal=this.vals.copy()
 				#print(trial,expected,result[0])
 				for i in range(len(this.vals)):
 					eVal[i]-=vector[i]*trial
-				expected=sampleHyperplane(eVal, this.vals, this.currentResult[0], slope,this.eps)
+				expected=sampleHyperplane(eVal, this.vals, this.currentResult[0], slope,this.delta)
 				result=this.internalEval(eVal,"dynamicSearch line")
 				#print(trial,expected,result[0])
 				
@@ -196,10 +196,10 @@ class FiniteGrad(GradMethod):
 					bVals=eVal
 					bestArgs=result[1]
 				if(result[0]-expected<=1): #we dont care about subsecond timing, and it is probiably just noise
-					this.eps=trial
+					this.delta=trial
 					break#this will happen eventually, when trial approaches 0
 				else:
-					if(abs(expected-this.currentResult[0])/this.currentResult[0]<args.delta):#we are underperforming expected, and even expected underperfroms delta, so it is time to stop looking for a better point in this line
+					if(abs(expected-this.currentResult[0])/this.currentResult[0]<args.epsilon):#we are underperforming expected, and even expected underperfroms epsilon, so it is time to stop looking for a better point in this line
 						break
 					trial/=2
 			improvement=(abs(best-this.currentResult[0])/this.currentResult[0])
@@ -207,7 +207,7 @@ class FiniteGrad(GradMethod):
 			this.currentResult[0]=best
 			this.currentResult[1]=tuple(bestArgs)
 			this.vals=bVals
-			if improvement<args.delta:
+			if improvement<args.epsilon:
 				return True
 			return False
 		except GeneratorExit:
@@ -235,15 +235,15 @@ parser.add_argument('-rb', '--read-bandwidth', nargs=2,type=float, help='host re
 
 parser.add_argument('-ilb', '--internal-link-bandwidth', nargs=2,type=float, help='internal link bandwidth range',metavar=('min', 'max'), required=True)
 parser.add_argument('-rd', '--remote-bandwidth', nargs=2,type=float, help='remote bandwidth option range',metavar=('min', 'max'), required=True)
-parser.add_argument('-e', '--epsilon', type=float, help='The initial learning rate of the gradient search', required=True)
-parser.add_argument('-e2', '--epsilon2', type=float, help="The size of the finite difference.  Only used by type 'Finite'")
-parser.add_argument('-d', '--delta', type=float, help="Each gradient stops early if the percentage difference between consecutive gradient itterations is less than delta.", required=True)
+parser.add_argument('-d', '--delta', type=float, help='The initial learning rate of the gradient search', required=True)
+parser.add_argument('-d2', '--delta2', type=float, help="The size of the finite difference.  Only used by type 'Finite'")
+parser.add_argument('-e', '--epsilon', type=float, help="Each gradient stops early if the percentage difference between consecutive gradient itterations is less than epsilon.", required=True)
 parser.add_argument('--seed', type=int, help="Seed for initial points to enable fair comparison between gradient search methods'")
-parser.add_argument( '--type', type=valid_type, help='Gradient search type.  \n\t\'Limit\' INCOMPLETE takes the limit of multiple simulations per gradient to find the truest gradient.\n\t \'Finite\' approximates the Gradient by taking 1 sample in each dimension a fixed delta out, and then moving down the gradient then moving epsilon down it.\n\t\'Dynamic\' approximates the Gradient by taking 1 sample in each dimension an epsilon out, then moving down the resulting vector.  As move distance is reduced, so is the sample radius.', required=True)
+parser.add_argument( '--type', type=valid_type, help='Gradient search type.  \n\t\'Limit\' UNIMPLEMENTED takes the limit of multiple simulations per gradient to find the truest gradient.\n\t \'Finite\' approximates the Gradient by taking 1 sample in each dimension a fixed epsilon out, and then moving down the gradient then moving epsilon down it.\n\t\'Dynamic\' approximates the Gradient by taking 1 sample in each dimension an epsilon out, then moving down the resulting vector.  As move distance is reduced, so is the sample radius.', required=True)
 
 import re
 args = parser.parse_args()
-if args.type=='finite' and not args.epsilon2:  
+if args.type=='finite' and not args.delta2:  
 	print("Epsilon 2 must be specified for finite",file=sys.stderr)
 	sys.exit()
 hitrates=re.split(',|\s|;',args.hitrates)
