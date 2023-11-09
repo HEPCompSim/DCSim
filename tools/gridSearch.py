@@ -148,7 +148,7 @@ try:
 	inBand = pow(2, (args.internal_link_bandwidth[0]+ args.internal_link_bandwidth[1])/2)
 	reBand = pow(2, (args.remote_bandwidth[0]+ args.remote_bandwidth[1])/2)
 	refStart=time.time()
-	v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,args.xblock, args.nblock,uniqueID='r',runtype="reference")
+	oneTest(args.platform, speed, read, inBand, reBand, hitrates,args.xblock, args.nblock,uniqueID='r',runtype="reference")
 	print("reference run took "+str(time.time()-refStart))
 	parallel_grid_search(args)
 	
