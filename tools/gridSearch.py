@@ -139,7 +139,9 @@ def parallel_grid_search(args):
 
 
 # Run the parallel grid search
+import platform
 try:
+	print(platform.processor())
 	print(args)
 	speed = pow(2, (args.speed[0]+args.speed[1])/2)
 	read = pow(2, (args.read_bandwidth[0]+ args.read_bandwidth[1])/2)
