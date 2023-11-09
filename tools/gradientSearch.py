@@ -255,13 +255,18 @@ def interpolate(x,minV,maxV):
 		minV,maxV=maxV,minV
 	
 	return x*(maxV-minV)+minV
+def spow(y):
+	if(y>100):
+		y=100
+	return pow(2,y);
+
 def evaluate_combination(stop_signal,args, val, i, hitrates,xblock,nblock,runtype):
 	if not stop_signal.is_set():
 		speedI,readI,inBandI, reBandI = val
-		speed = pow(2, interpolate(speedI, args.speed[0], args.speed[1]))
-		read = pow(2, interpolate(readI, args.read_bandwidth[0], args.read_bandwidth[1]))
-		inBand = pow(2, interpolate(inBandI, args.internal_link_bandwidth[0], args.internal_link_bandwidth[1]))
-		reBand = pow(2, interpolate(reBandI, args.remote_bandwidth[0], args.remote_bandwidth[1]))
+		speed = spow(interpolate(speedI, args.speed[0], args.speed[1]))
+		read = spow( interpolate(readI, args.read_bandwidth[0], args.read_bandwidth[1]))
+		inBand = spow( interpolate(inBandI, args.internal_link_bandwidth[0], args.internal_link_bandwidth[1]))
+		reBand = spow(interpolate(reBandI, args.remote_bandwidth[0], args.remote_bandwidth[1]))
 		#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand))
 		v,results = oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype=runtype)
 		#print(v)
