@@ -6,7 +6,7 @@ import concurrent.futures
 import multiprocessing
 import argparse
 from math import *
-from oneTest import oneEval, initEvaluator
+from oneTest import oneEval,oneTest, initEvaluator
 from itertools import product
 from fractions import Fraction
 import threading

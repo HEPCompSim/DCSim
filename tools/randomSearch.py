@@ -4,7 +4,7 @@
 import multiprocessing
 import argparse
 from math import *
-from oneTest import oneEval, initEvaluator
+from oneTest import oneEval,oneTest, initEvaluator
 import random
 import time
 import concurrent.futures
