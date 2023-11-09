@@ -54,6 +54,7 @@ def parallel_random_search(args):
 	minV = None
 	count=0
 	with concurrent.futures.ProcessPoolExecutor() as executor:
+		print(str(multiprocessing.cpu_count())+" parallel executions")
 		results = []
 		i = 0
 		ongoing=True
@@ -99,6 +100,14 @@ def parallel_random_search(args):
 
 # Run the parallel grid search
 try:
+	print(args)
+	speed = pow(2, (args.speed[0]+args.speed[1])/2)
+	read = pow(2, (args.read_bandwidth[0]+ args.read_bandwidth[1])/2)
+	inBand = pow(2, (args.internal_link_bandwidth[0]+ args.internal_link_bandwidth[1])/2)
+	reBand = pow(2, (args.remote_bandwidth[0]+ args.remote_bandwidth[1])/2)
+	refStart=time.time()
+	v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,args.xblock, args.nblock,uniqueID='r',runtype="reference")
+	print("reference run took "+str(time.time()-refStart))
 	parallel_random_search(args)
 
 	#print(extractedResults)
