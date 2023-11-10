@@ -53,14 +53,15 @@ def parallel_random_search(args):
 	best = None
 	minV = None
 	count=0
-	with concurrent.futures.ProcessPoolExecutor() as executor:
-		print(str(multiprocessing.cpu_count())+" parallel executions")
+	workers=39
+	with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
+		print(str(multiprocessing.cpu_count())+" parallel executions, "+str(workers)+" workers")
 		results = []
 		i = 0
 		ongoing=True
 		while ongoing:
 
-			for iii in range(multiprocessing.cpu_count()*100):
+			for iii in range(workers*100):
 				i += 1
 				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock,startTime)
 				results.append(result)

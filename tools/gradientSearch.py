@@ -304,15 +304,16 @@ def parallel_grad_search(args):
 				
 		count=0
 		exCount=0
-		with concurrent.futures.ProcessPoolExecutor() as executor:
-			print(str(multiprocessing.cpu_count())+" parallel executions")
+		workers=39
+		with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
+			print(str(multiprocessing.cpu_count())+" parallel executions, "+str(workers)+" workers")
 			results = []
 			while not stop_signal.is_set():
 				results = []
 				i = 0
 				
 				
-				for i in range(multiprocessing.cpu_count()*100):
+				for i in range(workers*100):
 					val=(random.random(),random.random(),random.random(),random.random())
 					result = executor.submit(search_thread, stop_signal,args, val, i, hitrates)
 					results.append(result)
