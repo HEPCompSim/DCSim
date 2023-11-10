@@ -270,7 +270,7 @@ def evaluate_combination(stop_signal,args, val, i, hitrates,xblock,nblock,runtyp
 		#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand))
 		refStart=time.time()
 		v,results = oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype=runtype)
-		print("Start: "+str(refStart)+"End: "+str(time.time()-refStart)+"Args:"+str((speed, read, inBand, reBand, hitrates,xblock,nblock)))
+		print("Start: "+str(refStart)+" End: "+str(time.time()-refStart)+" Args: "+str((speed, read, inBand, reBand, hitrates,xblock,nblock)))
 		#print(v)
 		return (v, (speed, read, inBand, reBand),results)
 	else:
