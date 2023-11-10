@@ -77,7 +77,7 @@ def evaluate_combination(args, val, i, hitrates,xblock,nblock,startTime):
 		#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand))
 		refStart=time.time()
 		v,results = oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="grid")
-		print("Start: "+str(refStart)+"End: "+str(time.time()-refStart)+"Args:" str((speed, read, inBand, reBand, hitrates,xblock,nblock)))
+		print("Start: "+str(refStart)+"End: "+str(time.time()-refStart)+"Args:"+ str((speed, read, inBand, reBand, hitrates,xblock,nblock)))
 		#print(v)
 		return (v, (speed, read, inBand, reBand),results,time.time())
 	else:
