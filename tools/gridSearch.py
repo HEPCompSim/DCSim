@@ -54,6 +54,7 @@ parser.add_argument('-t', '--time', type=int, help='the time budget (in seconds)
 parser.add_argument('-hr', '--hitrates', type=str, help='python array of hitrates to use', required=True)
 parser.add_argument('-xb', '--xblock', type=float, help='The xrootd blocksize',default=10000000)
 parser.add_argument('-nb', '--nblock', type=float, help='the network blocksize',default=1000000)
+parser.add_argument('-ms', '--max-sim', type=float, help='Maximum time for 1 simulation run',default=None)
 
 parser.add_argument('-s', '--speed', nargs=2,type=float, help='compute speed option with 3 values range',metavar=('min', 'max'), required=True)
 parser.add_argument('-rb', '--read-bandwidth', nargs=2,type=float, help='host read bandwidth range',metavar=('min', 'max'), required=True)
