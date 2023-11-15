@@ -30,33 +30,35 @@ def evaluate(run,refference=None):
 	if(count==0):
 		return float('inf')
 	return ret/count
-def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,runtype=None,remove=True):
+def oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,runtype=None,remove=True,timeout=None):
 	hits=' '.join([str(float(i)) for i in hitrates])
 	platform=pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed)
 	if( not uniqueID is None):
 		uniqueID=str(os.getpid())+"_"+str(uniqueID)+"_outputs"
 		runstart=time.time()
 		if debugMode:
-			process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.PIPE, stderr=subprocess.PIPE,timeout=timeout)
 			if process.stderr:
 				print(process.stdout.decode())
 				print(process.stderr.decode())
 				print((xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype))
 				print([file_path+"/hitrateScanScript.sh", "platform", hits, uniqueID, str(xblock), str(nblock)])
 		else:
-			process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
+			process = subprocess.run([file_path+"/hitrateScanScript.sh", platform, hits, uniqueID, str(int(float(xblock))), str(int(float(nblock)))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,timeout=timeout)
 		runend=time.time()
 		ret=extract(uniqueID,{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype,"clock_time":(runend-runstart)})
 		if(remove):
 			shutil.rmtree(uniqueID, ignore_errors=True)
 		return ret
+		
 	else:
 		process = subprocess.run([file_path+"/hitrateScanScript.sh",platform,hits,str(uniqueID),str(xblock),str(nblock)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		return extract(file_path+"/../tmp/outputs",{"cpu_speed":cpu_speed,"read_speed":read_speed,"link_speed":link_speed,"net_speed":net_speed,"xblock":xblock,"nblock":nblock,"run_type":runtype})
-def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,rff_run=None,runtype=None,remove=True):
-	run,allResults=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype,remove)
-
+def oneEval(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID=None,rff_run=None,runtype=None,remove=True,timeout=None):
+	try:
+		run,allResults=oneTest(xml_file_path, cpu_speed, read_speed, link_speed, net_speed,hitrates,xblock,nblock,uniqueID,runtype,remove,timeout)
+	except subprocess.TimeoutExpired:
+		return float('inf'),[] 
 	return evaluate(run,rff_run),allResults
 def main():
 	rff_run,xml_file_path, cpu_speed, read_speed, link_speed, net_speed,xrootdBlock, nblock = sys.argv[1:]
