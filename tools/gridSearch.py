@@ -78,7 +78,7 @@ def evaluate_combination(args, val, i, hitrates,xblock,nblock,startTime):
 		#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand))
 		refStart=time.time()
 		v,results = oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="grid",timeout=args.max_sim)
-		print("Start: "+str(refStart)+" End: "+str(time.time()-refStart)+" Args: "+ str((speed, read, inBand, reBand, hitrates,xblock,nblock)))
+		#print("Start: "+str(refStart)+" End: "+str(time.time()-refStart)+" Args: "+ str((speed, read, inBand, reBand, hitrates,xblock,nblock)))
 		#print(v)
 		return (v, (speed, read, inBand, reBand),results,time.time())
 	else:
@@ -103,11 +103,13 @@ def parallel_grid_search(args):
 		count=0
 		ongoing=True
 		while ongoing:
+			results = []
 			for iii in range(workers*100):
-				i += 1
-				val = next(ittr)
-				result = executor.submit(evaluate_combination, args, val, i, hitrates, args.xblock, args.nblock,startTime)
-				results.append(result)
+				if time.time() - startTime < args.time:
+					i += 1
+					val = next(ittr)
+					result = executor.submit(evaluate_combination, args, val, i, hitrates, args.xblock, args.nblock,startTime)
+					results.append(result)
 		
 			if time.time() - startTime > args.time:
 					for result in results:

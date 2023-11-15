@@ -61,11 +61,12 @@ def parallel_random_search(args):
 		i = 0
 		ongoing=True
 		while ongoing:
-
+			results = []
 			for iii in range(workers*100):
-				i += 1
-				result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock,startTime)
-				results.append(result)
+				if time.time() - startTime < args.time:
+					i += 1
+					result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock,startTime)
+					results.append(result)
 			
 			if time.time() - startTime > args.time:
 				for result in results:
