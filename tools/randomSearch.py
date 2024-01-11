@@ -8,12 +8,17 @@ from oneTest import oneEval,oneTest, initEvaluator
 import random
 import time
 import concurrent.futures
-from random import SystemRandom, Random
+#from random import SystemRandom
 startTime = time.time()
+def interpolate(x,minV,maxV):
+	if minV>maxV:
+		minV,maxV=maxV,minV
+	
+	return x*(maxV-minV)+minV
 def randomSample(minV,maxV):
 	if minV>maxV:
 		minV,maxV=maxV,minV
-	return Random.uniform(minV,maxV)
+	return interpolate(random.random(),minV,maxV)
 parser = argparse.ArgumentParser(description='random Search in a logimetric grid.')
 parser.add_argument('-r', '--reference', type=str, help='Reference values file path', required=True)
 parser.add_argument('-p', '--platform', type=str, help='Template Platform file path', required=True)
