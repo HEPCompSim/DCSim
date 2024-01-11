@@ -1,5 +1,5 @@
 #! /usr/bin/python3
-#./randomSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -t 60 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32
+#./randomSearch.py -r ../../DCSIM\ calibration\ Data/individualSlowRawData.json -p ../data/platform-files/sgbatch_validation_template.xml -t 60 -hr 1,.5,0 -s 29 32 -rb 23 25 -ilb 29 32 -rd 29 32 --seed 1
 
 import multiprocessing
 import argparse
@@ -8,12 +8,12 @@ from oneTest import oneEval,oneTest, initEvaluator
 import random
 import time
 import concurrent.futures
-from random import SystemRandom
+from random import SystemRandom, Random
 startTime = time.time()
-def randomSample(minV,maxV,generator):
+def randomSample(minV,maxV):
 	if minV>maxV:
 		minV,maxV=maxV,minV
-	return generator.uniform(minV,maxV)
+	return Random.uniform(minV,maxV)
 parser = argparse.ArgumentParser(description='random Search in a logimetric grid.')
 parser.add_argument('-r', '--reference', type=str, help='Reference values file path', required=True)
 parser.add_argument('-p', '--platform', type=str, help='Template Platform file path', required=True)
@@ -28,20 +28,15 @@ parser.add_argument('-rb', '--read-bandwidth', nargs=2,type=float, help='host re
 
 parser.add_argument('-ilb', '--internal-link-bandwidth', nargs=2,type=float, help='internal link bandwidth range',metavar=('min', 'max'), required=True)
 parser.add_argument('-rd', '--remote-bandwidth', nargs=2,type=float, help='remote bandwidth option range',metavar=('min', 'max'), required=True)
+parser.add_argument('--seed', type=int, help="Seed for initial points to allow deterministic execution'",default=1)
 import re
 args = parser.parse_args()
 hitrates=re.split(',|\s|;',args.hitrates)
 
 #print(args)
 extractedResults=[]
-def randomItteration(args, i, hitrates,xblock,nblock,startTime):
+def randomItteration(speed,read,inBand,reBand,args, i, hitrates,xblock,nblock,startTime):
 	if(time.time() - startTime < args.time):
-		generator=random.SystemRandom()
-		speed = pow(2, randomSample(args.speed[0], args.speed[1],generator))
-		read = pow(2, randomSample(args.read_bandwidth[0], args.read_bandwidth[1],generator))
-		inBand = pow(2, randomSample(args.internal_link_bandwidth[0], args.internal_link_bandwidth[1],generator))
-		reBand = pow(2, randomSample(args.remote_bandwidth[0], args.remote_bandwidth[1],generator))
-
 		#print('Running %.2E %.2E %.2E %.2E:' % (speed, read, inBand, reBand), end=' ')
 		v,allResults= oneEval(args.platform, speed, read, inBand, reBand, hitrates,xblock,nblock,uniqueID=i,runtype="random",timeout=args.max_sim)
 		#print(v)
@@ -56,6 +51,7 @@ def parallel_random_search(args):
 	count=0
 	workers=39
 	with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
+		random.seed(args.seed)
 		print(str(multiprocessing.cpu_count())+" parallel executions, "+str(workers)+" workers")
 		results = []
 		i = 0
@@ -65,7 +61,11 @@ def parallel_random_search(args):
 			for iii in range(workers*100):
 				if time.time() - startTime < args.time:
 					i += 1
-					result = executor.submit(randomItteration, args, i, hitrates, args.xblock, args.nblock,startTime)
+					speed = pow(2, randomSample(args.speed[0], args.speed[1]))
+					read = pow(2, randomSample(args.read_bandwidth[0], args.read_bandwidth[1]))
+					inBand = pow(2, randomSample(args.internal_link_bandwidth[0], args.internal_link_bandwidth[1]))
+					reBand = pow(2, randomSample(args.remote_bandwidth[0], args.remote_bandwidth[1]))
+					result = executor.submit(randomItteration, speed,read,inBand,reBand,args, i, hitrates, args.xblock, args.nblock,startTime)
 					results.append(result)
 			
 			if time.time() - startTime > args.time:
