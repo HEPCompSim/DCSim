@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'dockerCICD'
 
 jobs:
   docker:
