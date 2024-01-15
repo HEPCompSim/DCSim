@@ -8,13 +8,14 @@ USER root
 WORKDIR /tmp
 
 RUN echo "wrench ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+SHELL ["/bin/bash", "-c"]
 
 ###########################################################
 # Install prerequisites
 ###########################################################
 
-RUN apt-get update && apt-get upgrade
-RUN apt-get install -y cmake python=3.10 pip gcc gxx make gfortran boost git
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y cmake python3 pip gcc make gfortran libboost-all-dev git
 RUN python3 -m pip install pip setuptools numpy matplotlib scipy pandas --upgrade --no-input
 
 ###########################################################
