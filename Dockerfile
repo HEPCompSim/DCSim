@@ -33,9 +33,9 @@ RUN rm -rf googletest
 # Compile and install SimGrid & WRENCH
 ###########################################################
 
-RUN git clone https://framagit.org/simgrid/simgrid.git && mkdir -p simgrid/build && pushd simgrid/build && cmake .. && make -j${NCORES} && make install && popd
+RUN git clone https://framagit.org/simgrid/simgrid.git && mkdir -p simgrid/build && pushd simgrid/build && git checkout 98331a543f36f7991a92affa966a8f162c240984 && cmake .. && make -j${NCORES} && make install && popd
 RUN rm -rf simgrid
-RUN git clone https://github.com/wrench-project/wrench.git && mkdir -p wrench/build && pushd wrench/build && cmake .. && make -j${NCORES} && make install && popd
+RUN git clone https://github.com/wrench-project/wrench.git && mkdir -p wrench/build && pushd wrench/build && git checkout simgrid_master && cmake .. && make -j${NCORES} && make install && popd
 RUN rm -rf wrench
 
 ###########################################################
@@ -49,9 +49,9 @@ RUN ldconfig
 # Set user
 ###########################################################
 
-USER wrench
+#USER wrench
 WORKDIR /home/wrench
 
 # set user's environment variable
-ENV CXX="g++-11" CC="gcc-11"
+ENV CXX="g++" CC="gcc"
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
