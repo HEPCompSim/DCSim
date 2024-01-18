@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-MAINTAINER Maximilian Horzela <maximilian.horzela@kit.edu>
+LABEL org.opencontainers.image.authors="maximilian.horzela@kit.edu"
 
 ENV NCORES=4
 
@@ -72,7 +72,7 @@ RUN git clone https://github.com/HEPCompSim/DCSim.git && \
 ###########################################################
 
 #USER wrench
-WORKDIR /home/DCSim
+WORKDIR /home/dcsim
 
 # set user's environment variable
 ENV CXX="g++" CC="gcc"
