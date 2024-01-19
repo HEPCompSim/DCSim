@@ -2,10 +2,14 @@
 
 # DCSim
 
-Simulator for the simulation of high energy physics workloads on distributed computing systems with caching.
+Simulator for the simulation of high energy physics workloads on distributed computing systems with clusters, worker nodes, storages and caches.
 
 
 ## Install instructions
+You can use the Docker images available at https://hub.docker.com/repository/docker/mhorzela/dcsim/general to run your simulations.
+Example configuration files are embedded in the `~/data` directory of the image.
+
+If you want to build the simulator your own, checkout this repository and follow the subsequent steps.
 
 ### Option 1
 To get a fresh installation on your own system, either `git clone` this repository and execute the checkout script inside:
@@ -16,6 +20,9 @@ Mind that you will need super-user rights to do so, as well as `cmake`, `git`, `
 This will install the executable `dc-sim` for this simulator and all its software dependencies.
 
 ### Option 2
+With a `conda` environment, you would be able to install the full software setup without super-user rights.
+More information on how to work with and develop in a `conda` environment can be found in the [Conda Documentation](https://docs.anaconda.com/)
+
 Create a `conda` environment using the provided script
 ```bash
 checkout_scripts/install_conda_environment.sh
@@ -39,12 +46,10 @@ and deactivate it accordingly with
 conda deactivate
 ```
 
-### Tips for Conda
+#### Tips for sharing your Conda environment 
 
-With a `conda` environment, you would be able to install the full software setup without super-user rights.
-More information on how to work with and develop in a `conda` environment can be found in the [Conda Documentation](https://docs.anaconda.com/)
-
-Furthermore, it is possible to put a complete conda environment into a tarball to be able to export it to a different machine, e.g. a batch system node. To do that execute:
+It is possible to put a complete conda environment into a tarball to be able to export it to a different machine, e.g. a batch system node.
+To do that execute:
 
 ```bash
 conda activate dcsim-env # in case you don't have it activated yet
@@ -53,8 +58,11 @@ conda-pack
 
 The created tarball `dcsim-env.tar.gz` can then be uploaded to a storage element and copied from there to a different machine.
 
+**Beware:** It was observed that the simulation from a shared Conda environment can be significantly slower than in the native installation.
+
 
 ## Usage
+
 When you have successfully installed the simulator or activated the conda environment you can run
 ```bash
 dc-sim --help
