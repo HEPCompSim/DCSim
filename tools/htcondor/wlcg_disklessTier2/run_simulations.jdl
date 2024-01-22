@@ -1,0 +1,41 @@
+# submit multiple simulations and harvest scaling and job information
+
+executable = ./run_simulations.sh
+arguments = $(PLATFORM) $(WORKLOAD) $(DATASET) $(HITRATE) $(SEED)
+
+should_transfer_files = YES
+transfer_input_files = ../../../data/platform-files/$(PLATFORM), ../../../data/workload-configs/$(WORKLOAD), ../../../data/dataset-configs/$(DATASET)
+transfer_output_files = $(PLATFORM)_H$(HITRATE)_S$(SEED).csv
+when_to_transfer_output = ON_EXIT
+
+log = logs/log.$(ClusterId).$(ProcId)
+output = logs/out.$(ClusterId).$(ProcId)
+error = logs/err.$(ClusterId).$(ProcId)
+
+
+accounting_group=cms.production
+Requirements = TARGET.ProvidesIO && (CloudSite =!= topas)
++RemoteJob = True
+
+universe = docker
+docker_image = mschnepf/cs8-base
+
++RequestWalltime = (3600 + (2*3600*NumJobStarts))
+request_cpus = 1
+RequestMemory = 2GB
+periodic_release = (HoldReasonCode == 34)
+RequestDisk = 4GB
+
+x509userproxy = $ENV(X509_USER_PROXY)
+
+PLATFORM = WLCG_disklessTier2_reduced100.xml
+WORKLOAD = prefetchScanWorkloads.json 
+DATASET = prefetchScanDatasets.json
+
+#HITRATE_SEQ = $(sequence 0.0 0.1 1.0)
+#SEED_SEQ = $(sequence 0 1 10)
+
+#combinations = Cross($(HITRATE_SEQ),$(SEED_SEQ))
+
+#Queue SEED,HITRATE from seed_hitrate_arguments.txt
+Queue SEED,HITRATE from test.txt
