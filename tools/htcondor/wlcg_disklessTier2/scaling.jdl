@@ -18,7 +18,7 @@ Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="mdm1.etp.kit.edu")
 +RemoteJob = True
 
 universe = docker
-docker_image = mschnepf/slc7-condocker
+docker_image = mhorzela/dcsim
 
 +RequestWalltime = (15*$(NJOBS)) + 3600 + (24*3600*NumJobStarts)
 request_cpus = 1

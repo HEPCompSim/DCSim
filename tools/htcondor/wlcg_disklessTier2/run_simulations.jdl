@@ -18,7 +18,7 @@ Requirements = TARGET.ProvidesIO && (CloudSite =!= topas)
 +RemoteJob = True
 
 universe = docker
-docker_image = mschnepf/cs8-base
+docker_image = mhorzela/dcsim
 
 +RequestWalltime = (3600 + (2*3600*NumJobStarts))
 request_cpus = 1
