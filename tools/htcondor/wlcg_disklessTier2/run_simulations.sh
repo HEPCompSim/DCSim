@@ -47,6 +47,7 @@ echo "Starting execution of simulation..."
         --dataset-configurations ${DATASETS} \
         --duplications ${DUPLICATIONS} \
 	--cfg=network/loopback-bw:100000000000000 \
+        --cache-scope network \
 	--no-caching \
         --hitrate ${HITRATE}\
         --xrd-blocksize ${XRDBLOCKSIZE} \

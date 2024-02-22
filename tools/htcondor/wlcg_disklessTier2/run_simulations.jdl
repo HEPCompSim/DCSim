@@ -14,16 +14,16 @@ error = logs/err.$(ClusterId).$(ProcId)
 
 
 accounting_group=cms.production
-Requirements = TARGET.ProvidesIO && (CloudSite =!= topas)
+Requirements = TARGET.ProvidesIO && (CloudSite =!= topas) && (TARGET.Machine =!= "sg01.etp.kit.edu") && (TARGET.Machine =!= "sg03.etp.kit.edu") && (TARGET.Machine =!= "sg04.etp.kit.edu")
 +RemoteJob = True
 
 universe = docker
 docker_image = mhorzela/dcsim
 
-+RequestWalltime = (3600 + (2*3600*NumJobStarts))
++RequestWalltime = (7200 + (2*3600*NumJobStarts))
 request_cpus = 1
-RequestMemory = 2GB
-periodic_release = (HoldReasonCode == 34)
+RequestMemory = 8GB
+#periodic_release = (HoldReasonCode == 34)
 RequestDisk = 4GB
 
 x509userproxy = $ENV(X509_USER_PROXY)
