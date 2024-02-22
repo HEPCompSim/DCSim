@@ -12,7 +12,7 @@
             <zone id="GridKA" routing="Floyd">
 
                 <!-- <host id="Tier1" speed="3194Mf" core="42400"> -->
-                <cluster id="Tier1" prefix="Tier1" radical="0-9" suffix="" speed="2555Mf" core="42" bw="1150Mbps" lat="0us">
+                <cluster id="Tier1" prefix="Tier1" radical="0-9" suffix="" speed="2555Mf" core="14" bw="1150Mbps" lat="0us">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="1187.20GiB"/>
                     <!-- <disk id="shared_cache" read_bw="16GBps" write_bw="16GBps">
@@ -89,7 +89,7 @@
             <zone id="DESYGrid" routing="Floyd">
 
                 <!-- <host id="Tier2" speed="2761Mf" core="200"> -->
-                <host id="Tier2" speed="2209Mf" core="200">
+                <host id="Tier2" speed="2209Mf" core="67">
                     <prop id="type" value="worker"/>
                     <prop id="ram" value="500GiB"/>
                 </host>

@@ -884,7 +884,7 @@
     "infile_datasets": "DataProcessing_T2"
   },
   "Others_T2": {
-    "num_jobs": 0,
+    "num_jobs": 1,
     "cores": {
       "type": "histogram",
       "counts": [
