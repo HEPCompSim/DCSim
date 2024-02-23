@@ -1,6 +1,6 @@
 {
     "Analysis_T2": {
-        "num_jobs": 71,
+        "num_jobs": 216,
         "cores": {
             "type": "histogram",
             "counts": [0, 441598, 10, 0, 29325, 0, 0, 0, 5244],
@@ -31,7 +31,7 @@
         "infile_datasets": "Analysis_T2"
     },
     "Digi_T2": {
-        "num_jobs": 49,
+        "num_jobs": 148,
         "cores": {
             "type": "histogram",
             "counts": [0, 86939, 151890, 0, 87586, 0, 0, 0, 304]
@@ -56,7 +56,7 @@
         "infile_datasets": "Digi_T2"
     },
     "DataProcessing_T2": {
-        "num_jobs": 7,
+        "num_jobs": 22,
         "cores": {
             "type": "histogram",
             "counts": [0, 0, 1613, 0, 47233, 0, 0, 0, 0]
@@ -106,7 +106,7 @@
         "infile_datasets": "Others_T2"
     },
     "Merge_T2": {
-        "num_jobs": 3,
+        "num_jobs": 8,
         "cores": {
             "type": "histogram",
             "counts": [0, 18627, 0, 0, 0, 0, 0, 0, 0]
