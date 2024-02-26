@@ -31,7 +31,7 @@ QUANTITIES = {
         "label": "CPU time / min",
         "ylim": [0.,5500.]
     },
-    "CPUEfficiency": {
+    "Efficiency": {
         "ident": "Efficiency",
         "label": "CPU efficiency",
         "ylim": [0,1.3],
@@ -109,6 +109,7 @@ def createDataframeFromCSVs(csvFiles: Iterable):
     Returns:
         DataFrame: merged data-frame containing all job data
     """
+
     def q10(x: pd.Series):
         return x.quantile(0.1)
     def q25(x: pd.Series):
@@ -117,6 +118,7 @@ def createDataframeFromCSVs(csvFiles: Iterable):
         return x.quantile(0.75)
     def q90(x: pd.Series):
         return x.quantile(0.9)
+    
     # create a dataframe containing statistical moments of each run
     dfs = []
     for file in csvFiles:
@@ -170,6 +172,19 @@ def plotVariationbands(
         suffix (str, optional): Suffix for plot name. Defaults to "".
         figsize (tuple, optional): Figure aspect ratio. Defaults to (6,4).
     """
+
+    def scale_xticks(ax: plt.Axes, ticks: Iterable):
+        """Helper function which sets the xticks to the according scaled positions
+
+        Args: 
+            ax (matplotlib.Axes): subplot to scale xticks
+            ticks (Iterable): list of expected ticks (at least two values, lowest and highest tick)
+        """
+        scale = (ax.get_xlim()[-1]-ax.get_xlim()[0]-1)/(ticks[-1]-ticks[0])
+        print(f"Scale {(ticks[0],ticks[-1])} with {scale} to end up with correct seaborn axis {ax.get_xlim()}")
+        ax.set_xticks([scale*x for x in ticks])
+        ax.set_xticklabels(["{:.1f}".format(x) for x in ticks])
+
     # create plot output path
     plot_dir = os.path.abspath(plot_dir)
     if not os.path.exists(plot_dir):
@@ -179,31 +194,28 @@ def plotVariationbands(
     if suffix:
         suffix = "_"+suffix
     # create arrays to plot
-    df.groupby("prefetchrate")
+    # df_tmp = df.groupby(["Site","prefetchrate"]).agg(["mean",np.std])
+    # median_mean = df_tmp[".".join((quantity,"median"))]["mean"].reset_index()
+    # median_std = df_tmp[".".join((quantity,"median"))]["std"].reset_index()
+    # q25_mean = df_tmp[".".join((quantity,"q25"))]["mean"].reset_index()
+    # q25_std = df_tmp[".".join((quantity,"q25"))]["std"].reset_index()
+    # q75_mean = df_tmp[".".join((quantity,"q75"))]["mean"].reset_index()
+    # q75_std = df_tmp[".".join((quantity,"q75"))]["std"].reset_index()
     # plot quantity
+    print(df)
     logger.info(f"\tPlotting quantity {quantity}")
     fig = plt.figure(f"{prefix}{quantity}{suffix}", figsize=figsize)
-    ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(df["prefetchrate"],)
-    sns.boxplot(
-        x="prefetchrate", y=dquantity["ident"],
-        hue="Site", hue_order=sites,
-        data=df,
-        orient="v",
-        # whis=1.5, #[0.5,99.5],
-        flierprops=dict(marker="x"),
-        palette=sns.color_palette("colorblind", n_colors=len(sites))
-    )
+    ax1 = sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
+                       hue="Site", hue_order=sites,
+                       palette=sns.color_palette("colorblind", n_colors=len(sites)))
     ax1.set_title(title)
     ax1.set_xlabel("fraction of prefetched files in cache",color="black")
     hitrateticks = [x*0.1 for x in range(0,11)]
     scale_xticks(ax1, hitrateticks)
-    ax1.set_ylabel(dquantity["label"], color="black")
-    if dquantity["ylim"]:
-        ax1.set_ylim(dquantity["ylim"])
+    ax1.set_ylabel(QUANTITIES[quantity]["label"], color="black")
+    if QUANTITIES[quantity]["ylim"]:
+        ax1.set_ylim(QUANTITIES[quantity]["ylim"])
     ax1.legend(loc='best')
-    if emptyBoxes:
-        toEmptyBoxesStyle(ax1)
     fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.pdf"))
     fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.png"))
     plt.close()
@@ -211,6 +223,7 @@ def plotVariationbands(
 
 def run(args=parser.parse_args()):
     # configure logging
+    # pd.set_option('display.max_columns',None)
     logger.setLevel(getattr(logging, str(args.log).upper()))
     ch = logging.StreamHandler()
     ch.setLevel(getattr(logging, str(args.log).upper()))
@@ -220,16 +233,14 @@ def run(args=parser.parse_args()):
 
     # actual data processing
     df = createDataframeFromCSVs(args.monitorfiles)
-    pd.set_option('display.max_columns',None)
-    print(df)
-    print(df.loc[:,["Site"]])
-    #TODO
+    sites = sorted(df["Site"].unique())
 
     # create output
     out_dir = os.path.abspath(args.out)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    #TODO
+    # and plot
+    plotVariationbands(df, "Efficiency", sites, "", out_dir)
 
 
 if __name__ == "__main__":
