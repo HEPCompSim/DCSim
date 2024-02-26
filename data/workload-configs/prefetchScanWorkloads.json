@@ -1,6 +1,6 @@
 {
   "Analysis_T1": {
-    "num_jobs": 32,
+    "num_jobs": 96,
     "cores": {
       "type": "histogram",
       "counts": [
@@ -116,7 +116,7 @@
     "infile_datasets": "Analysis_T1"
   },
   "Digi_T1": {
-    "num_jobs": 33,
+    "num_jobs": 100,
     "cores": {
       "type": "histogram",
       "counts": [
@@ -220,7 +220,7 @@
     "infile_datasets": "Digi_T1"
   },
   "DataProcessing_T1": {
-    "num_jobs": 8,
+    "num_jobs": 26,
     "cores": {
       "type": "histogram",
       "counts": [
@@ -428,7 +428,7 @@
     "infile_datasets": "Others_T1"
   },
   "Merge_T1": {
-    "num_jobs": 3,
+    "num_jobs": 10,
     "cores": {
       "type": "histogram",
       "counts": [
@@ -532,7 +532,7 @@
     "infile_datasets": "Merge_T1"
   },
   "Analysis_T2": {
-    "num_jobs": 71,
+    "num_jobs": 216,
     "cores": {
       "type": "histogram",
       "counts": [
@@ -676,7 +676,7 @@
     "infile_datasets": "Analysis_T2"
   },
   "Digi_T2": {
-    "num_jobs": 49,
+    "num_jobs": 148,
     "cores": {
       "type": "histogram",
       "counts": [
@@ -780,7 +780,7 @@
     "infile_datasets": "Digi_T2"
   },
   "DataProcessing_T2": {
-    "num_jobs": 7,
+    "num_jobs": 22,
     "cores": {
       "type": "histogram",
       "counts": [
@@ -988,7 +988,7 @@
     "infile_datasets": "Others_T2"
   },
   "Merge_T2": {
-    "num_jobs": 3,
+    "num_jobs": 8,
     "cores": {
       "type": "histogram",
       "counts": [
