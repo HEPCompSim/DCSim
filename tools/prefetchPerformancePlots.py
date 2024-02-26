@@ -10,7 +10,7 @@ import argparse
 from collections.abc import Iterable
 
 import logging
-logger = logging.getLogger('classifyWorkloads')
+logger = logging.getLogger('prefetchPerformancePlots')
 
 
 plt.rcParams['figure.autolayout'] = True
