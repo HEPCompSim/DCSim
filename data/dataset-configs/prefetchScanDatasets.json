@@ -1,7 +1,11 @@
 {
   "Analysis_T1":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":320,
+=======
+    "num_files":960,
+>>>>>>> Stashed changes
     "filesize": {
             "type": "histogram",
             "counts": [208159, 967, 701, 447, 270, 154, 72, 31, 38, 6],
@@ -10,7 +14,11 @@
   },
   "Digi_T1":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":330,
+=======
+    "num_files":1000,
+>>>>>>> Stashed changes
     "filesize": {
         "type": "histogram",
         "counts": [157564, 3767, 32275, 353, 25151, 89, 0, 0, 759, 0],
@@ -19,7 +27,11 @@
   },
   "DataProcessing_T1":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":80,
+=======
+    "num_files":260,
+>>>>>>> Stashed changes
     "filesize": {
         "type":"histogram",
         "counts": [54197, 1801, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -37,7 +49,11 @@
   },
   "Merge_T1":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":30,
+=======
+    "num_files":100,
+>>>>>>> Stashed changes
     "filesize": {
         "type":"histogram",
         "counts": [23054, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -46,7 +62,11 @@
   },
   "Analysis_T2":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":710,
+=======
+    "num_files":2160,
+>>>>>>> Stashed changes
     "filesize": {
         "type": "histogram",
         "counts": [456792, 10442, 1316, 6796, 581, 121, 91, 0, 19, 19],
@@ -55,7 +75,11 @@
   },
   "Digi_T2":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":490,
+=======
+    "num_files":1480,
+>>>>>>> Stashed changes
     "filesize": {
         "type": "histogram",
         "counts": [323934, 2694, 91, 0, 0, 0, 0, 0, 0, 0],
@@ -64,7 +88,11 @@
   },
   "DataProcessing_T2":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":70,
+=======
+    "num_files":220,
+>>>>>>> Stashed changes
     "filesize": {
         "type":"histogram",
         "counts": [48846, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -82,7 +110,11 @@
   },
   "Merge_T2":{
     "location":"GridKA_dCache",
+<<<<<<< Updated upstream
     "num_files":30,
+=======
+    "num_files":80,
+>>>>>>> Stashed changes
     "filesize": {
         "type":"histogram",
         "counts": [18627, 0, 0, 0, 0, 0, 0, 0, 0, 0],
