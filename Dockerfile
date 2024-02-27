@@ -48,13 +48,13 @@ RUN git clone https://github.com/google/googletest.git && \
 
 RUN git clone https://framagit.org/simgrid/simgrid.git && \
     mkdir -p simgrid/build && pushd simgrid/build && \
-    git checkout 98331a543f36f7991a92affa966a8f162c240984 && \
+    #git checkout 98331a543f36f7991a92affa966a8f162c240984 && \
     cmake .. && make -j${NCORES} && make install && popd && \
     rm -rf simgrid
 RUN git clone https://github.com/wrench-project/wrench.git && \
     mkdir -p wrench/build && pushd wrench/build && \
-    git checkout simgrid_master && cmake .. && \
-    make -j${NCORES} && make install && popd && \
+    #git checkout simgrid_master && \
+    cmake .. && make -j${NCORES} && make install && popd && \
     rm -rf wrench
 
 ###########################################################
