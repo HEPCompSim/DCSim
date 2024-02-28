@@ -10,6 +10,7 @@ import argparse
 import re
 
 from collections.abc import Iterable
+from collections import OrderedDict
 
 import logging
 logger = logging.getLogger('harvestVariationRuns')
@@ -36,7 +37,7 @@ QUANTITIES = {
         "label": "CPU efficiency",
         "ylim": [0,1.3],
     },
-    "Hitrate": {
+    "hitrate": {
         "ident": "hitrate",
         "label": "hitrate",
         "ylim": [0.,1.05],
@@ -193,29 +194,41 @@ def plotVariationbands(
         prefix = prefix+"_"
     if suffix:
         suffix = "_"+suffix
-    # create arrays to plot
-    # df_tmp = df.groupby(["Site","prefetchrate"]).agg(["mean",np.std])
-    # median_mean = df_tmp[".".join((quantity,"median"))]["mean"].reset_index()
-    # median_std = df_tmp[".".join((quantity,"median"))]["std"].reset_index()
-    # q25_mean = df_tmp[".".join((quantity,"q25"))]["mean"].reset_index()
-    # q25_std = df_tmp[".".join((quantity,"q25"))]["std"].reset_index()
-    # q75_mean = df_tmp[".".join((quantity,"q75"))]["mean"].reset_index()
-    # q75_std = df_tmp[".".join((quantity,"q75"))]["std"].reset_index()
-    # plot quantity
-    print(df)
+    # plot
     logger.info(f"\tPlotting quantity {quantity}")
     fig = plt.figure(f"{prefix}{quantity}{suffix}", figsize=figsize)
-    ax1 = sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
-                       hue="Site", hue_order=sites,
-                       palette=sns.color_palette("colorblind", n_colors=len(sites)))
+    ax1 = fig.add_subplot(1,1,1)
+    palette = sns.color_palette("colorblind", n_colors=len(sites))    
+    sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
+                 hue="Site", hue_order=sites,
+                 estimator="mean", #errorbar="sd", err_style="band",
+                 linestyle="solid", palette=palette,
+                 ax=ax1)
+    sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q25"))),
+                 hue="Site", hue_order=sites,
+                 estimator="mean", #errorbar="sd", err_style="band",
+                 linestyle="dashed", palette=palette,
+                 ax=ax1)
+    sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q75"))),
+                 hue="Site", hue_order=sites,
+                 estimator="mean", #errorbar="sd", err_style="band",
+                 linestyle="dashdot", palette=palette,
+                 ax=ax1)
     ax1.set_title(title)
     ax1.set_xlabel("fraction of prefetched files in cache",color="black")
-    hitrateticks = [x*0.1 for x in range(0,11)]
-    scale_xticks(ax1, hitrateticks)
     ax1.set_ylabel(QUANTITIES[quantity]["label"], color="black")
     if QUANTITIES[quantity]["ylim"]:
         ax1.set_ylim(QUANTITIES[quantity]["ylim"])
-    ax1.legend(loc='best')
+    handles, labels = ax1.get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    by_label["75% quantile"] = mpl.lines.Line2D([0],[0],color="black", linestyle="dashdot")
+    by_label.move_to_end("75% quantile", last=False)
+    by_label["median"] = mpl.lines.Line2D([0],[0],color="black", linestyle="solid")
+    by_label.move_to_end("median", last=False)
+    by_label["25% quantile"] = mpl.lines.Line2D([0],[0],color="black", linestyle="dashed")
+    by_label.move_to_end("25% quantile", last=False)
+    ax1.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best',frameon=False)
+    # save plot
     fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.pdf"))
     fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.png"))
     plt.close()
@@ -240,7 +253,9 @@ def run(args=parser.parse_args()):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     # and plot
-    plotVariationbands(df, "Efficiency", sites, "", out_dir)
+    for quantity in QUANTITIES.values():
+        logger.info("Plotting {}".format(quantity["ident"]))
+        plotVariationbands(df, quantity["ident"], sites, "", out_dir)
 
 
 if __name__ == "__main__":
