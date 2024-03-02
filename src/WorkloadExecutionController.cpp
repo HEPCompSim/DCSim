@@ -208,9 +208,12 @@ int WorkloadExecutionController::main() {
     long batch_size = 100;
     long num_jobs_in_flight = 0;
     this->num_completed_jobs = 0;
+    bool continue_submitting = true;
     while (this->workload_spec.size() > 0 && (!this->abort)) {
-        if (num_jobs_in_flight < 200) {
-            num_jobs_in_flight += this->submitBatchOfJobs(htcondor_compute_service, job_spec_keys, batch_index, batch_size);
+        if (num_jobs_in_flight < 200 and continue_submitting) {
+            long num_jobs_submitted = this->submitBatchOfJobs(htcondor_compute_service, job_spec_keys, batch_index, batch_size);
+            continue_submitting = (num_jobs_submitted != 0);
+            num_jobs_in_flight += num_jobs_submitted;
             batch_index++;
         }
 
