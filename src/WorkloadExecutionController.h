@@ -57,7 +57,7 @@ private:
 
     std::shared_ptr<wrench::CompoundJob> createJob(std::string job_name);
     void submitBatchOfJobs(std::shared_ptr<wrench::HTCondorComputeService> htcondor_compute_service, std::vector<const std::string *> job_spec_keys,
-                           unsigned long batch_index, unsigned long batch_size);
+                            long batch_index, unsigned long batch_size);
 
 
     int main() override;

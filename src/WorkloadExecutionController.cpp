@@ -58,7 +58,7 @@ WorkloadExecutionController::WorkloadExecutionController(
 
 void WorkloadExecutionController::submitBatchOfJobs(std::shared_ptr<wrench::HTCondorComputeService> htcondor_compute_service,
                                                     std::vector<const std::string *> job_spec_keys,
-                                                                    unsigned long batch_index, unsigned long batch_size) {
+                                                                     long batch_index, unsigned long batch_size) {
     for (unsigned long i = std::min<unsigned long>(job_spec_keys.size(), batch_size * batch_index);
              i < std::min<unsigned long>(job_spec_keys.size(), batch_size * (batch_index + 1));
              i++) {
@@ -66,6 +66,8 @@ void WorkloadExecutionController::submitBatchOfJobs(std::shared_ptr<wrench::HTCo
         WRENCH_INFO("Submitted job %s", job->getName().c_str());
         job_manager->submitJob(job, htcondor_compute_service);
     }
+    WRENCH_INFO("SUBMITTED BATCH #%ld (%lu jobs)", batch_index, (std::min<unsigned long>(job_spec_keys.size(), batch_size * (batch_index + 1)) - std::min<unsigned long>(job_spec_keys.size(), batch_size * batch_index)));
+
     return;
 }
 
@@ -205,7 +207,7 @@ int WorkloadExecutionController::main() {
 //
 //    }
 
-    long batch_size = 10;
+    long batch_size = 40;
     long current_batch = -1;
     long num_completed_jobs_in_current_batch = 0;
     this->num_completed_jobs = 0;
