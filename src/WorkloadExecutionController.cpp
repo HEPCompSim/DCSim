@@ -207,7 +207,7 @@ int WorkloadExecutionController::main() {
 //
 //    }
 
-    long batch_size = 40;
+    long batch_size = 100;
     long current_batch = -1;
     long num_completed_jobs_in_current_batch = 0;
     this->num_completed_jobs = 0;
