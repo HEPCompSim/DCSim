@@ -202,11 +202,6 @@ int WorkloadExecutionController::main() {
     WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->arrival_time);
     wrench::Simulation::sleep(this->arrival_time);
 
-//    unsigned long batch_size = 100;
-//    for (unsigned long batch = 0; batch < (unsigned long)std::ceil((double)job_spec_keys.size() / (double)batch_size); batch++) {
-//
-//    }
-
     long batch_size = 100;
     long current_batch = -1;
     long num_completed_jobs_in_current_batch = 0;
@@ -215,7 +210,7 @@ int WorkloadExecutionController::main() {
         if ((current_batch < 0) || ((double)num_completed_jobs_in_current_batch > 0.5 * (double)batch_size)) {
             current_batch++;
             this->submitBatchOfJobs(htcondor_compute_service, job_spec_keys, current_batch, batch_size);
-            num_completed_jobs_in_current_batch = num_completed_jobs_in_current_batch - batch_size;
+            num_completed_jobs_in_current_batch = batch_size - num_completed_jobs_in_current_batch;
         }
 
         try {
