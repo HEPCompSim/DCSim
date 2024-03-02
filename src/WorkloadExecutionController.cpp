@@ -215,7 +215,7 @@ int WorkloadExecutionController::main() {
         if ((current_batch < 0) || ((double)num_completed_jobs_in_current_batch > 0.5 * (double)batch_size)) {
             current_batch++;
             this->submitBatchOfJobs(htcondor_compute_service, job_spec_keys, current_batch, batch_size);
-            num_completed_jobs_in_current_batch = 0;
+            num_completed_jobs_in_current_batch = num_completed_jobs_in_current_batch - batch_size;
         }
 
         try {
