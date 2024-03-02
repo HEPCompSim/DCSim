@@ -204,13 +204,25 @@ int WorkloadExecutionController::main() {
     WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->arrival_time);
     wrench::Simulation::sleep(this->arrival_time);
 
+
+    // Compute the number of job slots
+    long num_job_slots = 0;
+    auto hostname_list = simulation->getHostnameList();
+    for (const auto &hostname: hostname_list) {
+        auto hostProperties = wrench::S4U_Simulation::getHostProperty(hostname, "type");
+        if (hostProperties.find("worker") != std::string::npos) {
+            num_job_slots++;
+        }
+    }
+
+    // Process execution by batches
     long batch_index = 0;
-    long batch_size = 100;
+    long batch_size = num_job_slots;
     long num_jobs_in_flight = 0;
     this->num_completed_jobs = 0;
     bool continue_submitting = true;
     while (this->workload_spec.size() > 0 && (!this->abort)) {
-        if (num_jobs_in_flight < 200 and continue_submitting) {
+        if (num_jobs_in_flight < num_job_slots and continue_submitting) {
             long num_jobs_submitted = this->submitBatchOfJobs(htcondor_compute_service, job_spec_keys, batch_index, batch_size);
             continue_submitting = (num_jobs_submitted != 0);
             num_jobs_in_flight += num_jobs_submitted;
