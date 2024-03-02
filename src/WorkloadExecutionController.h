@@ -56,7 +56,7 @@ private:
     std::map<std::string, JobSpecification> workload_spec;
 
     std::shared_ptr<wrench::CompoundJob> createJob(std::string job_name);
-    void submitBatchOfJobs(std::shared_ptr<wrench::HTCondorComputeService> htcondor_compute_service, std::vector<const std::string *> job_spec_keys,
+    unsigned long submitBatchOfJobs(std::shared_ptr<wrench::HTCondorComputeService> htcondor_compute_service, std::vector<const std::string *> job_spec_keys,
                             long batch_index, unsigned long batch_size);
 
 

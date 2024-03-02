@@ -56,19 +56,21 @@ WorkloadExecutionController::WorkloadExecutionController(
     this->generator = generator;
 }
 
-void WorkloadExecutionController::submitBatchOfJobs(std::shared_ptr<wrench::HTCondorComputeService> htcondor_compute_service,
+unsigned long WorkloadExecutionController::submitBatchOfJobs(std::shared_ptr<wrench::HTCondorComputeService> htcondor_compute_service,
                                                     std::vector<const std::string *> job_spec_keys,
                                                                      long batch_index, unsigned long batch_size) {
+    unsigned long num_submitted = 0;
     for (unsigned long i = std::min<unsigned long>(job_spec_keys.size(), batch_size * batch_index);
              i < std::min<unsigned long>(job_spec_keys.size(), batch_size * (batch_index + 1));
              i++) {
         auto job = this->createJob(*job_spec_keys[i]);
         WRENCH_INFO("Submitted job %s", job->getName().c_str());
         job_manager->submitJob(job, htcondor_compute_service);
+        num_submitted++;
     }
     WRENCH_INFO("SUBMITTED BATCH #%ld (%lu jobs)", batch_index, (std::min<unsigned long>(job_spec_keys.size(), batch_size * (batch_index + 1)) - std::min<unsigned long>(job_spec_keys.size(), batch_size * batch_index)));
 
-    return;
+    return num_submitted;
 }
 
 std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createJob(std::string job_name) {
@@ -202,15 +204,14 @@ int WorkloadExecutionController::main() {
     WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->arrival_time);
     wrench::Simulation::sleep(this->arrival_time);
 
+    long batch_index = 0;
     long batch_size = 100;
-    long current_batch = -1;
-    long num_completed_jobs_in_current_batch = 0;
+    long num_jobs_in_flight = 0;
     this->num_completed_jobs = 0;
     while (this->workload_spec.size() > 0 && (!this->abort)) {
-        if ((current_batch < 0) || ((double)num_completed_jobs_in_current_batch > 0.5 * (double)batch_size)) {
-            current_batch++;
-            this->submitBatchOfJobs(htcondor_compute_service, job_spec_keys, current_batch, batch_size);
-            num_completed_jobs_in_current_batch = batch_size - num_completed_jobs_in_current_batch;
+        if (num_jobs_in_flight < 200) {
+            num_jobs_in_flight += this->submitBatchOfJobs(htcondor_compute_service, job_spec_keys, batch_index, batch_size);
+            batch_index++;
         }
 
         try {
@@ -220,8 +221,7 @@ int WorkloadExecutionController::main() {
             continue;
         }
         // Hack: we know we got a job completion
-        num_completed_jobs_in_current_batch++;
-
+        num_jobs_in_flight--;
     }
 
 //    WRENCH_INFO(
