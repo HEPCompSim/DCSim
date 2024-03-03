@@ -211,7 +211,7 @@ int WorkloadExecutionController::main() {
     for (const auto &hostname: hostname_list) {
         auto hostProperties = wrench::S4U_Simulation::getHostProperty(hostname, "type");
         if (hostProperties.find("worker") != std::string::npos) {
-            num_job_slots++;
+            num_job_slots +=  wrench::S4U_Simulation::getHostNumCores(hostname);
         }
     }
 
