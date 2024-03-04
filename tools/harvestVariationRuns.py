@@ -219,14 +219,18 @@ def plotVariationbands(
     ax1.set_ylabel(QUANTITIES[quantity]["label"], color="black")
     if QUANTITIES[quantity]["ylim"]:
         ax1.set_ylim(QUANTITIES[quantity]["ylim"])
+    # manipulate legend
     handles, labels = ax1.get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
-    by_label["75% quantile"] = mpl.lines.Line2D([0],[0],color="black", linestyle="dashdot")
-    by_label.move_to_end("75% quantile", last=False)
-    by_label["median"] = mpl.lines.Line2D([0],[0],color="black", linestyle="solid")
-    by_label.move_to_end("median", last=False)
     by_label["25% quantile"] = mpl.lines.Line2D([0],[0],color="black", linestyle="dashed")
+    by_label["25% quantile"].set_linewidth(1.)
     by_label.move_to_end("25% quantile", last=False)
+    by_label["median"] = mpl.lines.Line2D([0],[0],color="black", linestyle="solid")
+    by_label["median"].set_linewidth(1.)
+    by_label.move_to_end("median", last=False)
+    by_label["75% quantile"] = mpl.lines.Line2D([0],[0],color="black", linestyle="dashdot")
+    by_label["75% quantile"].set_linewidth(1.)
+    by_label.move_to_end("75% quantile", last=False)
     ax1.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best',frameon=False)
     # save plot
     fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.pdf"))
