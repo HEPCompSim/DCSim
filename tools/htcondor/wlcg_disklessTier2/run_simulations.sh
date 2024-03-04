@@ -37,7 +37,7 @@ SEED="${5}"
 BUFFERSIZE=0
 DUPLICATIONS=1
 HITRATE="${4}"
-XRDBLOCKSIZE=1000000
+XRDBLOCKSIZE=100000000
 
 echo "Starting execution of simulation..."
 
