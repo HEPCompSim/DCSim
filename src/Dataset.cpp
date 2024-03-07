@@ -18,17 +18,17 @@ Dataset::Dataset(
         const std::string name_suffix,
         const std::mt19937 &generator) {
     this->generator = generator;
-    std::string potential_separator = "_";
-    if (name_suffix == "") {
-        potential_separator = "";
-    }
+    std::string potential_separator = (name_suffix.empty() ? "" : "_");
+//    if (name_suffix == "") {
+//        potential_separator = "";
+//    }
 
     this->size_dist = initializeRNG(file_size);
     for (size_t f = 0; f < num_files; f++) {
         // Sample inputfile sizes
         double dsize = size_dist(this->generator);
         while (dsize < 0.) dsize = this->size_dist(this->generator);
-        files.push_back(wrench::Simulation::addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dsize));
+        this->files.push_back(wrench::Simulation::  addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dsize));
     }
     this->hostnames = hostnames;
     this->name = name_suffix;
