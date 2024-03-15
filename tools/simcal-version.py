@@ -11,26 +11,23 @@ import sys
 import atexit
 
 
-class DataLoader(sc.DataLoader):
-    def __init__(self, scsn, fcsn, scfn, fcfn):
+def dataLoader(scsn, fcsn, scfn, fcfn):
         with open(scsn, 'r') as file:
-            self.scsn = json.load(file)
+            scsn = json.load(file)
         with open(fcsn, 'r') as file:
-            self.fcsn = json.load(file)
+            fcsn = json.load(file)
         with open(scfn, 'r') as file:
-            self.scfn = json.load(file)
+            scfn = json.load(file)
         with open(fcfn, 'r') as file:
-            self.fcfn = json.load(file)
-
-    def get_data(self):
-        return self.scsn, self.fcsn, self.scfn, self.fcfn
+            fcfn = json.load(file)
+        return scsn, fcsn, scfn, fcfn
 
 
 class Simulator(sc.Simulator):
     def __init__(self, path, json_template, hitrates):
         super().__init__()
         self.path = path
-        self.template = sc.JSONTemplate(file=json_template)
+        self.template = json_template
         self.hitrates = hitrates
 
     def run(self, env, args):
@@ -42,10 +39,10 @@ class Simulator(sc.Simulator):
 
 
 # do whatever
-data = DataLoader("../../DCSIM\ calibration\ Data/individualSlowRawData.json",
-                  "../../DCSIM\ calibration\ Data/individualFastRawData.json",
-                  "../../DCSIM\ calibration\ Data/duplicateSlowRawData.json",
-                  "../../DCSIM\ calibration\ Data/duplicateFastRawData.json"
+data = dataLoader("../../DCSIM calibration Data/individualSlowRawData.json",
+                  "../../DCSIM calibration Data/individualFastRawData.json",
+                  "../../DCSIM calibration Data/duplicateSlowRawData.json",
+                  "../../DCSIM calibration Data/duplicateFastRawData.json"
                   )
 simulator = Simulator("tools/hitrateScanScript.sh", "../data/platform-files/sgbatch_validation_template.xml",
                       "1.0 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.0")
@@ -98,7 +95,7 @@ def loss(reference, simulated):
 
 
 point = SamplePoint(simulator)
-calibrator.calibrate(point, loss, data.get_data())
+calibrator.calibrate(point, loss, data)
 
 
 ## helper functions
@@ -160,3 +157,19 @@ def parse_csv(file):
             runtime = float(row['job.end']) - float(row['job.start'])
             stats[machine].append(runtime)
     return stats
+	
+def pFromV(xml_file_path, cpu_speed, read_speed, link_speed, net_speed):
+	# Get the command-line arguments
+	
+
+	# Read the contents of the XML file
+	with open(xml_file_path, 'r') as f:
+		xml_contents = f.read()
+
+	# Replace the placeholders in the XML file with the specified values
+	xml_contents = re.sub(r'{cpu-speed}', str(cpu_speed), xml_contents)
+	xml_contents = re.sub(r'{read-speed}', str(read_speed), xml_contents)
+	xml_contents = re.sub(r'{link-speed}', str(link_speed), xml_contents)
+	xml_contents = re.sub(r'{net-speed}', str(net_speed), xml_contents)
+
+	return xml_contents
