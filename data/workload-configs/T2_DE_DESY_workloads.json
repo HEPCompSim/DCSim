@@ -1,7 +1,6 @@
 {
     "Analysis_T2": {
-        "num_jobs": 108,
-        "infiles_per_job": 10,
+        "num_jobs": 216,
         "cores": {
             "type": "histogram",
             "counts": [0, 441598, 10, 0, 29325, 0, 0, 0, 5244],
@@ -28,11 +27,11 @@
             "bins": [0, 2e+09, 4e+09, 6e+09, 8e+09, 1e+10, 1.2e+10, 1.4e+10, 1.6e+10, 1.8e+10, 2e+10]
         },
         "workload_type": "streaming",
-        "submission_time": 10
+        "submission_time": 10,
+        "infile_datasets": "Analysis_T2"
     },
     "Digi_T2": {
-        "num_jobs": 74,
-        "infiles_per_job": 10,
+        "num_jobs": 148,
         "cores": {
             "type": "histogram",
             "counts": [0, 86939, 151890, 0, 87586, 0, 0, 0, 304]
@@ -47,22 +46,17 @@
             "counts": [212797, 32272, 12499, 63662, 58, 0, 5431, 0, 0, 0],
             "bins": [100, 1290, 2480, 3670, 4860, 6050, 7240, 8430, 9620, 10810, 12000]
         },
-        "infilesize": {
-            "type": "histogram",
-            "counts": [323934, 2694, 91, 0, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
-        },
         "outfilesize": {
             "type": "histogram",
             "counts": [255261, 66445, 1547, 670, 349, 293, 564, 245, 889, 2],
             "bins": [0, 2e+09, 4e+09, 6e+09, 8e+09, 1e+10, 1.2e+10, 1.4e+10, 1.6e+10, 1.8e+10, 2e+10]
         },
         "workload_type": "streaming",
-        "submission_time": 10
+        "submission_time": 10,
+        "infile_datasets": "Digi_T2"
     },
     "DataProcessing_T2": {
-        "num_jobs": 11,
-        "infiles_per_job": 10,
+        "num_jobs": 22,
         "cores": {
             "type": "histogram",
             "counts": [0, 0, 1613, 0, 47233, 0, 0, 0, 0]
@@ -77,22 +71,17 @@
             "counts": [76, 1499, 42, 113, 5541, 0, 41522, 0, 53, 0],
             "bins": [100, 1290, 2480, 3670, 4860, 6050, 7240, 8430, 9620, 10810, 12000]
         },
-        "infilesize": {
-            "type":"histogram",
-            "counts": [48846, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
-        },
         "outfilesize": {
             "type":"histogram",
             "counts": [47160, 1623, 51, 2, 8, 2, 0, 0, 0, 0],
             "bins": [0, 2e+09, 4e+09, 6e+09, 8e+09, 1e+10, 1.2e+10, 1.4e+10, 1.6e+10, 1.8e+10, 2e+10]
         },
         "workload_type": "streaming",
-        "submission_time": 10
+        "submission_time": 10,
+        "infile_datasets": "DataProcessing_T2"
     },
     "Others_T2": {
         "num_jobs": 0,
-        "infiles_per_job": 10,
         "cores": {
             "type": "histogram",
             "counts": [0, 0, 127, 0, 998, 0, 0, 0, 608]
@@ -107,22 +96,17 @@
             "counts": [50, 263, 1416, 4, 0, 0, 0, 0, 0, 0],
             "bins": [100, 1290, 2480, 3670, 4860, 6050, 7240, 8430, 9620, 10810, 12000]
         },
-        "infilesize": {
-            "type":"histogram",
-            "counts": [1733, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 3e+09, 6e+09, 9e+09, 1.2e+10, 1.5e+10, 1.8e+10, 2.1e+10, 2.4e+10, 2.7e+10, 3e+10]
-        },
         "outfilesize": {
             "type":"histogram",
             "counts": [1402, 313, 14, 2, 0, 2, 0, 0, 0, 0],
             "bins": [0, 1.5e+09, 3e+09, 4.5e+09, 6e+09, 7.5e+09, 9e+09, 1.05e+10, 1.2e+10, 1.35e+10, 1.5e+10]
         },
         "workload_type": "streaming",
-        "submission_time": 10
+        "submission_time": 10,
+        "infile_datasets": "Others_T2"
     },
     "Merge_T2": {
-        "num_jobs": 4,
-        "infiles_per_job": 10,
+        "num_jobs": 8,
         "cores": {
             "type": "histogram",
             "counts": [0, 18627, 0, 0, 0, 0, 0, 0, 0]
@@ -137,17 +121,13 @@
             "counts": [7877, 10746, 4, 0, 0, 0, 0, 0, 0, 0],
             "bins": [100, 1290, 2480, 3670, 4860, 6050, 7240, 8430, 9620, 10810, 12000]
         },
-        "infilesize": {
-            "type":"histogram",
-            "counts": [18627, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            "bins": [0, 5e+09, 1e+10, 1.5e+10, 2e+10, 2.5e+10, 3e+10, 3.5e+10, 4e+10, 4.5e+10, 5e+10]
-        },
         "outfilesize": {
             "type":"histogram",
             "counts": [3677, 11877, 3073, 0, 0, 0, 0, 0, 0, 0],
             "bins": [0, 2e+09, 4e+09, 6e+09, 8e+09, 1e+10, 1.2e+10, 1.4e+10, 1.6e+10, 1.8e+10, 2e+10]
         },
         "workload_type": "streaming",
-        "submission_time": 10
+        "submission_time": 10,
+        "infile_datasets": "Merge_T2"
     }
 }

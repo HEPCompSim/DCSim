@@ -1,7 +1,6 @@
 {
     "crown_ttbar_validation": {
         "num_jobs": 1,
-        "infiles_per_job": 20,
         "cores": {
             "type": "histogram",
             "counts": [0,1]
@@ -16,17 +15,13 @@
             "average": 2400,
             "sigma": 0
         },
-        "infilesize": {
-            "type": "gaussian",
-            "average": 427718950,
-            "sigma": 0
-        },
         "outfilesize": {
             "type": "gaussian",
             "average": 16000000,
             "sigma": 0
         },
         "workload_type": "streaming",
-        "submission_time": 10
+        "submission_time": 10,
+        "infile_datasets": "crown_ttbar"
     }
 }

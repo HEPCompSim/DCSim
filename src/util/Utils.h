@@ -13,8 +13,8 @@
  */
 enum StorageServiceBufferType {
     Infinity, /* full buffering */
-    Zero, /* ideal (continous) flow model */
-    Value /* Any integral value between 0 and infinity corresponding to a real buffer size (small buffer size -> many simulation calls -> slower simulation) */
+    Zero,     /* ideal (continous) flow model */
+    Value     /* Any integral value between 0 and infinity corresponding to a real buffer size (small buffer size -> many simulation calls -> slower simulation) */
 };
 
 /**
@@ -24,22 +24,18 @@ enum StorageServiceBufferType {
  * @return StorageServiceBufferType 
  */
 inline StorageServiceBufferType get_ssbuffer_type(std::string ssprop) {
-    if((ssprop == "infinity") or (ssprop == "inf")) {
+    if ((ssprop == "infinity") or (ssprop == "inf")) {
         return StorageServiceBufferType::Infinity;
-    }
-    else if ((ssprop == "0") or (ssprop == "zero")) {
-         return StorageServiceBufferType::Zero;
-    }
-    else {
-        if ((!ssprop.empty()) && (ssprop.find_first_not_of("0123456789")==std::string::npos) && (std::stoll(ssprop) > 0)) {
+    } else if ((ssprop == "0") or (ssprop == "zero")) {
+        return StorageServiceBufferType::Zero;
+    } else {
+        if ((!ssprop.empty()) && (ssprop.find_first_not_of("0123456789") == std::string::npos) && (std::stoll(ssprop) > 0)) {
             return StorageServiceBufferType::Value;
-        }
-        else {
+        } else {
             throw std::runtime_error("StorageService buffer value " + ssprop + "invalid. Please choose 'infinity', 'zero' or a positive long integer value in between");
         }
     }
 }
 
 
-#endif //S_UTILS_H
-
+#endif//S_UTILS_H

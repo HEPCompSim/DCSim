@@ -27,6 +27,6 @@ public:
     double total_flops;
     // Memory consumption of the job
     double total_mem;
-
 };
-#endif //S_JOB_SPECIFICATION_H
+
+#endif//S_JOB_SPECIFICATION_H

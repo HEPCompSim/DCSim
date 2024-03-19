@@ -21,6 +21,8 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
 
 
 namespace po = boost::program_options;
@@ -31,18 +33,24 @@ namespace po = boost::program_options;
  * with memory footprint by avoiding passing around / storing items that apply to
  * all jobs.
  */
-const std::vector<std::string> workload_keys = {
-        "num_jobs", "infiles_per_job", "cores",
-        "flops", "memory", "infilesize", "outfilesize",
-        "workload_type", "submission_time"
-    };
+const std::vector<std::string> dataset_keys = {
+        "location", "num_files",
+        "filesize"};
+const std::vector<std::string> mandatory_workload_keys = {
+        "num_jobs",
+        "flops", "memory", "outfilesize",
+        "workload_type", "submission_time"};
+const std::vector<std::string> elective_workload_keys = {
+        "infiles_per_job",
+        "infile_dataset",
+};
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
-std::mt19937 SimpleSimulator::gen(42);  // random number generator
-std::ofstream filedump; // output file stream to write monitoring dump to
-bool SimpleSimulator::infile_caching_on = true; // flag to turn off/on the caching of job input-files
-bool SimpleSimulator::prefetching_on = true;   // flag to enable prefetching during streaming
-bool SimpleSimulator::shuffle_jobs = false;   // flag to enable job shuffling during submission
-double SimpleSimulator::xrd_block_size = 1.*1000*1000*1000; // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
+std::mt19937 SimpleSimulator::gen(42);                           // random number generator
+std::ofstream filedump;                                          // output file stream to write monitoring dump to
+bool SimpleSimulator::infile_caching_on = true;                  // flag to turn off/on the caching of job input-files
+bool SimpleSimulator::prefetching_on = true;                     // flag to enable prefetching during streaming
+bool SimpleSimulator::shuffle_jobs = false;                      // flag to enable job shuffling during submission
+double SimpleSimulator::xrd_block_size = 1. * 1000 * 1000 * 1000;// maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 // TODO: The initialized below is likely bogus (at compile time?)
 std::set<std::string> SimpleSimulator::cache_hosts;
 std::set<std::string> SimpleSimulator::storage_hosts;
@@ -52,7 +60,7 @@ std::set<std::string> SimpleSimulator::executors;
 std::set<std::string> SimpleSimulator::file_registries;
 std::set<std::string> SimpleSimulator::network_monitors;
 std::map<std::string, std::set<std::string>> SimpleSimulator::hosts_in_zones;
-bool SimpleSimulator::local_cache_scope = false; // flag to consider only local caches
+bool SimpleSimulator::local_cache_scope = false;// flag to consider only local caches
 
 
 /**
@@ -60,7 +68,7 @@ bool SimpleSimulator::local_cache_scope = false; // flag to consider only local 
  * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
  */
 struct cacheScope {
-    cacheScope(std::string const& val): value(val) {}
+    cacheScope(std::string const &val) : value(val) {}
     std::string value;
 };
 /**
@@ -70,16 +78,16 @@ struct cacheScope {
  * @param val 
  * @return std::ostream& 
  */
-std::ostream& operator<<(std::ostream &os, const cacheScope &val) {
+std::ostream &operator<<(std::ostream &os, const cacheScope &val) {
     os << val.value << " ";
-    return os; 
+    return os;
 }
 
 /**
  * @brief Overload of boost::program_options validate method
  * to check for custom validator classes
  */
-void validate(boost::any& v, std::vector<std::string> const& values, cacheScope* /* target_type */, int) {
+void validate(boost::any &v, std::vector<std::string> const &values, cacheScope * /* target_type */, int) {
     using namespace boost::program_options;
 
     // Make sure no previous assignment to 'v' was made.
@@ -87,7 +95,7 @@ void validate(boost::any& v, std::vector<std::string> const& values, cacheScope*
 
     // Extract the first string from 'values'. If there is more than
     // one string, it's an error, and exception will be thrown.
-    std::string const& s = validators::get_single_string(values);
+    std::string const &s = validators::get_single_string(values);
 
     if (s == "local" || s == "network" || s == "siblingnetwork") {
         v = boost::any(cacheScope(s));
@@ -101,10 +109,10 @@ void validate(boost::any& v, std::vector<std::string> const& values, cacheScope*
  * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
  */
 struct WorkloadTypeStruct {
-    WorkloadTypeStruct(std::string const& val): value(boost::to_lower_copy(val)) {}
+    WorkloadTypeStruct(std::string const &val) : value(boost::to_lower_copy(val)) {}
     std::string value;
     // getter function
-    WorkloadType get() const{
+    WorkloadType get() const {
         return get_workload_type(value);
     }
 };
@@ -116,16 +124,16 @@ struct WorkloadTypeStruct {
  * @param val 
  * @return std::ostream& 
  */
-std::ostream& operator<<(std::ostream &os, const WorkloadTypeStruct &val) {
+std::ostream &operator<<(std::ostream &os, const WorkloadTypeStruct &val) {
     os << val.value << " ";
-    return os; 
+    return os;
 }
 
 /**
  * @brief Overload of boost::program_options validate method
  * to check for custom validator classes
  */
-void validate(boost::any& v, std::vector<std::string> const& values, WorkloadTypeStruct* /* target_type */, int) {
+void validate(boost::any &v, std::vector<std::string> const &values, WorkloadTypeStruct * /* target_type */, int) {
     using namespace boost::program_options;
 
     // Make sure no previous assignment to 'v' was made.
@@ -133,14 +141,13 @@ void validate(boost::any& v, std::vector<std::string> const& values, WorkloadTyp
 
     // Extract the first string from 'values'. If there is more than
     // one string, it's an error, and exception will be thrown.
-    std::string const& s = validators::get_single_string(values);
+    std::string const &s = validators::get_single_string(values);
 
     auto w = WorkloadTypeStruct(s);
     try {
         w.get();
         v = boost::any(w);
-    }
-    catch(std::runtime_error &e) {
+    } catch (std::runtime_error &e) {
         throw validation_error(validation_error::invalid_option_value);
     }
 }
@@ -150,14 +157,14 @@ void validate(boost::any& v, std::vector<std::string> const& values, WorkloadTyp
  * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
  */
 struct StorageServiceBufferValue {
-    StorageServiceBufferValue(std::string const& val): value(boost::to_lower_copy(val)) {}
+    StorageServiceBufferValue(std::string const &val) : value(boost::to_lower_copy(val)) {}
     std::string value;
     StorageServiceBufferType type;
     // getter function
-    StorageServiceBufferType getType() const{
+    StorageServiceBufferType getType() const {
         return get_ssbuffer_type(value);
     }
-    std::string get() const{
+    std::string get() const {
         return value;
     }
 };
@@ -169,16 +176,16 @@ struct StorageServiceBufferValue {
  * @param val 
  * @return std::ostream& 
  */
-std::ostream& operator<<(std::ostream &os, const StorageServiceBufferValue &val) {
+std::ostream &operator<<(std::ostream &os, const StorageServiceBufferValue &val) {
     os << val.value << " ";
-    return os; 
+    return os;
 }
 
 /**
  * @brief Overload of boost::program_options validate method
  * to check for custom validator classes
  */
-void validate(boost::any& v, std::vector<std::string> const& values, StorageServiceBufferValue* /* target_type */, int) {
+void validate(boost::any &v, std::vector<std::string> const &values, StorageServiceBufferValue * /* target_type */, int) {
     using namespace boost::program_options;
 
     // Make sure no previous assignment to 'v' was made.
@@ -186,23 +193,21 @@ void validate(boost::any& v, std::vector<std::string> const& values, StorageServ
 
     // Extract the first string from 'values'. If there is more than
     // one string, it's an error, and exception will be thrown.
-    std::string const& s = validators::get_single_string(values);
+    std::string const &s = validators::get_single_string(values);
 
     auto ssp = StorageServiceBufferValue(s);
     StorageServiceBufferType stype;
     try {
         stype = ssp.getType();
         // Ensure that non-value options are parsed correctly
-        if(stype == StorageServiceBufferType::Zero) {
+        if (stype == StorageServiceBufferType::Zero) {
             v = boost::any(StorageServiceBufferValue("0"));
-        } else if(stype == StorageServiceBufferType::Infinity) {
+        } else if (stype == StorageServiceBufferType::Infinity) {
             v = boost::any(StorageServiceBufferValue("infinity"));
-        }
-        else {
+        } else {
             v = boost::any(ssp);
         }
-    }
-    catch(std::runtime_error &e) {
+    } catch (std::runtime_error &e) {
         throw validation_error(validation_error::invalid_option_value);
     }
 }
@@ -214,20 +219,20 @@ void validate(boost::any& v, std::vector<std::string> const& values, StorageServ
  * @param argv 
  * 
  */
-po::variables_map process_program_options(int argc, char** argv) {
+po::variables_map process_program_options(int argc, char **argv) {
 
     // default values
     double hitrate = 0.0;
 
-    double average_flops = 2164.428*1000*1000*1000;
-    double sigma_flops = 0.1*average_flops;
-    double average_memory = 2.*1000*1000*1000;
-    double sigma_memory = 0.1*average_memory;
+    double average_flops = 2164.428 * 1000 * 1000 * 1000;
+    double sigma_flops = 0.1 * average_flops;
+    double average_memory = 2. * 1000 * 1000 * 1000;
+    double sigma_memory = 0.1 * average_memory;
     size_t infiles_per_job = 10;
     double average_infile_size = 3600000000.;
-    double sigma_infile_size = 0.1*average_infile_size;
-    double average_outfile_size = 0.5*infiles_per_job*average_infile_size;
-    double sigma_outfile_size = 0.1*average_outfile_size;
+    double sigma_infile_size = 0.1 * average_infile_size;
+    double average_outfile_size = 0.5 * infiles_per_job * average_infile_size;
+    double sigma_outfile_size = 0.1 * average_outfile_size;
 
 
     size_t duplications = 1;
@@ -236,51 +241,27 @@ po::variables_map process_program_options(int argc, char** argv) {
     bool prefetch_off = false;
     bool shuffle_jobs = false;
 
-    double xrd_block_size = 1000.*1000*1000;
-    std::string storage_service_buffer_size = "1048576"; // 1MiB
+    double xrd_block_size = 1000. * 1000 * 1000;
+    std::string storage_service_buffer_size = "1048576";// 1MiB
+
+    unsigned int seed = 42;
 
     po::options_description desc("Allowed options");
-    desc.add_options()
-        ("help,h", "show brief usage message\n")
-
-        ("platform,p", po::value<std::string>()->value_name("<platform>")->required(), "platform description file, written in XML following the SimGrid-defined DTD")
-        ("hitrate,H", po::value<double>()->default_value(hitrate), "initial fraction of staged input-files on caches at simulation start")
-
-        ("workload-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with workload configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")
-
-        ("njobs,n", po::value<size_t>()->default_value(60), "number of jobs to simulate")
-        ("ncores,c", po::value<int>()->default_value(1), "number of cores jobs run on")
-        ("flops", po::value<double>()->default_value(average_flops), "amount of floating point operations jobs need to process")
-        ("sigma-flops", po::value<double>()->default_value(sigma_flops), "jobs' distribution spread in FLOPS")
-        ("mem,m", po::value<double>()->default_value(average_memory), "average size of memory needed for jobs to run")
-        ("sigma-mem", po::value<double>()->default_value(sigma_memory), "jobs' sistribution spread in memory-needs")
-        ("ninfiles", po::value<size_t>()->default_value(infiles_per_job), "number of input-files each job has to process")
-        ("insize", po::value<double>()->default_value(average_infile_size), "average size of input-files jobs read")
-        ("sigma-insize", po::value<double>()->default_value(sigma_infile_size), "jobs' distribution spread in input-file size")
-        ("outsize", po::value<double>()->default_value(average_outfile_size), "average size of output-files jobs write")
-        ("sigma-outsize", po::value<double>()->default_value(sigma_outfile_size), "jobs' distribution spread in output-file size")
-        ("workload-type", po::value<WorkloadTypeStruct>()->default_value(WorkloadTypeStruct("streaming")), "switch to define the type of the workload. Please choose from 'calculation', 'streaming', or 'copy'")
-        ("submission-time", po::value<double>()->default_value(0.), "time to wait before submission of jobs")
-
-        ("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workload to feed into the simulation")
-
-        ("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")
-        ("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")
-        ("shuffle-jobs", po::bool_switch()->default_value(shuffle_jobs), "switch to turn on/off shuffling jobs during submission")
-
-        ("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation")
-
-        ("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")
-        ("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data")
-
-        ("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks")
-    ;
+    auto op = desc.add_options();
+    op("help,h", "show brief usage message\n");
+    op("platform,p", po::value<std::string>()->value_name("<platform>")->required(), "platform description file, written in XML following the SimGrid-defined DTD")("hitrate,H", po::value<double>()->default_value(hitrate), "initial fraction of staged input-files on caches at simulation start");
+    op("workload-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with workload configurations. Note that all job-specific commandline options will be ignored in case at least one configuration is provided.")("dataset-configurations", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{}, ""), "List of paths to .json files with dataset configurations.");
+    op("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workload to feed into the simulation");
+    op("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")("shuffle-jobs", po::bool_switch()->default_value(shuffle_jobs), "switch to turn on/off shuffling jobs during submission");
+    op("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation");
+    op("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data");
+    op("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks");
+    op("seed,s", po::value<unsigned int>()->default_value(seed), "Set the seed for the random generator");
 
     po::variables_map vm;
     po::store(
-        po::parse_command_line(argc, argv, desc),
-        vm
-    );
+            po::parse_command_line(argc, argv, desc),
+            vm);
 
     if (vm.count("help")) {
         std::cerr << desc << std::endl;
@@ -289,8 +270,9 @@ po::variables_map process_program_options(int argc, char** argv) {
 
     try {
         po::notify(vm);
-    } catch (std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl << std::endl;
+    } catch (std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl
+                  << std::endl;
         std::cerr << desc << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -309,25 +291,25 @@ po::variables_map process_program_options(int argc, char** argv) {
  * @param duplications Number of duplications each job is duplicated
  * @return std::map<std::string, JobSpecification> 
  */
-std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification>& workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
+std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> &workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
     size_t num_jobs = workload.size();
     std::map<std::string, JobSpecification> dupl_workload;
     std::cerr << "\tDuplicating workload " << &workload << " with " << std::to_string(num_jobs) << " jobs ";
-    for (auto & job_spec: workload) {
+    for (auto &job_spec: workload) {
         boost::smatch job_index_matches;
         boost::regex job_index_expression{"\\d+"};
-        boost::regex_search(job_spec.first, job_index_matches,  job_index_expression);
-        for (size_t d=0; d < duplications; d++) {
+        boost::regex_search(job_spec.first, job_index_matches, job_index_expression);
+        for (size_t d = 0; d < duplications; d++) {
             size_t dup_index;
-            std::stringstream job_index_sstream(job_index_matches[job_index_matches.size()-1]);
+            std::stringstream job_index_sstream(job_index_matches[job_index_matches.size() - 1]);
             job_index_sstream >> dup_index;
             dup_index += num_jobs * d;
-            std::string dupl_job_id = boost::replace_last_copy(job_spec.first, job_index_matches[job_index_matches.size()-1], std::to_string(dup_index));
+            std::string dupl_job_id = boost::replace_last_copy(job_spec.first, job_index_matches[job_index_matches.size() - 1], std::to_string(dup_index));
             JobSpecification dupl_job_specs = job_spec.second;
             if (d > 0) {
-                dupl_job_specs.outfile = wrench::Simulation::addFile(boost::replace_last_copy(dupl_job_specs.outfile->getID(), job_index_matches[job_index_matches.size()-1], std::to_string(dup_index)), dupl_job_specs.outfile->getSize());
+                dupl_job_specs.outfile = wrench::Simulation::addFile(boost::replace_last_copy(dupl_job_specs.outfile->getID(), job_index_matches[job_index_matches.size() - 1], std::to_string(dup_index)), dupl_job_specs.outfile->getSize());
                 // TODO: Think of a better way to copy the outfile destination
-                for (auto ss : grid_storage_services) {
+                for (auto ss: grid_storage_services) {
                     dupl_job_specs.outfile_destination = wrench::FileLocation::LOCATION(ss, dupl_job_specs.outfile);
                     break;
                 }
@@ -347,15 +329,15 @@ std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobS
  * 
  * @throw std::runtime_error, std::invalid_argument
  */
-void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation){
+void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation) {
     std::vector<std::string> hostname_list = simulation->getHostnameList();
     if (hostname_list.size() == 0) {
         throw std::runtime_error("Empty hostname list! Have you instantiated the platform already?");
     }
-    for (const auto& hostname: hostname_list) {
+    for (const auto &hostname: hostname_list) {
         auto hostProperties = wrench::S4U_Simulation::getHostProperty(hostname, "type");
         bool validType = false;
-        if (hostProperties == ""){
+        if (hostProperties == "") {
             throw std::runtime_error("Configuration property \"type\" missing for host " + hostname);
         }
         if (hostProperties.find("executor") != std::string::npos) {
@@ -394,40 +376,39 @@ void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simu
  */
 void SimpleSimulator::fillHostsInSiblingZonesMap(bool include_subzones = false) {
     std::map<std::string, std::vector<std::string>> zones_in_zones = wrench::S4U_Simulation::getAllSubZoneIDsByZone();
-    std::map<std::string, std::vector< std::string>> hostnames_in_zones = wrench::S4U_Simulation::getAllHostnamesByZone();
+    std::map<std::string, std::vector<std::string>> hostnames_in_zones = wrench::S4U_Simulation::getAllHostnamesByZone();
     std::map<std::string, std::set<std::string>> tmp_hosts_in_zones;
 
-    if (include_subzones) { // include all hosts in child-zones into a hostname set
-        for (const auto& zones_in_zone: zones_in_zones) {
+    if (include_subzones) {// include all hosts in child-zones into a hostname set
+        for (const auto &zones_in_zone: zones_in_zones) {
             std::cerr << "Zone: " << zones_in_zone.first << std::endl;
-            for (const auto& zone: zones_in_zone.second) {
+            for (const auto &zone: zones_in_zone.second) {
                 std::cerr << "\tSubzone: " << zone << std::endl;
-                for (const auto& host: hostnames_in_zones[zone]) {
+                for (const auto &host: hostnames_in_zones[zone]) {
                     std::cerr << "\t\tHost: " << host << std::endl;
                     tmp_hosts_in_zones[zones_in_zone.first].insert(host);
                     tmp_hosts_in_zones[zone].insert(host);
                 }
             }
         }
-    } else { // just convert the vector of hostnames to set in map
-        for (const auto& hostnamesByZone: hostnames_in_zones) {
+    } else {// just convert the vector of hostnames to set in map
+        for (const auto &hostnamesByZone: hostnames_in_zones) {
             std::vector<std::string> hostnamesVec = hostnamesByZone.second;
             std::set<std::string> hostnamesSet(hostnamesVec.begin(), hostnamesVec.end());
             tmp_hosts_in_zones[hostnamesByZone.first] = hostnamesSet;
         }
     }
     // identify all sibling zones and append their hosts
-    for (const auto& hosts_in_zone: tmp_hosts_in_zones) {
+    for (const auto &hosts_in_zone: tmp_hosts_in_zones) {
         std::string zone = hosts_in_zone.first;
         auto parent_zone = simgrid::s4u::Engine::get_instance()->netzone_by_name_or_null(zone)->get_parent();
         auto hosts = hosts_in_zone.second;
-        for (const auto& sibling: parent_zone->get_children()) {
+        for (const auto &sibling: parent_zone->get_children()) {
             auto hosts = tmp_hosts_in_zones[sibling->get_name()];
             SimpleSimulator::hosts_in_zones[zone].insert(hosts.begin(), hosts.end());
         }
     }
 }
-
 
 int main(int argc, char **argv) {
 
@@ -446,25 +427,14 @@ int main(int argc, char **argv) {
     // output-file name containing simulation information
     std::string filename = vm["output-file"].as<std::string>();
 
-    size_t num_jobs = vm["njobs"].as<size_t>();
-    size_t infiles_per_job = vm["ninfiles"].as<size_t>();
+    size_t duplications = vm["duplications"].as<size_t>();
+
     double hitrate = vm["hitrate"].as<double>();
 
-    int req_cores = vm["ncores"].as<int>();
-
-    double average_flops = vm["flops"].as<double>();
-    double sigma_flops = vm["sigma-flops"].as<double>();
-    double average_memory = vm["mem"].as<double>();
-    double sigma_memory = vm["sigma-mem"].as<double>();
-    double average_infile_size = vm["insize"].as<double>();
-    double sigma_infile_size = vm["sigma-insize"].as<double>();
-    double average_outfile_size = vm["outsize"].as<double>();
-    double sigma_outfile_size = vm["sigma-outsize"].as<double>();
-
-    double submission_arrival_time = vm["submission-time"].as<double>();
-
-    size_t duplications = vm["duplications"].as<size_t>();
     std::vector<std::string> workload_configurations = vm["workload-configurations"].as<std::vector<std::string>>();
+
+    // dataset-configurations name containing datasets infomration
+    std::vector<std::string> dataset_configurations = vm["dataset-configurations"].as<std::vector<std::string>>();
 
     // Flags to turn on/off the caching of jobs' input-files
     SimpleSimulator::infile_caching_on = !(vm["no-caching"].as<bool>());
@@ -494,68 +464,138 @@ int main(int argc, char **argv) {
         }
     }
 
+    /* Set seed for random engine */
+
+    unsigned int seed = vm["seed"].as<unsigned int>();
+    SimpleSimulator::gen.seed(seed);
+
+    /* Create datasets */
+
+    std::cerr << "Constructing dataset specifications..." << std::endl;
+
+    std::vector<Dataset> dataset_specs = {};
+
+    if (dataset_configurations.size() == 0) {
+        //Default dataset config
+    } else {
+        for (auto &ds_confpath: dataset_configurations) {
+            std::ifstream ds_conf(ds_confpath);
+            nlohmann::json dss_json = nlohmann::json::parse(ds_conf);
+
+            // Looping over the multiple workloads configured in the json file
+            for (auto &ds: dss_json.items()) {
+
+                // Checking json syntax to match workload spec
+                for (auto &ds_key: dataset_keys) {
+                    try {
+                        if (!ds.value().contains(ds_key)) {
+                            throw std::invalid_argument("ERROR: the dataset configuration " + ds_confpath + " must contain " + ds_key + " as information.");
+                        }
+                    } catch (std::invalid_argument &e) {
+                        std::cerr << e.what() << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                std::vector<std::string> location{};
+                if (ds.value()["location"].type() == nlohmann::json::value_t::string)
+                    location = {ds.value()["location"]};
+                else
+                    location = ds.value()["location"].get<std::vector<std::string>>();
+                dataset_specs.push_back(
+                        Dataset(
+                                // TODO: support simple strings when only one host is required as location
+                                location,
+                                ds.value()["num_files"],
+                                ds.value()["filesize"],
+                                ds.key(),
+                                SimpleSimulator::gen));
+                std::cerr << "\tDataset " << std::string(ds.key()) << " loaded" << std::endl;
+            }
+        }
+    }
+    std::cerr << "Created " << dataset_specs.size() << " unique datasets!"
+              << "\n";
+
 
     /* Create a workload */
     std::cerr << "Constructing workload specification..." << std::endl;
 
     std::vector<Workload> workload_specs = {};
-
-    if(workload_configurations.size() == 0){
-        std::cerr << "Trying to create a single workload from CLI parameters, consider using a workload config instead..." << std::endl;
-        workload_specs.push_back(
-            Workload(
-                num_jobs, infiles_per_job,
-                req_cores,
-                average_flops, sigma_flops,
-                average_memory,sigma_memory,
-                average_infile_size, sigma_infile_size,
-                average_outfile_size, sigma_outfile_size,
-                vm["workload-type"].as<WorkloadTypeStruct>().get(), "",
-                submission_arrival_time,
-                SimpleSimulator::gen
-            )
-        );
-
-        std::cerr << "\tThe workload has " << std::to_string(num_jobs) << " unique jobs" << std::endl;
+    try {
+        if (workload_configurations.size() == 0)
+            throw std::invalid_argument("ERROR: the workload configuration loaded is invalid or empty.");
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        exit(EXIT_FAILURE);
     }
-    else {
-        for(auto &wf_confpath : workload_configurations){
-            std::ifstream wf_conf(wf_confpath);
-            if(!wf_conf.is_open()) throw std::runtime_error("File " + wf_confpath + " could not be opened!");
-            nlohmann::json wfs_json = nlohmann::json::parse(wf_conf);
 
-            // Looping over the multiple workloads configured in the json file
-            for (auto &wf: wfs_json.items()){
+    for (auto &wf_confpath: workload_configurations) {
+        std::ifstream wf_conf(wf_confpath);
+        try {
+            if (!wf_conf.is_open())
+                throw std::runtime_error("File " + wf_confpath + " could not be opened!");
+        } catch (const std::exception &e) {
+            std::cerr << e.what() << std::endl;
+            exit(EXIT_FAILURE);
+        }
 
-                // Checking json syntax to match workload spec
-                for (auto &wf_key : workload_keys){
-                    try {
-                        if(!wf.value().contains(wf_key)){
-                            throw std::invalid_argument("ERROR: the workload configuration " + wf_confpath + " must contain " + wf_key + " as information.");
-                        }
+        nlohmann::json wfs_json = nlohmann::json::parse(wf_conf);
+
+        // Looping over the multiple workloads configured in the json file
+        for (auto &wf: wfs_json.items()) {
+            // Checking json syntax to match workload spec
+            for (auto &wf_key: mandatory_workload_keys) {
+                try {
+                    if (!wf.value().contains(wf_key)) {
+                        throw std::invalid_argument("ERROR: the workload configuration " + wf_confpath + " must contain " + wf_key + " as information.");
                     }
-                    catch(std::invalid_argument& e){
-                        std::cerr << e.what() << std::endl;
-                        exit(EXIT_FAILURE);
-                    }
+                } catch (std::invalid_argument &e) {
+                    std::cerr << e.what() << std::endl;
+                    exit(EXIT_FAILURE);
                 }
-                std::string workload_type_lower = boost::to_lower_copy(std::string(wf.value()["workload_type"]));
-                workload_specs.push_back(
-                    Workload(
-                        wf.value()["num_jobs"], wf.value()["infiles_per_job"],
-                        wf.value()["cores"],
-                        wf.value()["flops"], wf.value()["memory"],
-                        wf.value()["infilesize"], wf.value()["outfilesize"],
-                        get_workload_type(workload_type_lower), wf.key(),
-                        wf.value()["submission_time"],
-                        SimpleSimulator::gen
-                    )
-                );
-                std::cerr << "\tThe workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
             }
+            std::string workload_type_lower = boost::to_lower_copy(std::string(wf.value()["workload_type"]));
+            if (workload_type_lower != "calculation") {
+                std::vector<std::string> infile_datasets{};
+                if (wf.value()["infile_datasets"].type() == nlohmann::json::value_t::string)
+                    infile_datasets = {wf.value()["infile_datasets"]};
+                else
+                    infile_datasets = wf.value()["infile_datasets"].get<std::vector<std::string>>();
+                workload_specs.push_back(
+                        Workload(
+                                wf.value()["num_jobs"],
+                                wf.value()["cores"],
+                                wf.value()["flops"], wf.value()["memory"],
+                                wf.value()["outfilesize"],
+                                get_workload_type(workload_type_lower), wf.key(),
+                                wf.value()["submission_time"],
+                                SimpleSimulator::gen,
+                                infile_datasets));
+            } else {
+                workload_specs.push_back(
+                        Workload(
+                                wf.value()["num_jobs"],
+                                wf.value()["cores"],
+                                wf.value()["flops"], wf.value()["memory"],
+                                wf.value()["outfilesize"],
+                                get_workload_type(workload_type_lower), wf.key(),
+                                wf.value()["submission_time"],
+                                SimpleSimulator::gen));
+            }
+            std::cerr << "\tThe workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
         }
     }
-    std::cerr << "Created " << workload_specs.size() << " unique workloads!" << "\n";
+    std::cerr << "Created " << workload_specs.size() << " unique workloads!"
+              << "\n";
+
+    /* Add infiles to worklaod */
+
+    for (auto &ws: workload_specs) {
+        if (ws.workload_type == WorkloadType::Calculation)
+            continue;
+        ws.assignFiles(dataset_specs);
+    }
+
 
     /* Read and parse the platform description file to instantiate a simulation platform */
     std::cerr << "Instantiating SimGrid platform..." << std::endl;
@@ -569,7 +609,7 @@ int main(int argc, char **argv) {
     if (rec_netzone_caches) {
         SimpleSimulator::fillHostsInSiblingZonesMap();
     } else {
-        for (const auto& hostnamesByZone: wrench::S4U_Simulation::getAllHostnamesByZone()) {
+        for (const auto &hostnamesByZone: wrench::S4U_Simulation::getAllHostnamesByZone()) {
             std::vector<std::string> hostnamesVec = hostnamesByZone.second;
             std::set<std::string> hostnamesSet(hostnamesVec.begin(), hostnamesVec.end());
             SimpleSimulator::hosts_in_zones[hostnamesByZone.first] = hostnamesSet;
@@ -582,26 +622,22 @@ int main(int argc, char **argv) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
         auto storage_service = simulation->add(
-            wrench::SimpleStorageService::createSimpleStorageService(
-                host, {"/"},
-                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
-                {}
-            )
-        );
+                wrench::SimpleStorageService::createSimpleStorageService(
+                        host, {"/"},
+                        {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
+                        {}));
         cache_storage_services.insert(storage_service);
     }
 
     // and remote storages that are able to serve all file requests
-    //TODO: Think of a way to support grid storages serving only some datasets
+
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     for (auto host: SimpleSimulator::storage_hosts) {
         auto storage_service = simulation->add(
-            wrench::SimpleStorageService::createSimpleStorageService(
-                host, {"/"},
-                {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
-                {}
-            )
-        );
+                wrench::SimpleStorageService::createSimpleStorageService(
+                        host, {"/"},
+                        {{wrench::SimpleStorageServiceProperty::BUFFER_SIZE, buffer_size}},
+                        {}));
         grid_storage_services.insert(storage_service);
     }
 
@@ -609,20 +645,15 @@ int main(int argc, char **argv) {
     std::set<std::shared_ptr<wrench::ComputeService>> condor_compute_resources;
     for (auto host: SimpleSimulator::worker_hosts) {
         condor_compute_resources.insert(
-            simulation->add(
-                new wrench::BareMetalComputeService(
-                    host,
-                    {std::make_pair(
-                        host,
-                        std::make_tuple(
-                            wrench::Simulation::getHostNumCores(host),
-                            wrench::Simulation::getHostMemoryCapacity(host)
-                        )
-                    )},
-                    ""
-                )
-            )
-        );
+                simulation->add(
+                        new wrench::BareMetalComputeService(
+                                host,
+                                {std::make_pair(
+                                        host,
+                                        std::make_tuple(
+                                                wrench::Simulation::getHostNumCores(host),
+                                                wrench::Simulation::getHostMemoryCapacity(host)))},
+                                "")));
     }
 
     // Instantiate a HTcondorComputeService and add it to the simulation
@@ -633,21 +664,16 @@ int main(int argc, char **argv) {
     }
     for (auto host: SimpleSimulator::scheduler_hosts) {
         htcondor_compute_services.insert(
-            simulation->add(
-                new wrench::HTCondorComputeService(
-                    host,
-                    condor_compute_resources,
-                    {
-                        {wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "0.0"},
-                        {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "0.0"},
-                        {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "0.0"},
-                        {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "0.0"},
-                        {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "0.0"}
-                    },
-                    {}
-                )
-            )
-        );
+                simulation->add(
+                        new wrench::HTCondorComputeService(
+                                host,
+                                condor_compute_resources,
+                                {{wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "0.0"},
+                                 {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "0.0"},
+                                 {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "0.0"},
+                                 {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "0.0"},
+                                 {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "0.0"}},
+                                {})));
     }
 
 
@@ -666,21 +692,20 @@ int main(int argc, char **argv) {
     if (SimpleSimulator::executors.size() != 1) {
         throw std::runtime_error("Currently this simulator supports only a single host running workload execution controllers!");
     }
-    std::cerr << "Creating workload execution controllers..." << "\n";
+    std::cerr << "Creating workload execution controllers..."
+              << "\n";
     for (auto host: SimpleSimulator::executors) {
-        for (auto& workload_spec: workload_specs) {
+        for (auto &workload_spec: workload_specs) {
             auto wms = simulation->add(
-                new WorkloadExecutionController(
-                    workload_spec,
-                    htcondor_compute_services,
-                    grid_storage_services,
-                    cache_storage_services,
-                    host,
-                    filename,
-                    SimpleSimulator::shuffle_jobs,
-                    SimpleSimulator::gen
-                )
-            );
+                    new WorkloadExecutionController(
+                            workload_spec,
+                            htcondor_compute_services,
+                            grid_storage_services,
+                            cache_storage_services,
+                            host,
+                            filename,
+                            SimpleSimulator::shuffle_jobs,
+                            SimpleSimulator::gen));
             std::cerr << "\tCreated execution controller " << wms->getName() << " executing workload " << &workload_spec << " with " << workload_spec.job_batch.size() << " jobs to simulate\n";
             workload_execution_controllers.insert(wms);
         }
@@ -688,29 +713,37 @@ int main(int argc, char **argv) {
     }
 
     /* Instantiate inputfiles and set outfile destinations*/
-    std::cerr << "Creating and staging input files plus set destination of output files..." << std::endl;
-    for (auto wms: workload_execution_controllers) {
-        try {
-            for (auto &job_spec: wms->get_workload_spec()) {
-                std::shuffle(job_spec.second.infiles.begin(), job_spec.second.infiles.end(), SimpleSimulator::gen); // Shuffle the input files
-                // Compute the job's incremental inputfiles size
-                double incr_inputfile_size = 0.;
-                for (auto const &f : job_spec.second.infiles) {
-                    incr_inputfile_size += f->getSize();
+    std::cerr << "Creating and staging input files" << std::endl;
+    try {
+        for (auto dss: dataset_specs) {
+            std::shuffle(dss.files.begin(), dss.files.end(), SimpleSimulator::gen);
+            //TODO: Add total_file_size as dataset property
+
+            for (auto const &f: dss.files) {
+                // Distribute the dataset files on specified GRID storages
+                //TODO: Think of a more realistic distribution pattern and avoid duplications
+                for (auto storage_service: grid_storage_services) {
+                    if (std::find(dss.hostnames.begin(), dss.hostnames.end(), storage_service->getHostname()) == dss.hostnames.end())
+                        continue;
+                    simulation->stageFile(wrench::FileLocation::LOCATION(storage_service, f));
+                    SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
                 }
+            }
+        }
+        for (auto wms: workload_execution_controllers) {
+            for (auto &job_spec: wms->get_workload_spec()) {
+                double incr_infile_size = 0.;
                 double cached_files_size = 0.;
-                for (auto const &f : job_spec.second.infiles) {
-                    // Distribute the inputfiles on all GRID storages
-                    //TODO: Think of a more realistic distribution pattern and avoid duplications
-                    for (auto storage_service: grid_storage_services) {
-                        // simulation->stageFile(f, storage_service);
-                        simulation->stageFile(wrench::FileLocation::LOCATION(storage_service, f));
-                        SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
-                    }
-                    // Distribute the infiles on all caches until desired hitrate is reached
-                    //TODO: Rework the initialization of input files on caches
-                    if (cached_files_size < hitrate*incr_inputfile_size) {
-                        for (const auto& cache : cache_storage_services) {
+                for (auto const &f: job_spec.second.infiles) {
+                    incr_infile_size += f->getSize();
+                }
+
+                for (auto const &f: job_spec.second.infiles) {
+
+                    // Distribute the files on all caches until desired hitrate is reached
+                    // TODO: Rework the initialization of input files on caches
+                    if (cached_files_size < hitrate * incr_infile_size) {
+                        for (const auto &cache: cache_storage_services) {
                             // simulation->stageFile(f, cache);
                             simulation->stageFile(wrench::FileLocation::LOCATION(cache, f));
                             SimpleSimulator::global_file_map[cache].touchFile(f.get());
@@ -718,10 +751,19 @@ int main(int argc, char **argv) {
                         cached_files_size += f->getSize();
                     }
                 }
-                if (cached_files_size/incr_inputfile_size < hitrate) {
+                if (cached_files_size / incr_infile_size < hitrate) {
                     throw std::runtime_error("Desired hitrate was not reached!");
                 }
-
+            }
+        }
+    } catch (std::runtime_error &e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return 0;
+    }
+    std::cerr << "Set destination of output files..." << std::endl;
+    for (auto wms: workload_execution_controllers) {
+        try {
+            for (auto &job_spec: wms->get_workload_spec()) {
                 // Set outfile destinations
                 // TODO: Think of a way to identify a specific (GRID) storage
                 for (auto storage_service: grid_storage_services) {
@@ -735,7 +777,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    std::cerr << "Duplicating workloads ... " << "\n";
+    std::cerr << "Duplicating workloads ... "
+              << "\n";
     size_t num_total_jobs = 0;
     for (auto wms: workload_execution_controllers) {
         /* Duplicate the workload */
@@ -751,15 +794,31 @@ int main(int argc, char **argv) {
         /* initialize output-dump file */
         filedump.open(filename, ios::out | ios::trunc);
         if (filedump.is_open()) {
-            filedump << "job.tag" << ", "; // << "job.ncpu" << ", " << "job.memory" << ", " << "job.disk" << ", ";
-            filedump << "machine.name" << ", ";
-            filedump << "hitrate" << ", ";
-            filedump << "job.start" << ", " << "job.end" << ", " << "job.computetime" << ", ";
-            filedump << "infiles.transfertime" << ", " << "infiles.size" << ", " << "outfiles.transfertime" << ", " << "outfiles.size" << "\n";
+            filedump << "job.tag"
+                     << ", ";// << "job.ncpu" << ", " << "job.memory" << ", " << "job.disk" << ", ";
+            filedump << "machine.name"
+                     << ", ";
+            filedump << "hitrate"
+                     << ", ";
+            filedump << "job.start"
+                     << ", "
+                     << "job.end"
+                     << ", "
+                     << "job.computetime"
+                     << ", "
+                     << "job.flops"
+                     << ", ";
+            filedump << "infiles.transfertime"
+                     << ", "
+                     << "infiles.size"
+                     << ", "
+                     << "outfiles.transfertime"
+                     << ", "
+                     << "outfiles.size"
+                     << "\n";
             filedump.close();
             std::cerr << "Wrote header of the output dump into file " << filename << std::endl;
-        }
-        else {
+        } else {
             throw std::runtime_error("Couldn't open output-file " + filename + " for dump!");
         }
         std::cerr << "Launching the Simulation..." << std::endl;

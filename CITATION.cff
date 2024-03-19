@@ -1,0 +1,18 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Horzela
+    given-names: Maximilian
+    orcid: https://orcid.org/0000-0002-3190-7962
+  - family-names: Casanova
+    given-names: Henri
+    orcid: https://orcid.org/0000-0001-6310-0365
+  - family-names: Rossi Tisbeni
+    given-names: Simone
+    orcid: https://orcid.org/0000-0001-6776-285X
+  - family-names: Gottmann
+    given-names: Artur
+    orcid: https://orcid.org/0000-0001-6696-349X
+title: HEPCompSim/DCSim: DCSim simulator release v0.3
+version: v0.3
+date-released: 2023-08-30

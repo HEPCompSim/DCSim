@@ -17,6 +17,16 @@ this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURC
 this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 work_dir="$PWD"
 
+# Use nproc to determine the number of thread for build
+if command -v nproc &> /dev/null; then
+    num_procs=$(nproc)
+else
+    num_procs=6
+fi
+
+# Release tag for SimGrid and WRENCH. If not specified will directly clone the repository
+SimGrid_tag="v3.34"
+WRENCH_tag="v2.2"
 
 # checking out packages from git as prerequisites for WRENCH:
 #
@@ -32,7 +42,7 @@ mkdir -p build
 cd build
 cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j 6; sudo make install
+make -j "$num_procs"; sudo make install
 popd
 
 # 2) nlohmann json, docu: https://json.nlohmann.me/, git: https://github.com/nlohmann/json
@@ -47,7 +57,7 @@ mkdir -p build
 cd build
 cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j 6; sudo make install
+make -j "$num_procs"; sudo make install
 popd
 
 # 3) googletest, docu & git: https://github.com/google/googletest
@@ -62,7 +72,7 @@ mkdir -p build
 cd build
 cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j 6; sudo make install
+make -j "$num_procs"; sudo make install
 popd
 
 # 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
@@ -74,14 +84,20 @@ echo "Installing SimGrid..."
 # fi
 # pushd simgrid-v3.32
 if [ ! -d "$work_dir/simgrid" ]; then
-    git clone https://framagit.org/simgrid/simgrid.git
+    if [ -n "$SimGrid_tag" ]; then
+        # If SimGrid_tag is specified, run the git clone command with the tag
+        git clone --depth 1 --branch "$SimGrid_tag" https://framagit.org/simgrid/simgrid.git
+    else
+        # If SimGrid_tag is not specified, clone the repository without a specific tag
+        git clone https://framagit.org/simgrid/simgrid.git
+    fi
 fi
 pushd simgrid
 mkdir -p build
 cd build
 cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j 6; sudo make install
+make -j "$num_procs"; sudo make install
 popd
 
 # installing WRENCH 2.0:
@@ -93,15 +109,21 @@ echo "Installing WRENCH..."
 # fi
 # pushd wrench-2.1
 if [ ! -d "$work_dir/wrench" ]; then
-    git clone https://github.com/wrench-project/wrench.git
+    if [ -n "$WRENCH_tag" ]; then
+        # If WRENCH_tag is specified, run the git clone command with the tag
+        git clone --depth 1 --branch "$WRENCH_tag" https://github.com/wrench-project/wrench.git
+    else
+        # If WRENCH_tag is not specified, clone the repository without a specific tag
+        git clone https://github.com/wrench-project/wrench.git
+    fi
 fi
 pushd wrench
 mkdir -p build
 cd build
 cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j 6; sudo make install
-# make -j 6 examples; sudo make install examples # needed additionally, since not done by default
+make -j "$num_procs"; sudo make install
+# make -j "$num_procs" examples; sudo make install examples # needed additionally, since not done by default
 popd
 
 # install the sgbatch simulator
@@ -111,5 +133,7 @@ mkdir -p build
 cd build
 cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j 6; sudo make install
+make -j "$num_procs"; sudo make install
 popd
+
+sudo ldconfig

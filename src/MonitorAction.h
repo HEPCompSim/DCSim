@@ -15,12 +15,11 @@ public:
      * @brief Constructor that adds some more parameters for monitoring purposes
      */
     MonitorAction(
-        const std::string &name,
-        double ram,
-        unsigned long num_cores,
-        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_execute,
-        const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate
-    );
+            const std::string &name,
+            double ram,
+            unsigned long num_cores,
+            const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_execute,
+            const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate);
 
     double get_infile_transfer_time() {
         return infile_transfer_time;
@@ -47,11 +46,11 @@ public:
     void set_hitrate(double value) {
         this->hitrate = value;
     }
-    
+
 protected:
     /** @brief Attribute monitoring accumulated transfer-time of input-files.
      * Non-zero for jobs where infile-read and compute steps are separated. */
-    double infile_transfer_time; 
+    double infile_transfer_time;
     /** @brief Attribute monitoring the accumulated computation time (CPU time).*/
     double calculation_time;
     // /** @brief Atrribute monitoring accumulated transfer-time of output files.
@@ -60,7 +59,6 @@ protected:
     /** @brief Attribute monitoring fraction of input-files read from cache.
      * This might be dependent on the cache definition. */
     double hitrate;
-
 };
 
-#endif //MY_SIMPLE_EXECUTION_CONTROLLER_H
+#endif//MY_SIMPLE_EXECUTION_CONTROLLER_H

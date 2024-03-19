@@ -16,4 +16,4 @@ public:
 };
 
 
-#endif //S_DEFAULTVALUES_H
+#endif//S_DEFAULTVALUES_H

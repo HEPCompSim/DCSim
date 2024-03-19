@@ -19,6 +19,7 @@ action() {
     # local PLATFORM="$parent/data/platform-files/WLCG_disklessTier2_reduced1000.xml"
     # local WORKLOADS="$parent/data/workload-configs/Dummy_workloads.json $parent/data/workload-configs/T?_DE_*_workloads.json"
     local WORKLOADS="$parent/data/workload-configs/T?_DE_*_workloads.json"
+    local DATSET="$parent/data/dataset-configs/prefetchScan.json"
 
     local XRD_BLOCKSIZE=100000000
     local STORAGE_BUFFER_SIZE=0 #1048576
@@ -31,7 +32,7 @@ action() {
         mkdir -p $OUTDIR
     fi
 
-    for prefetchrate in $(LANG=en_US seq 0.0 0.1 1.0)
+    for prefetchrate in $(LANG=en seq 0.0 0.1 1.0)
     do 
         dc-sim --platform "$PLATFORM" \
             --hitrate ${prefetchrate} \
@@ -41,7 +42,8 @@ action() {
             --storage-buffer-size $STORAGE_BUFFER_SIZE \
             --cache-scope network \
             --no-caching \
-            --workload-configurations $WORKLOADS #\
+            --workload-configurations $WORKLOADS \
+            --dataset-configurations $DATSET
             # --no-streaming \
             # --wrench-full-log
             # --log=simple_wms.threshold=debug \

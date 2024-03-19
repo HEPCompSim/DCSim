@@ -1,10 +1,10 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./measure_and_simulate.sh
-arguments = $(PLATFORM) $(NJOBS) $(BUFFERSIZE)
+arguments = $(PLATFORM) $(WORKLOAD) $(DATASET) $(NJOBS) $(BUFFERSIZE)
 
 should_transfer_files = YES
-transfer_input_files = ../../../data/platform-files/$(PLATFORM).xml
+transfer_input_files = ../../../data/platform-files/$(PLATFORM), ../../../data/workload-configs/$(WORKLOAD), ../../../data/dataset-configs/$(DATASET)
 transfer_output_files = scaling_dump_$(PLATFORM)$(NJOBS)jobs.txt, $(PLATFORM)$(NJOBS).csv
 when_to_transfer_output = ON_EXIT
 
@@ -14,11 +14,11 @@ error = logs/err.$(ClusterId).$(ProcId)
 
 
 accounting_group=cms.production
-Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="ms04.etp.kit.edu")
+Requirements = TARGET.ProvidesIO && (TARGET.Machine=?="mdm1.etp.kit.edu")
 +RemoteJob = True
 
 universe = docker
-docker_image = mschnepf/slc7-condocker
+docker_image = mhorzela/dcsim
 
 +RequestWalltime = (15*$(NJOBS)) + 3600 + (24*3600*NumJobStarts)
 request_cpus = 1
@@ -28,6 +28,8 @@ RequestDisk = 4000000
 
 x509userproxy = $ENV(X509_USER_PROXY)
 
-PLATFORM = WLCG_disklessTier2
+PLATFORM = WLCG_disklessTier2.xml
+WORKLOAD = wlcg_disklessT2.json
+DATASET = wlcg_disklessT2_datasets.json
 BUFFERSIZE = 0
 queue NJOBS from arguments.txt
