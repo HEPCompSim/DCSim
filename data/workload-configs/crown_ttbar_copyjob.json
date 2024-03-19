@@ -1,0 +1,48 @@
+{
+    "crown_ttbar_validation": {
+        "num_jobs": 1,
+        "cores": {
+            "type": "histogram",
+            "counts": [0,1]
+        },
+        "flops": {
+            "type": "gaussian",
+            "average": 1174794431328,
+            "sigma": 0
+        },
+        "memory": {
+            "type": "gaussian",
+            "average": 2400,
+            "sigma": 0
+        },
+        "outfilesize": {
+            "type": "gaussian",
+            "average": 16000000,
+            "sigma": 0
+        },
+        "workload_type": "streaming",
+        "submission_time": 10,
+        "infile_datasets": [
+            "crown_ttbar0",
+            "crown_ttbar1",
+            "crown_ttbar2",
+            "crown_ttbar3",
+            "crown_ttbar4",
+            "crown_ttbar5",
+            "crown_ttbar6",
+            "crown_ttbar7",
+            "crown_ttbar8",
+            "crown_ttbar9",
+            "crown_ttbar10",
+            "crown_ttbar11",
+            "crown_ttbar12",
+            "crown_ttbar13",
+            "crown_ttbar14",
+            "crown_ttbar15",
+            "crown_ttbar16",
+            "crown_ttbar17",
+            "crown_ttbar18",
+            "crown_ttbar19"
+        ]
+    }
+}

@@ -1,0 +1,182 @@
+{
+    "crown_ttbar0": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 866135599,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar1": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 455956192,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar2": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 866417169,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar3": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 784874363,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar4": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 124618076,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar5": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 126464985,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar6": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 231452621,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar7": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 14095661,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar8": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 865918255,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar9": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 100233383,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar10": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 585147111,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar11": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 2800197,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar12": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 743067675,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar13": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 577566000,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar14": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 17780531,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar15": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 867036301,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar16": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 578114540,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar17": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 162000281,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar18": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 25253049,
+          "sigma": 0
+      }
+    },
+    "crown_ttbar19": {
+        "location":["RemoteStorage"],
+        "num_files": 1,
+        "filesize": {
+          "type": "gaussian",
+          "average": 660307831,
+          "sigma": 0
+      }
+    }
+  }
