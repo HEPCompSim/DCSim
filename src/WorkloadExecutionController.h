@@ -13,6 +13,7 @@
 #include <wrench-dev.h>
 #include <iostream>
 #include <fstream>
+#include <utility>
 
 #include "JobSpecification.h"
 #include "Workload.h"
@@ -39,7 +40,7 @@ public:
     }
 
     void set_workload_spec(std::map<std::string, JobSpecification> w) {
-        this->workload_spec = w;
+        this->workload_spec = std::move(w);
     }
 
 
@@ -55,9 +56,10 @@ private:
     /** @brief job batch to submit with all specs **/
     std::map<std::string, JobSpecification> workload_spec;
 
-    std::shared_ptr<wrench::CompoundJob> createJob(std::string job_name);
-    unsigned long submitBatchOfJobs(std::shared_ptr<wrench::HTCondorComputeService> htcondor_compute_service, std::vector<const std::string *> job_spec_keys,
-                            long batch_index, unsigned long batch_size);
+    std::shared_ptr<wrench::CompoundJob> createJob(const std::string& job_name);
+    unsigned long submitBatchOfJobs(const std::shared_ptr<wrench::HTCondorComputeService>& htcondor_compute_service,
+                                    std::vector<const std::string *> job_spec_keys,
+                                    size_t batch_index, size_t batch_size);
 
 
     int main() override;
@@ -66,6 +68,7 @@ private:
     std::shared_ptr<wrench::JobManager> job_manager;
     // /** @brief The data movement manager */
     // std::shared_ptr<wrench::DataMovementManager> data_movement_manager;
+
     /** @brief Whether the workflow execution should be aborted */
     bool abort = false;
     /** @brief The desired fraction of input files served by the cache */
@@ -77,6 +80,9 @@ private:
     std::string filename;
     /** @brief Output filestream object to write out dump */
     std::ofstream filedump;
+
+    /** @rief The number of jobs that have been submitted but haven't finished/failed yet **/
+    size_t num_jobs_in_flight = 0;
 
     /** @brief number of complete jobs so far **/
     size_t num_completed_jobs = 0;
