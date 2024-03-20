@@ -125,6 +125,7 @@ def q90(x: pd.Series):
 
 
 def processFile(file: os.PathLike):
+        logger.debug(f"\tProcessing file {file}")
         if not os.path.exists(file):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
@@ -143,7 +144,7 @@ def processFile(file: os.PathLike):
             df_tmp = df_tmp.reset_index()
             df_tmp["prefetchrate"] = float(re.search(r'([h,H])([0-9]*[.])?[0-9]*', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]).group().strip("hH"))
             df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
-            logger.debug("intermediate dataframe: ", type(df_tmp), df_tmp.shape, "\n", df_tmp)
+            logger.debug("\tintermediate dataframe: ", type(df_tmp), df_tmp.shape, "\n", df_tmp)
         return df_tmp
 
 
