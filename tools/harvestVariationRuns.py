@@ -163,7 +163,7 @@ def createDataframeFromCSVs(csvFiles: Iterable, nprocs=os.cpu_count()/2) -> pd.D
     from multiprocessing import Pool
     pool = Pool(processes=int(nprocs))
     process_dict = {}
-    logger.info(f"Analysing {len(csvFiles)} with {nprocs} concurrent processes")
+    logger.info(f"Analysing {len(csvFiles)} files with {nprocs} concurrent processes")
     for file in csvFiles:
         process_dict[file] = pool.apply_async(processFile, (file,))
     dfs = []
@@ -171,6 +171,7 @@ def createDataframeFromCSVs(csvFiles: Iterable, nprocs=os.cpu_count()/2) -> pd.D
         dfs.append(process.get())
     pool.close()
     pool.join()
+    logger.info("\tFinished analysing")
     # concatenate all dataframes
     df = pd.concat([df for df in dfs], ignore_index=True)
     logger.debug(f"Raw data: \n{df.head()}")
@@ -227,18 +228,18 @@ def plotVariationbands(
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("ci",95), err_style="band",
-                 linestyle="solid", palette=palette,
+                 estimator="mean", errorbar=("sd",1), n_boot=1, seed=42,
+                 linestyle="solid", err_style="band", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q25"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("ci",95), err_style="band",
-                 linestyle="dashed", palette=palette,
+                 estimator="mean", errorbar=("sd",1), n_boot=1, seed=42,
+                 linestyle="dashed", err_style="band", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q75"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("ci",95), err_style="band",
-                 linestyle="dashdot", palette=palette,
+                 estimator="mean", errorbar=("sd",1), n_boot=1, seed=42,
+                 linestyle="dashdot", err_style="band", palette=palette,
                  ax=ax1)
     ax1.set_title(title)
     ax1.set_xlabel("fraction of prefetched files in cache",color="black")
