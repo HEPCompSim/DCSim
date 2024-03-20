@@ -162,9 +162,8 @@ def createDataframeFromCSVs(csvFiles: Iterable, nprocs=os.cpu_count()/2) -> pd.D
     from multiprocessing import Pool
     pool = Pool(processes=int(nprocs))
     process_dict = {}
-    print(csvFiles)
-    for i,file in enumerate(csvFiles):
-        print(i, file)
+    logger.info(f"Analysing {len(csvFiles)} with {nprocs} concurrent processes")
+    for file in csvFiles:
         process_dict[file] = pool.apply_async(processFile, (file,))
     dfs = []
     for file, process in process_dict.items():
@@ -227,17 +226,17 @@ def plotVariationbands(
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("sd",1.0), err_style="band",
+                 estimator="mean", errorbar=("ci",95), err_style="band",
                  linestyle="solid", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q25"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("sd",1.0), err_style="band",
+                 estimator="mean", errorbar=("ci",95), err_style="band",
                  linestyle="dashed", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q75"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("sd",1.0), err_style="band",
+                 estimator="mean", errorbar=("ci",95), err_style="band",
                  linestyle="dashdot", palette=palette,
                  ax=ax1)
     ax1.set_title(title)
