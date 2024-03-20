@@ -101,28 +101,18 @@ def mapHostToSite(test: str, mapping: 'dict[str,str]',):
         return test
 
 
-def createDataframeFromCSVs(csvFiles: Iterable):
-    """Merge all data from individual CSV files into a single data-frame
 
-    Args:
-        csvFiles (List(PathLike)): CSV files containing job data
+def q10(x: pd.Series):
+    return x.quantile(0.1)
+def q25(x: pd.Series):
+    return x.quantile(0.25)
+def q75(x: pd.Series):
+    return x.quantile(0.75)
+def q90(x: pd.Series):
+    return x.quantile(0.9)
 
-    Returns:
-        DataFrame: merged data-frame containing all job data
-    """
 
-    def q10(x: pd.Series):
-        return x.quantile(0.1)
-    def q25(x: pd.Series):
-        return x.quantile(0.25)
-    def q75(x: pd.Series):
-        return x.quantile(0.75)
-    def q90(x: pd.Series):
-        return x.quantile(0.9)
-    
-    # create a dataframe containing statistical moments of each run
-    dfs = []
-    for file in csvFiles:
+def processFile(file: os.PathLike):
         if not os.path.exists(file):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
@@ -142,13 +132,36 @@ def createDataframeFromCSVs(csvFiles: Iterable):
             df_tmp["prefetchrate"] = float(re.search(r'([h,H])([0-9]*[.])?[0-9]*', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]).group().strip("hH"))
             df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
             logger.debug("intermediate dataframe: ", type(df_tmp), df_tmp.shape, "\n", df_tmp)
-            dfs.append(df_tmp)
+        return df_tmp
+
+
+def createDataframeFromCSVs(csvFiles: Iterable):
+    """Merge all data from individual CSV files into a single data-frame
+
+    Args:
+        csvFiles (List(PathLike)): CSV files containing job data
+
+    Returns:
+        DataFrame: merged data-frame containing all job data
+    """
+
+    # create a dataframe containing statistical moments of each run
+    from multiprocessing import Pool
+    pool = Pool(processes=int(os.cpu_count()/2))
+    process_dict = {}
+    print(csvFiles)
+    for i,file in enumerate(csvFiles):
+        print(i, file)
+        process_dict[file] = pool.apply_async(processFile, (file,))
+    dfs = []
+    for file, process in process_dict.items():
+        dfs.append(process.get())
+    pool.close()
+    pool.join()
     # concatenate all dataframes
     df = pd.concat([df for df in dfs], ignore_index=True)
     logger.debug(f"Raw data: \n{df.head()}")
     return df
-
-
 
 
 
