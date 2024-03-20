@@ -60,6 +60,13 @@ def valid_file(param: str) -> str:
     return param
 
 
+def valid_int(param: int) -> int:
+    param = int(param)
+    if not param > 0:
+        raise argparse.ArgumentTypeError("Argument must be greater than zero!")
+    return param
+
+
 parser = argparse.ArgumentParser(
     description="Produce a table (CSV file format) including the hitrate dependency of the simulated system for varied runs. \
         It uses several files as input, one for each prefetch value used to initialize the simulation per variation run. \
@@ -91,6 +98,11 @@ parser.add_argument(
     default="info",
     help="set the logging level",
 )
+parser.add_argument(
+    "--njobs", "-j",
+    type=valid_int,
+    help="number of concurrent jobs processing monitoring files"
+)
 
 
 def mapHostToSite(test: str, mapping: 'dict[str,str]',):
@@ -117,7 +129,7 @@ def processFile(file: os.PathLike):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
             # read one data file
-            data = pd.read_csv(f,sep=",\s")
+            data = pd.read_csv(f,sep=",\s",engine='python')
             mask = ~data["job.tag"].str.contains("__")
             data = data[mask]
             # compute derived quantities
@@ -127,7 +139,7 @@ def processFile(file: os.PathLike):
             data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
             data["Site"] = data["machine.name"].apply(lambda x: mapHostToSite(x,HostSiteMapping))
             # aggregate per execution site
-            df_tmp = data.groupby("Site").agg(['mean','median', q10, q25, q75, q90])
+            df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             df_tmp["prefetchrate"] = float(re.search(r'([h,H])([0-9]*[.])?[0-9]*', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]).group().strip("hH"))
             df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
@@ -135,11 +147,12 @@ def processFile(file: os.PathLike):
         return df_tmp
 
 
-def createDataframeFromCSVs(csvFiles: Iterable):
+def createDataframeFromCSVs(csvFiles: Iterable, nprocs=os.cpu_count()/2) -> pd.DataFrame:
     """Merge all data from individual CSV files into a single data-frame
 
     Args:
         csvFiles (List(PathLike)): CSV files containing job data
+        nprocs (int): number of concurrent processes
 
     Returns:
         DataFrame: merged data-frame containing all job data
@@ -147,7 +160,7 @@ def createDataframeFromCSVs(csvFiles: Iterable):
 
     # create a dataframe containing statistical moments of each run
     from multiprocessing import Pool
-    pool = Pool(processes=int(os.cpu_count()/2))
+    pool = Pool(processes=int(nprocs))
     process_dict = {}
     print(csvFiles)
     for i,file in enumerate(csvFiles):
@@ -214,17 +227,17 @@ def plotVariationbands(
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", #errorbar="sd", err_style="band",
+                 estimator="mean", errorbar=("sd",1.0), err_style="band",
                  linestyle="solid", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q25"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", #errorbar="sd", err_style="band",
+                 estimator="mean", errorbar=("sd",1.0), err_style="band",
                  linestyle="dashed", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q75"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", #errorbar="sd", err_style="band",
+                 estimator="mean", errorbar=("sd",1.0), err_style="band",
                  linestyle="dashdot", palette=palette,
                  ax=ax1)
     ax1.set_title(title)
@@ -261,8 +274,12 @@ def run(args=parser.parse_args()):
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
+    nprocs = 1
+    if args.njobs:
+        nprocs = args.njobs
+
     # actual data processing
-    df = createDataframeFromCSVs(args.monitorfiles)
+    df = createDataframeFromCSVs(args.monitorfiles, nprocs)
     sites = sorted(df["Site"].unique())
 
     # create output
