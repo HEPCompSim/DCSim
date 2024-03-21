@@ -109,7 +109,7 @@ class SamplePoint:
 
     def call_platform(self, env, args):
         inter = {}
-        platform = fill_template(env, args)
+        platform = self.fill_template(env, args)
         for workload in self.workloads:
             inter[workload] = {}
             for hitrate in self.hitrates:
