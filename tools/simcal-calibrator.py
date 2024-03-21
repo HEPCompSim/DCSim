@@ -112,7 +112,6 @@ class SamplePoint:
         inter = {}
         platform = self.fill_template(env, args)
         for workload in self.workloads:
-            print(workloads,workload)
             inter[workload] = {}
             for hitrate in self.hitrates:
                 inter[workload][hitrate] = self.simulator({"workload":workload, "platform":platform, "hitrate":hitrate}, env=env)
@@ -170,5 +169,5 @@ calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 40).for
 calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 40).format("%.2f bps"))
 
 dataDir=toolsDir/"../data"
-point = SamplePoint(simulator,"../data/platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 1_000_000_000, 0, (dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"))
+point = SamplePoint(simulator,"../data/platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 1_000_000_000, 0, ((dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),))
 calibrator.calibrate(point, loss, data)
