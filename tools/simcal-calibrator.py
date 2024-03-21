@@ -54,7 +54,7 @@ class Simulator(sc.Simulator):
         # }
 
         # self.bash(path, str(jargs))
-		output=env.tmp_file()
+        output=env.tmp_file()
         env.bash(self.path,
                  args=(
                      "--platform", args["platform"],
