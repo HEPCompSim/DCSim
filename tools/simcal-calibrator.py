@@ -56,7 +56,6 @@ class Simulator(sc.Simulator):
         # self.bash(path, str(jargs))
         env.bash(self.path,
                  args=(
-                     str(jargs),
                      "--platform", args["platform"],
                      "--output-file", args["output"],
                      "--workload-configurations", args["workload"][0],
