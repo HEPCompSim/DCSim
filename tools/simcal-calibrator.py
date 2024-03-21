@@ -67,8 +67,7 @@ class Simulator(sc.Simulator):
                      "--duplications", "48",
                      "--cfg=network/loopback-bw:100000000000000",
                      "--no-caching"
-                 ),
-                 std_in=())
+                 ))
         return self.extract(output)
 
 
