@@ -170,7 +170,7 @@ try:
 	dataDir=toolsDir/"../data"
 	point = SamplePoint(simulator,"../data/platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 1_000_000_000, 0, ((dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),))
 	calibrator.calibrate(point, loss, data)
-except Exception e:
+except Exception as e:
 	print(e)
 	while True:
 		pass:
