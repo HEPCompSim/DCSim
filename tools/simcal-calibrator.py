@@ -12,6 +12,8 @@ import simcal as sc
 
 
 def dataLoader(scsn, fcsn, scfn, fcfn):
+	#todo, handle raw files
+	#todo, sane dir structure
     with open(scsn, 'r') as file:
         scsn = json.load(file)
     with open(fcsn, 'r') as file:
@@ -152,7 +154,7 @@ data = dataLoader("../../DCSIM calibration Data/individualSlowRawData.json",
                   "../../DCSIM calibration Data/duplicateSlowRawData.json",
                   "../../DCSIM calibration Data/duplicateFastRawData.json"
                   )
-simulator = Simulator("tools/hitrateScanScript.sh",
+simulator = Simulator("dc-sim",
                       "../data/platform-files/sgbatch_validation_template.xml")
 calibrator = sc.calibrators.Debug()
 calibrator.add_param("cpuSpeed", "flops").exponential_range(20, 40)
