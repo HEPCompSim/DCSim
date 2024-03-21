@@ -150,7 +150,7 @@ class SamplePoint:
 def loss(reference, simulated):
     return 0
 
-try{
+try:
 	# do whatever
 	data = dataLoader("../../DCSIM calibration Data/individualSlowRawData.json",
 					  "../../DCSIM calibration Data/individualFastRawData.json",
