@@ -159,7 +159,7 @@ data = dataLoader("../../DCSIM calibration Data/individualSlowRawData.json",
                   )
 simulator = Simulator("dc-sim",
                       "../data/platform-files/sgbatch_validation_template.xml")
-calibrator = sc.calibrators.Debug()
+calibrator = sc.calibrators.Debug(sys.stdout)
 calibrator.add_param("cpuSpeed", "flops").exponential_range(20, 40)
 calibrator.add_param("ramdisk", "Bps").exponential_range(20, 40)
 calibrator.add_param("disk", "Bps").exponential_range(20, 40)
