@@ -10,6 +10,8 @@ from statistics import mean, stdev, StatisticsError
 
 import simcal as sc
 
+toolsDir = Path(
+    os.path.dirname(os.path.realpath(__file__)))  # Get path to THIS folder where the simulator lives
 
 def dataLoader(scsn, fcsn, scfn, fcfn):
 	#todo, handle raw files
@@ -163,6 +165,6 @@ calibrator.add_param("disk", "Bps").exponential_range(20, 40)
 calibrator.add_param("internalNetwork", "bps").exponential_range(20, 40)
 calibrator.add_param("externalFastNetwork", "bps").exponential_range(20, 40)
 calibrator.add_param("externalSlowNetwork", "bps").exponential_range(20, 40)
-
-point = SamplePoint(simulator)
+dataDir=toolsDir/"../data"
+point = SamplePoint(simulator, [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 1_000_000_000, 0, (dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json")):
 calibrator.calibrate(point, loss, data)
