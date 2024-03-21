@@ -113,7 +113,7 @@ class SamplePoint:
         for workload in self.workloads:
             inter[workload] = {}
             for hitrate in self.hitrates:
-                inter[workload][hitrate] = self.simulator((workload, platform, hitrate), env=env)
+                inter[workload][hitrate] = self.simulator({"workload":workload, "platform":platform, "hitrate":hitrate}, env=env)
         platform.close()
         return self.restructure(inter)
 
