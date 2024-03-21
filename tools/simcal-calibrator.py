@@ -68,7 +68,7 @@ class Simulator(sc.Simulator):
                      "--cfg=network/loopback-bw:100000000000000",
                      "--no-caching"
                  ))
-        return self.extract(output)
+        return self.extract(output.name)
 
 
 class SamplePoint:
