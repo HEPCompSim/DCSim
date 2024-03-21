@@ -54,10 +54,11 @@ class Simulator(sc.Simulator):
         # }
 
         # self.bash(path, str(jargs))
+		output=env.tmp_file()
         env.bash(self.path,
                  args=(
                      "--platform", args["platform"],
-                     "--output-file", args["output"],
+                     "--output-file", output,
                      "--workload-configurations", args["workload"][0],
                      "--dataset-configurations", args["workload"][1],
                      "--hitrate", args["hitrate"],
