@@ -120,30 +120,30 @@ class SamplePoint:
     def __call__(self, args):
         env = sc.Environment()
         env.tmp_dir(".")
-        scsn = self.call_platform(env, (
+        scsn = self.call_platform(env, 
             {"cpuSpeed": args["cpuSpeed"],
              "cacheSpeed": args["disk"],
              "internalNetworkSpeed": args["internalNetwork"],
              "externalNetworkSpeed": args["externalSlowNetwork"]
-             }))
-        fcsn = self.call_platform(env, (
+             })
+        fcsn = self.call_platform(env, 
             {"cpuSpeed": args["cpuSpeed"],
              "cacheSpeed": args["ramDisk"],
              "internalNetworkSpeed": args["internalNetwork"],
              "externalNetworkSpeed": args["externalSlowNetwork"]
-             }))
-        fcfn = self.call_platform(env, (
+             })
+        fcfn = self.call_platform(env, 
             {"cpuSpeed": args["cpuSpeed"],
              "cacheSpeed": args["ramDisk"],
              "internalNetworkSpeed": args["internalNetwork"],
              "externalNetworkSpeed": args["externalFastNetwork"]
-             }))
-        scfn = self.call_platform(env, (
+             })
+        scfn = self.call_platform(env, 
             {"cpuSpeed": args["cpuSpeed"],
              "cacheSpeed": args["disk"],
              "internalNetworkSpeed": args["internalNetwork"],
              "externalNetworkSpeed": args["externalFastNetwork"]
-             }))
+             })
         return scsn, scfn, fcsn, fcfn
 
 
