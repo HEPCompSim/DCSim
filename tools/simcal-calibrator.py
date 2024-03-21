@@ -58,7 +58,7 @@ class Simulator(sc.Simulator):
         env.bash(self.path,
                  args=(
                      "--platform", args["platform"],
-                     "--output-file", output,
+                     "--output-file", output.name,
                      "--workload-configurations", args["workload"][0],
                      "--dataset-configurations", args["workload"][1],
                      "--hitrate", args["hitrate"],
