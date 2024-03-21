@@ -112,6 +112,7 @@ class SamplePoint:
         inter = {}
         platform = self.fill_template(env, args)
         for workload in self.workloads:
+            print(workloads,workload)
             inter[workload] = {}
             for hitrate in self.hitrates:
                 inter[workload][hitrate] = self.simulator({"workload":workload, "platform":platform, "hitrate":hitrate}, env=env)
