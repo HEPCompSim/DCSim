@@ -8,6 +8,7 @@ import sys
 from collections import defaultdict
 from statistics import mean, stdev, StatisticsError
 from pathlib import Path
+import re
 
 import simcal as sc
 
