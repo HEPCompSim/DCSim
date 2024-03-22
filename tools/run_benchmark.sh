@@ -1,19 +1,53 @@
-if [ ! $# -eq 2 ]; then
-    echo "Usage: ${0} <# of jobs> <platform file>"
-    exit 1
+#! /bin/bash
+
+# script for execution of simulation scenarios to test the runtime and memory scaling of the simulator
+#
+#
+parent="$( dirname "$base" )"
+PLATFORM="$parent/data/platform-files/WLCG_disklessTier2.xml"
+WORKLOAD="$parent/data/workload-configs/simScaling.json"
+DATASET="$parent/data/dataset-configs/simScaling.json"
+DUPLICATIONS=1
+HITRATE=0.0
+XRDBLOCKSIZE=1000000000
+
+SCENARIO="wlcg"
+#BUFFER_SIZE=0
+BUFFER_SIZE=0
+
+if [ ! -d "tmp/monitor/$SCENARIO" ]; then
+    mkdir -p tmp/monitor/$SCENARIO
 fi
 
 
-NJOBS="${1}"
-PLATFORM="${2}"
-
-
-./build/dc-sim --platform ${PLATFORM} \
-        --njobs ${NJOBS} --ninfiles 20 --insize 427718950 --sigma-insize 10000 \
-        --flops 2886000000000 --sigma-flops 10000000 \
-        --outsize 50000000 --sigma-outsize 1000000 \
-        --xrd-blocksize 1000000 \
-        --storage-buffer-size 0 \
-        --output-file /dev/null \
-	--wrench-default-control-message-size=0
-
+for NJOBS in 1
+do
+    for XRDBLOCKSIZE in 1000000 10000000 100000000 500000000 1000000000 5000000000
+    #for XRDBLOCKSIZE in 10000000 5000000000
+    #for XRDBLOCKSIZE in 1000000000000000
+    do
+	echo "XRDBLOCKSIZE: $XRDBLOCKSIZE"
+    	WORKLOAD_TMP="${WORKLOAD}.tmp" 
+    	cp $WORKLOAD $WORKLOAD_TMP
+    	DATASET_TMP="${DATASET}.tmp"
+    	cp $DATASET $DATASET_TMP
+    	NFILES=$((NJOBS*1))
+    	sed -i "" "s/\"num_jobs\": [0-9]*,/\"num_jobs\": $NJOBS,/" "$WORKLOAD_TMP"
+    	sed -i "" "s/\"num_files\": [0-9]*,/\"num_files\": $NFILES,/" "$DATASET_TMP"
+	OUTFILE=/tmp/benchmark_xrtd_$XRDBLOCKSIZE.stdout
+	ERRFILE=/tmp/benchmark_xrtd_$XRDBLOCKSIZE.stderr
+    	/opt/local/bin/gtime -v dc-sim --platform "$PLATFORM" \
+        	--duplications ${DUPLICATIONS} \
+        	--hitrate 0.0 \
+		--storage-buffer-size $BUFFER_SIZE \
+        	--xrd-blocksize ${XRDBLOCKSIZE} \
+        	--output-file /dev/null \
+        	--workload-configurations "$WORKLOAD_TMP" \
+        	--dataset-configurations "$DATASET_TMP"  --wrench-full-log 1> $OUTFILE 2> $ERRFILE
+    	cat $ERRFILE | grep -e "done" | sed "s/S.* /$NJOBS jobs took /" | sed "s/$/ sec/"
+    	cat $ERRFILE | grep -e "Elap" | sed "s/.*):/  - Elapsed:    /"
+    	cat $ERRFILE | grep -e "Maxi" | sed "s/.*):/  - MaxRSS (kb):/"
+	echo "Detailed RSS info: cat $ERRFILE | grep CURRENT"
+   
+	done
+done
