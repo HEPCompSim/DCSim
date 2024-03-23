@@ -48,6 +48,9 @@ def loadDirs(folders):
 		root,dirs,files=next(os.walk(folder))
 		ret[root]={}
 		for file in files:
+			if "bad_" in file:
+				#print("skipping",file)
+				continue
 			fileContent=extract(root+"/"+file)
 			ret[root][float(file[file.rfind("_")+1:file.rfind(".")])]=fileContent
 	return list(restructure(ret).values())
@@ -89,8 +92,7 @@ class Simulator(sc.Simulator):
 		# self.bash(path, str(jargs))
 		
 		output=env.tmp_file(keep=False)
-		o=env.bash(self.path,
-				 args=(
+		cargs=[
 					 "--platform", args["platform"],
 					 "--output-file", output.name,
 					 "--workload-configurations", args["workload"][1],
@@ -101,7 +103,12 @@ class Simulator(sc.Simulator):
 					 "--duplications", "48",
 					 "--cfg=network/loopback-bw:100000000000000",
 					 "--no-caching"
-				 ))
+				 ]
+		for i in range(len(cargs)):
+			cargs[i]=str(cargs[i])
+		#print('dc-sim', ' '.join(cargs))
+		o=env.bash(self.path,
+				 args=cargs)
 		#print(o[1])
 		return extract(output.name)
 
@@ -176,15 +183,19 @@ class SamplePoint:
 
 def loss(reference, simulated):
 	for platform in zip(reference,simulated):
-		for expiriment in platform[1]:
+		for expiriment in platform[1].keys() & platform[0].keys():
 			sim=platform[1][expiriment]
 			for ref in platform[0][expiriment]:
-				for machine in sim:
-					for hitrate in sim[machine]:
+				for machine in sim.keys()&ref.keys():
+					for hitrate in sim[machine].keys()&ref[machine].keys():
+						#break
+						#N dimensional KS test (ddks) 
+						#unless we can find n dimensional k sample anderson darling
 						print(type(ref[machine][hitrate]))
 						print(type(sim[machine][hitrate]))
 						print(len(ref[machine][hitrate]))
 						print(len(sim[machine][hitrate]))
+						print(sim[machine][hitrate])
 						#There are a different number of results for each machine in each dataset
 	return 0
 
@@ -206,5 +217,5 @@ calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 40).for
 calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
 
 dataDir=toolsDir/"../data"
-samplePoint = SamplePoint(simulator,"../data/platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json")},data)
+samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json")},data)
 calibrator.calibrate(samplePoint)
