@@ -5,7 +5,8 @@
 #
 parent="$( dirname "$base" )"
 PLATFORM1="$parent/data/platform-files/WLCG_disklessTier2.xml"
-PLATFORM2="$parent/data/platform-files/WLCG_disklessTier2_MODIFIED.xml"
+PLATFORM2="$parent/data/platform-files/WLCG_disklessTier2_Tier1_MODIFIED.xml"
+PLATFORM3="$parent/data/platform-files/WLCG_disklessTier2_Tier1_Tier2_MODIFIED.xml"
 WORKLOAD="$parent/data/workload-configs/simScaling.json"
 DATASET="$parent/data/dataset-configs/simScaling.json"
 DUPLICATIONS=1
@@ -25,7 +26,7 @@ for NJOBS in 400
 do
     for XRDBLOCKSIZE in 1000000000
     do
-	for PLATFORM in $PLATFORM1 $PLATFORM2 
+	for PLATFORM in $PLATFORM1 $PLATFORM2 $PLATFORM3
 	do
 		echo "PLATFORM: $PLATFORM"
 		PLATFORM_NAME=`echo $PLATFORM | sed "s/.*\///"`
@@ -40,13 +41,13 @@ do
 		ERRFILE=/tmp/benchmark_xrtd_$PLATFORM_NAME.stderr
     		/opt/local/bin/gtime -v dc-sim --platform "$PLATFORM" \
         		--duplications ${DUPLICATIONS} \
-        		--hitrate 0.0 \
+        		--hitrate 1.0 \
 			--storage-buffer-size $BUFFER_SIZE \
 			--wrench-commport-pool-size=100000 \
         		--xrd-blocksize ${XRDBLOCKSIZE} \
         		--output-file /dev/null \
         		--workload-configurations "$WORKLOAD_TMP" \
-        			--dataset-configurations "$DATASET_TMP"  --wrench-full-log 1> $OUTFILE 2> $ERRFILE
+        			--dataset-configurations "$DATASET_TMP"  1> $OUTFILE 2> $ERRFILE
     		cat $ERRFILE | grep -e "done" | sed "s/S.* /$NJOBS jobs took /" | sed "s/$/ sec/"
     		cat $ERRFILE | grep -e "Elap" | sed "s/.*):/  - Elapsed:    /"
     		cat $ERRFILE | grep -e "Maxi" | sed "s/.*):/  - MaxRSS (kb):/"
