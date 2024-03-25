@@ -156,6 +156,7 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
    job_manager->submitJob(job, cs);
 
     // Remove it form the workload spec
+    this->workload_spec_submitted[job_name] = this->workload_spec[job_name];
     this->workload_spec.erase(job_name);
 
     return job;
@@ -280,11 +281,16 @@ void WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr
 */
 void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
 
-    /* Retrieve the job that this event is for */
-    WRENCH_INFO("Notified that job %s with %ld actions has completed", event->job->getName().c_str(), event->job->getActions().size());
 
     this->job_scheduler->jobDone(event->job);
     this->num_completed_jobs++;
+
+    auto job_name = event->job->getName();
+    auto job_spec = this->workload_spec_submitted[job_name];
+    this->workload_spec_submitted.erase(job_name);
+
+    /* Retrieve the job that this event is for */
+    WRENCH_INFO("Notified that job %s with %ld actions has completed", job_name.c_str(), event->job->getActions().size());
 
     /* Figure out execution host. All actions run on the same host, so let's just pick an arbitrary one */
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
@@ -317,12 +323,12 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
         double elapsed = end_date - start_date;
         WRENCH_DEBUG("Analyzing action: %s, started in s: %.2f, ended in s: %.2f, elapsed in s: %.2f", action->getName().c_str(), start_date, end_date, elapsed);
 
-        flops += this->workload_spec[event->job->getName()].total_flops;
+        flops += job_spec.total_flops;
         if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
             incr_infile_transfertime += elapsed;
         } else if (auto monitor_action = std::dynamic_pointer_cast<MonitorAction>(action)) {
             if (found_computation_action) {
-                throw std::runtime_error("There was more than one computation action in job " + event->job->getName());
+                throw std::runtime_error("There was more than one computation action in job " + job_name);
             }
             found_computation_action = true;
             if (incr_infile_transfertime <= 0. && incr_compute_time < 0. && hitrate < 0.) {
@@ -339,8 +345,8 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
                 incr_outfile_transfertime += end_date - start_date;
             } else {
                 throw std::runtime_error(
-                        "Writing outputfile " + this->workload_spec[event->job->getName()].outfile->getID() +
-                        " for job " + event->job->getName() + " finished before start!");
+                        "Writing outputfile " + job_spec.outfile->getID() +
+                        " for job " + job_name + " finished before start!");
             }
         } else if (auto compute_action = std::dynamic_pointer_cast<wrench::ComputeAction>(action)) {
             if (end_date >= start_date) {
@@ -351,22 +357,22 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
                 }
             } else {
                 throw std::runtime_error(
-                        "Computation for job " + event->job->getName() + " finished before start!");
+                        "Computation for job " + job_name + " finished before start!");
             }
         }
     }
 
     // Figure out file sizes
-    for (auto const &f: this->workload_spec[event->job->getName()].infiles) {
+    for (auto const &f: job_spec.infiles) {
         incr_infile_size += f->getSize();
     }
-    incr_outfile_size += this->workload_spec[event->job->getName()].outfile->getSize();
+    incr_outfile_size += job_spec.outfile->getSize();
 
     /* Dump relevant information to file */
     this->filedump.open(this->filename, ios::out | ios::app);
     if (this->filedump.is_open()) {
 
-        this->filedump << event->job->getName() << ", ";
+        this->filedump << job_name << ", ";
         // << std::to_string(job->getMinimumRequiredNumCores()) << ", "
         // << std::to_string(job->getMinimumRequiredMemory()) << ", "
         // << /*TODO: find a way to get disk usage on scratch space */ << ", ";
@@ -378,7 +384,7 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
 
         this->filedump.close();
 
-        WRENCH_INFO("Information for job %s has been dumped into file %s", event->job->getName().c_str(), this->filename.c_str());
+        WRENCH_INFO("Information for job %s has been dumped into file %s", job_name.c_str(), this->filename.c_str());
     } else {
         throw std::runtime_error("Couldn't open output-file " + this->filename + " for dump!");
     }
