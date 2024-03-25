@@ -154,12 +154,14 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
     // Submit the job
     WRENCH_INFO("Submitting job %s to compute service %s...", job->getName().c_str(), cs->getName().c_str());
    job_manager->submitJob(job, cs);
+    return job;
+}
 
+
+void WorkloadExecutionController::setJobSubmitted(const std::string &job_name) {
     // Remove it form the workload spec
     this->workload_spec_submitted[job_name] = this->workload_spec[job_name];
     this->workload_spec.erase(job_name);
-
-    return job;
 }
 
 

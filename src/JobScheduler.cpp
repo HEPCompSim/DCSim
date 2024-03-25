@@ -49,6 +49,7 @@ void JobScheduler::schedule() {
         std::cerr << "TRYING TO SCHEDULE A JOB FROM EC " << ec->getName() << "\n";
 
         // Loop through all the jobs in the workload in sequence
+        std::vector<std::string> scheduled_jobs;
         for (const auto &job_spec: ec->get_workload_spec()) {
             auto job_name = job_spec.first;
             auto num_cores = job_spec.second.cores;
@@ -60,20 +61,31 @@ void JobScheduler::schedule() {
 
             std::cerr << "TRYING TO SCHEDULE: " << job_name << " " << num_cores << " " << total_ram << "\n";
 
-            for (auto const &entry: this->available_resources) {
-                std::cerr << "Looking at CS: " << entry.first->getName() << "\n";
-                if ((num_cores <= std::get<0>(entry.second)) and
-                    (total_ram <= std::get<1>(entry.second))) {
-                    // Create the job and schedule it
-                    std::cerr << "YES!!\n";
-                    auto job = ec->createAndSubmitJob(job_name, entry.first);
-                    std::cerr << "JOB CREATED AND SUBMITTED\n";
-                    std::get<0>(this->available_resources[entry.first]) -= num_cores;
-                    std::get<1>(this->available_resources[entry.first]) -= total_ram;
-                    this->total_num_idle_cores -= num_cores;
-                    break;
-                }
+            auto target_cs = pickComputeService(num_cores, total_ram);
+            if (target_cs) {
+                auto job = ec->createAndSubmitJob(job_name, target_cs);
+                std::cerr << "JOB CREATED AND SUBMITTED\n";
+                std::get<0>(this->available_resources[target_cs]) -= num_cores;
+                std::get<1>(this->available_resources[target_cs]) -= total_ram;
+                this->total_num_idle_cores -= num_cores;
+                scheduled_jobs.push_back(job_name);
             }
         }
+        // Clear jobs from the workload
+        for (auto const &job_name : scheduled_jobs) {
+            ec->setJobSubmitted(job_name);
+        }
     }
+}
+
+std::shared_ptr<wrench::ComputeService> JobScheduler::pickComputeService(unsigned long num_cores, double total_ram) {
+    for (auto const &entry: this->available_resources) {
+        std::cerr << "Looking at CS: " << entry.first->getName() << "\n";
+        if ((num_cores <= std::get<0>(entry.second)) and
+            (total_ram <= std::get<1>(entry.second))) {
+                return entry.first;
+            break;
+        }
+    }
+    return nullptr;
 }

@@ -44,12 +44,10 @@ public:
         this->workload_spec = std::move(w);
     }
 
-    void setJobScheduler(const std::shared_ptr<JobScheduler> &job_scheduler) {
-        this->job_scheduler = job_scheduler;
-    }
-
     std::shared_ptr<wrench::CompoundJob> createAndSubmitJob(const std::string &job_name,
                                                             const std::shared_ptr<wrench::ComputeService> &cs);
+    void setJobSubmitted(const std::string &job_name);
+
     bool isWorkloadEmpty();
 
 protected:
