@@ -149,7 +149,10 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
         job->addActionDependency(compute_action, fw_action);
     }
 
+    std::cerr << "SUBMITTING THE JOB\n";
+
     // Submit the job
+    WRENCH_INFO("Submitting job %s to compute service %s...", job->getName().c_str(), cs->getName().c_str());
    job_manager->submitJob(job, cs);
 
     // Remove it form the workload spec

@@ -41,32 +41,37 @@ void JobScheduler::schedule() {
         return;
     }
 
-    std::cerr << "I AM IN SCHEDULE!\n";
-
-    // Pick a workload in an execution controller
-    std::shared_ptr<WorkloadExecutionController> picked_execution_controller = nullptr;
+    // Go through the workload execution controllers in order
     for (auto const &ec: this->execution_controllers) {
         if (ec->isWorkloadEmpty()) {
-            continue;
+            continue; // all jobs have been submitted fo this execution controller
         }
+        std::cerr << "TRYING TO SCHEDULE A JOB FROM EC " << ec->getName() << "\n";
 
-        // Loop through all the jobs in the workload until
+        // Loop through all the jobs in the workload in sequence
         for (const auto &job_spec: ec->get_workload_spec()) {
             auto job_name = job_spec.first;
             auto num_cores = job_spec.second.cores;
             auto total_ram = job_spec.second.total_mem;
 
-            // TODO: Do this efficiently via priority queues/maps etc,
-            //  stop when for sure nothing can be scheduled etc
-            // Pick a compute services
+            if (this->total_num_idle_cores == 0) {
+                return;
+            }
+
+            std::cerr << "TRYING TO SCHEDULE: " << job_name << " " << num_cores << " " << total_ram << "\n";
+
             for (auto const &entry: this->available_resources) {
+                std::cerr << "Looking at CS: " << entry.first->getName() << "\n";
                 if ((num_cores <= std::get<0>(entry.second)) and
                     (total_ram <= std::get<1>(entry.second))) {
                     // Create the job and schedule it
+                    std::cerr << "YES!!\n";
                     auto job = ec->createAndSubmitJob(job_name, entry.first);
+                    std::cerr << "JOB CREATED AND SUBMITTED\n";
                     std::get<0>(this->available_resources[entry.first]) -= num_cores;
                     std::get<1>(this->available_resources[entry.first]) -= total_ram;
                     this->total_num_idle_cores -= num_cores;
+                    break;
                 }
             }
         }
