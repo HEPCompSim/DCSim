@@ -4,25 +4,17 @@
 #
 #
 parent="$( dirname "$base" )"
-PLATFORM1="$parent/data/platform-files/WLCG_disklessTier2.xml"
-PLATFORM2="$parent/data/platform-files/WLCG_disklessTier2_Tier1_MODIFIED.xml"
-PLATFORM3="$parent/data/platform-files/WLCG_disklessTier2_Tier1_Tier2_MODIFIED.xml"
-WORKLOAD="$parent/data/workload-configs/simScaling.json"
-DATASET="$parent/data/dataset-configs/simScaling.json"
+PLATFORM1="$parent/data/platform-files/sgbatch_validation.xml"
+WORKLOAD="$parent/data/workload-configs/crown_ttbar_testjob.json"
+DATASET="$parent/data/dataset-configs/crown_ttbar_testjob.json"
 DUPLICATIONS=1
 HITRATE=0.0
 XRDBLOCKSIZE=1000000000
 
-SCENARIO="wlcg"
-#BUFFER_SIZE=0
 BUFFER_SIZE=0
 
-if [ ! -d "tmp/monitor/$SCENARIO" ]; then
-    mkdir -p tmp/monitor/$SCENARIO
-fi
 
-
-for NJOBS in 100
+for NJOBS in 800
 do
     for XRDBLOCKSIZE in 1000000000
     do
