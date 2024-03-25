@@ -22,7 +22,7 @@ if [ ! -d "tmp/monitor/$SCENARIO" ]; then
 fi
 
 
-for NJOBS in 400
+for NJOBS in 100
 do
     for XRDBLOCKSIZE in 1000000000
     do

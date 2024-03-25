@@ -25,7 +25,10 @@ private:
     std::vector<WorkloadExecutionController *> execution_controllers;
     unsigned long total_num_idle_cores;
 
-};
+    std::shared_ptr<wrench::ComputeService> pickComputeService(unsigned long num_cores, double total_ram);
+
+
+    };
 
 
 #endif //DCSIM_JOBSCHEDULER_H
