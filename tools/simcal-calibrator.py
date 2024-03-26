@@ -11,6 +11,9 @@ from pathlib import Path
 import re
 import glob
 import simcal as sc
+import ddks#pip install git+https://github.com/pnnl/DDKS 
+import torch #pip install torchvision
+
 
 toolsDir = Path(
 	os.path.dirname(os.path.realpath(__file__)))  # Get path to THIS folder where the simulator lives
@@ -68,7 +71,7 @@ def dataLoader(sets):
 	#print(scsn)
 	#todo, handle raw files
 	#todo, sane dir structure
-	return scsn, fcsn, scfn, fcfn
+	return scsn,scfn,fcsn,fcfn
 
 
 class Simulator(sc.Simulator):
@@ -103,6 +106,7 @@ class Simulator(sc.Simulator):
 					 "--duplications", "48",
 					 "--cfg=network/loopback-bw:100000000000000",
 					 "--no-caching"
+					 #"--seed", 0
 				 ]
 		for i in range(len(cargs)):
 			cargs[i]=str(cargs[i])
@@ -180,8 +184,20 @@ class SamplePoint:
 				 "externalNetworkSpeed": args["externalFastNetwork"]
 				 })
 		return loss(self.data,(scsn,scfn,fcsn,fcfn))
-
+def buildTensor(data):
+	tensor=torch.empty((len(data),2), dtype=torch.float32)
+	for i,data in enumerate(data):
+		start=float(data['job.start'])
+		end=float(data['job.end'])
+		cpu=float(data['job.computetime'])
+		
+		tensor[i:0]=start-end
+		tensor[i:1]=(start-end)/cpu
+	return tensor
 def loss(reference, simulated):
+	calculation = ddks.methods.ddKS()
+	count=0
+	total=0
 	for platform in zip(reference,simulated):
 		for expiriment in platform[1].keys() & platform[0].keys():
 			sim=platform[1][expiriment]
@@ -191,13 +207,25 @@ def loss(reference, simulated):
 						#break
 						#N dimensional KS test (ddks) 
 						#unless we can find n dimensional k sample anderson darling
-						print(type(ref[machine][hitrate]))
-						print(type(sim[machine][hitrate]))
-						print(len(ref[machine][hitrate]))
-						print(len(sim[machine][hitrate]))
-						print(sim[machine][hitrate])
+						#Apparently we are doing Wasserstein 
+						refTensor=buildTensor(ref[machine][hitrate])
+						
+						simTensor=buildTensor(sim[machine][hitrate])
+						#print(type(ref[machine][hitrate]))
+						#print(type(sim[machine][hitrate]))
+						#print(len(ref[machine][hitrate]))
+						#print(len(sim[machine][hitrate]))
+						#print(sim[machine][hitrate])
+						#print(ref[machine][hitrate])
+						#print(refTensor,simTensor)
+						total+=  float(calculation(refTensor,simTensor))
+						#print(distance)
+						count+=1
 						#There are a different number of results for each machine in each dataset
-	return 0
+	if(count==0):
+		count=1
+	print(total/count)
+	return total/count
 
 # do whatever
 data = dataLoader({"test":[glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/diskCache/SG*1Gbps*")),
@@ -208,6 +236,7 @@ data = dataLoader({"test":[glob.glob(os.path.expanduser("~/hep-testjob/data/test
 	   
 simulator = Simulator("dc-sim")
 calibrator = sc.calibrators.Debug(sys.stdout)
+#calibrator = sc.calibrators.Grid()
 
 calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
 calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
@@ -218,4 +247,6 @@ calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 40).for
 
 dataDir=toolsDir/"../data"
 samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json")},data)
-calibrator.calibrate(samplePoint)
+coordinator = sc.coordinators.ThreadPool(pool_size=1) 
+cal=calibrator.calibrate(samplePoint, timelimit=600, coordinator=coordinator)
+print(cal)
