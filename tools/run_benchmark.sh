@@ -14,7 +14,7 @@ XRDBLOCKSIZE=1000000000
 BUFFER_SIZE=0
 
 
-for NJOBS in 800
+for NJOBS in 8000
 do
     for XRDBLOCKSIZE in 1000000000
     do
@@ -22,13 +22,13 @@ do
 	do
 		echo "PLATFORM: $PLATFORM"
 		PLATFORM_NAME=`echo $PLATFORM | sed "s/.*\///"`
-    		WORKLOAD_TMP="${WORKLOAD}.tmp" 
-    		cp $WORKLOAD $WORKLOAD_TMP
-    		DATASET_TMP="${DATASET}.tmp"
-    		cp $DATASET $DATASET_TMP
-    		NFILES=$((NJOBS*20))
-    		sed -i "" "s/\"num_jobs\": [0-9]*,/\"num_jobs\": $NJOBS,/" "$WORKLOAD_TMP"
-    		sed -i "" "s/\"num_files\": [0-9]*,/\"num_files\": $NFILES,/" "$DATASET_TMP"
+    		#WORKLOAD_TMP="${WORKLOAD}.tmp" 
+    		#cp $WORKLOAD $WORKLOAD_TMP
+    		#DATASET_TMP="${DATASET}.tmp"
+    		#cp $DATASET $DATASET_TMP
+    		#NFILES=$((NJOBS*20))
+    		#sed -i "" "s/\"num_jobs\": [0-9]*,/\"num_jobs\": $NJOBS,/" "$WORKLOAD_TMP"
+    		#sed -i "" "s/\"num_files\": [0-9]*,/\"num_files\": $NFILES,/" "$DATASET_TMP"
 		OUTFILE=/tmp/benchmark_xrtd_$PLATFORM_NAME.stdout
 		ERRFILE=/tmp/benchmark_xrtd_$PLATFORM_NAME.stderr
     		/opt/local/bin/gtime -v dc-sim --platform "$PLATFORM" \
@@ -39,8 +39,8 @@ do
         		--xrd-blocksize ${XRDBLOCKSIZE} \
         		--output-file /dev/null \
         		--wrench-full-log \
-        		--workload-configurations "$WORKLOAD_TMP" \
-        			--dataset-configurations "$DATASET_TMP"  1> $OUTFILE 2> $ERRFILE
+        		--workload-configurations "$WORKLOAD" \
+        			--dataset-configurations "$DATASET"  1> $OUTFILE 2> $ERRFILE
     		cat $ERRFILE | grep -e "done" | sed "s/S.* /$NJOBS jobs took /" | sed "s/$/ sec/"
     		cat $ERRFILE | grep -e "Elap" | sed "s/.*):/  - Elapsed:    /"
     		cat $ERRFILE | grep -e "Maxi" | sed "s/.*):/  - MaxRSS (kb):/"

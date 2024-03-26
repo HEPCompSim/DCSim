@@ -13,22 +13,18 @@ class JobScheduler {
 
 public:
 
-
-    JobScheduler(const std::vector<std::shared_ptr<wrench::ComputeService>> &compute_services);
+    explicit JobScheduler(const std::vector<std::shared_ptr<wrench::ComputeService>> &compute_services);
     void addExecutionController(WorkloadExecutionController *execution_controller);
     void schedule();
     void jobDone(const std::shared_ptr<wrench::CompoundJob> &job);
-    
+
 private:
     std::map<std::shared_ptr<wrench::ComputeService>, std::tuple<unsigned long, double>> available_resources;
-    std::vector<std::shared_ptr<wrench::ComputeService>> compute_services;
     std::vector<WorkloadExecutionController *> execution_controllers;
     unsigned long total_num_idle_cores;
 
     std::shared_ptr<wrench::ComputeService> pickComputeService(unsigned long num_cores, double total_ram);
 
-
-    };
-
+};
 
 #endif //DCSIM_JOBSCHEDULER_H

@@ -56,23 +56,6 @@ WorkloadExecutionController::WorkloadExecutionController(
     this->shuffle_jobs = shuffle_jobs;
     this->generator = generator;
 }
-//
-//unsigned long WorkloadExecutionController::submitBatchOfJobs(const std::shared_ptr<wrench::HTCondorComputeService>& htcondor_compute_service,
-//                                                             std::vector<const std::string *> job_spec_keys,
-//                                                             size_t batch_index, size_t batch_size) {
-//    unsigned long num_submitted = 0;
-//    for (unsigned long i = std::min<unsigned long>(job_spec_keys.size(), batch_size * batch_index);
-//         i < std::min<unsigned long>(job_spec_keys.size(), batch_size * (batch_index + 1));
-//         i++) {
-//        auto job = this->createJob(*job_spec_keys[i]);
-//        WRENCH_INFO("Submitted job %s", job->getName().c_str());
-//        job_manager->submitJob(job, htcondor_compute_service);
-//        num_submitted++;
-//    }
-//    WRENCH_INFO("SUBMITTED BATCH #%ld (%lu jobs)", batch_index, (std::min<unsigned long>(job_spec_keys.size(), batch_size * (batch_index + 1)) - std::min<unsigned long>(job_spec_keys.size(), batch_size * batch_index)));
-//
-//    return num_submitted;
-//}
 
 std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmitJob(const std::string &job_name,
                                                                                      const std::shared_ptr<wrench::ComputeService> &cs) {
@@ -149,11 +132,9 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
         job->addActionDependency(compute_action, fw_action);
     }
 
-    std::cerr << "SUBMITTING THE JOB\n";
-
     // Submit the job
     WRENCH_INFO("Submitting job %s to compute service %s...", job->getName().c_str(), cs->getName().c_str());
-   job_manager->submitJob(job, cs);
+    job_manager->submitJob(job, cs);
     return job;
 }
 
@@ -194,23 +175,6 @@ int WorkloadExecutionController::main() {
     // this->data_movement_manager = this->createDataMovementManager();
     // WRENCH_INFO("Created a data manager");
 
-
-    // Get the available compute services
-#if 0
-    // TODO: generalize to arbitrary numbers of HTCondorComputeServices
-    if (this->htcondor_compute_services.empty()) {
-        throw std::runtime_error("Aborting - No compute services available!");
-    }
-    if (this->htcondor_compute_services.size() != 1) {
-        throw std::runtime_error("This execution controller running on " + this->getHostname() + " requires a single HTCondorCompute service");
-    }
-    WRENCH_INFO("Found %ld HTCondor Service(s) on:", this->htcondor_compute_services.size());
-    for (const auto& htcondor_compute_service: this->htcondor_compute_services) {
-        WRENCH_INFO("\t%s", htcondor_compute_service->getHostname().c_str());
-    }
-    auto htcondor_compute_service = *this->htcondor_compute_services.begin();
-#endif
-
     // Shuffle jobs for submission
     std::vector<const std::string *> job_spec_keys;
     job_spec_keys.reserve(this->workload_spec.size());
@@ -224,9 +188,10 @@ int WorkloadExecutionController::main() {
     // Sleep until my arrival time
     wrench::Simulation::sleep(this->arrival_time);
 
-    WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->arrival_time);
     // Let myself known to the job scheduler
     this->job_scheduler->addExecutionController(this);
+
+    WRENCH_INFO("There are %ld jobs to schedule at time %f", this->workload_spec.size(), this->arrival_time);
 
     // Main loop
     size_t total_num_jobs = this->workload_spec.size();
