@@ -62,14 +62,6 @@ private:
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
 
-
-
-//
-//    unsigned long submitBatchOfJobs(const std::shared_ptr<wrench::HTCondorComputeService>& htcondor_compute_service,
-//                                    std::vector<const std::string *> job_spec_keys,
-//                                    size_t batch_index, size_t batch_size);
-
-
     int main() override;
 
     /** @brief The job manager */

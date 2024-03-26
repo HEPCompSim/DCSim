@@ -57,6 +57,12 @@ WorkloadExecutionController::WorkloadExecutionController(
     this->generator = generator;
 }
 
+/**
+ * @brief Method to create a submit a job
+ * @param job_name: the name of the job in the workload description
+ * @param cs: the compute service on which to submit the job
+ * @return the submitted job
+ */
 std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmitJob(const std::string &job_name,
                                                                                      const std::shared_ptr<wrench::ComputeService> &cs) {
     // Pick the first job
@@ -76,20 +82,21 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
                 "copycompute_" + job_name,
                 job_spec.total_mem, job_spec.cores,
                 *copy_computation,
-                [](const std::shared_ptr<wrench::ActionExecutor>& action_executor) {
+                [](const std::shared_ptr<wrench::ActionExecutor> &action_executor) {
                     WRENCH_INFO("Copy computation terminating");
                 });
         job->addCustomAction(run_action);
     } else if (this->workload_type == WorkloadType::Streaming) {
         auto streamed_computation = std::make_shared<StreamedComputation>(
-                this->cache_storage_services, this->grid_storage_services, job_spec.infiles, job_spec.total_flops, SimpleSimulator::prefetching_on);
+                this->cache_storage_services, this->grid_storage_services, job_spec.infiles, job_spec.total_flops,
+                SimpleSimulator::prefetching_on);
 
         // TODO: figure out what is the best value for the ability to parallelize HEP workloads on a CPU. Setting speedup to number of cores for now
         run_action = std::make_shared<MonitorAction>(
                 "streaming_" + job_name,
                 job_spec.total_mem, job_spec.cores,
                 *streamed_computation,
-                [](const std::shared_ptr<wrench::ActionExecutor>& action_executor) {
+                [](const std::shared_ptr<wrench::ActionExecutor> &action_executor) {
                     WRENCH_INFO("Streaming computation terminating");
                     // Do nothing
                 });
@@ -139,6 +146,10 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
 }
 
 
+/**
+ * @brief Remove a job specification from the workload because the corresponding job has been submitted
+ * @param job_name: the name of the job in the workload description
+ */
 void WorkloadExecutionController::setJobSubmitted(const std::string &job_name) {
     // Remove it form the workload spec
     this->workload_spec_submitted[job_name] = this->workload_spec[job_name];
@@ -146,6 +157,10 @@ void WorkloadExecutionController::setJobSubmitted(const std::string &job_name) {
 }
 
 
+/**
+ * @brief Method to determine whether all jobs have been submitted
+ * @return True is all jobs have been submitted, false otherwise
+ */
 bool WorkloadExecutionController::isWorkloadEmpty() {
     return this->workload_spec.empty();
 }
@@ -203,7 +218,8 @@ int WorkloadExecutionController::main() {
         try {
             this->waitForAndProcessNextEvent();
         } catch (wrench::ExecutionException &e) {
-            WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again", (e.getCause()->toString().c_str()));
+            WRENCH_INFO("Error while getting next execution event (%s)... ignoring and trying again",
+                        (e.getCause()->toString().c_str()));
             continue;
         }
     }
@@ -217,7 +233,8 @@ int WorkloadExecutionController::main() {
         WRENCH_INFO("Workload execution on %s is incomplete!", this->getHostname().c_str());
     }
 
-    WRENCH_INFO("WorkloadExecutionController daemon started on host %s terminating", wrench::Simulation::getHostName().c_str());
+    WRENCH_INFO("WorkloadExecutionController daemon started on host %s terminating",
+                wrench::Simulation::getHostName().c_str());
 
     this->job_manager.reset();
 
@@ -231,7 +248,8 @@ int WorkloadExecutionController::main() {
  * 
  * @param event: an execution event
  */
-void WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent> event) {
+void
+WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent> event) {
     WRENCH_INFO("Notified that compound job %s has failed!", event->job->getName().c_str());
     WRENCH_INFO("Failure cause: %s", event->failure_cause->toString().c_str());
     WRENCH_INFO("As a WorkloadExecutionController, I abort as soon as there is a failure");
@@ -246,7 +264,8 @@ void WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr
 *
 * @param event: an execution event
 */
-void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
+void WorkloadExecutionController::processEventCompoundJobCompletion(
+        std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
 
 
     this->job_scheduler->jobDone(event->job);
@@ -254,10 +273,11 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
 
     auto job_name = event->job->getName();
     auto job_spec = this->workload_spec_submitted[job_name];
-    this->workload_spec_submitted.erase(job_name);
+    this->workload_spec_submitted.erase(job_name); // clean up memory
 
     /* Retrieve the job that this event is for */
-    WRENCH_INFO("Notified that job %s with %ld actions has completed", job_name.c_str(), event->job->getActions().size());
+    WRENCH_INFO("Notified that job %s with %ld actions has completed", job_name.c_str(),
+                event->job->getActions().size());
 
     /* Figure out execution host. All actions run on the same host, so let's just pick an arbitrary one */
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
@@ -288,7 +308,8 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
                     " of action " + action->getName() + " out of scope!");
         }
         double elapsed = end_date - start_date;
-        WRENCH_DEBUG("Analyzing action: %s, started in s: %.2f, ended in s: %.2f, elapsed in s: %.2f", action->getName().c_str(), start_date, end_date, elapsed);
+        WRENCH_DEBUG("Analyzing action: %s, started in s: %.2f, ended in s: %.2f, elapsed in s: %.2f",
+                     action->getName().c_str(), start_date, end_date, elapsed);
 
         flops += job_spec.total_flops;
         if (auto file_read_action = std::dynamic_pointer_cast<wrench::FileReadAction>(action)) {
@@ -347,7 +368,8 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(std::shared_
         this->filedump << std::to_string(global_start_date) << ", " << std::to_string(global_end_date) << ", ";
         this->filedump << std::to_string(incr_compute_time) << ", " << std::to_string(flops) << ", ";
         this->filedump << std::to_string(incr_infile_transfertime) << ", " << std::to_string(incr_infile_size) << ", ";
-        this->filedump << std::to_string(incr_outfile_transfertime) << ", " << std::to_string(incr_outfile_size) << std::endl;
+        this->filedump << std::to_string(incr_outfile_transfertime) << ", " << std::to_string(incr_outfile_size)
+                       << std::endl;
 
         this->filedump.close();
 
