@@ -37,7 +37,7 @@ SEED="${5}"
 BUFFERSIZE=0
 DUPLICATIONS=1
 HITRATE="${4}"
-XRDBLOCKSIZE=1000000
+XRDBLOCKSIZE=100000000
 
 echo "Starting execution of simulation..."
 
@@ -52,6 +52,7 @@ echo "Starting execution of simulation..."
         --hitrate ${HITRATE}\
         --xrd-blocksize ${XRDBLOCKSIZE} \
         --storage-buffer-size ${BUFFERSIZE} \
+	--seed ${SEED} \
         --output-file "${PLATFORM}_H${HITRATE}_S${SEED}.csv" 
 #    & TEST_PID=$!
 
