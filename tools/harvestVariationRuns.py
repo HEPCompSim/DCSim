@@ -228,17 +228,17 @@ def plotVariationbands(
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("sd",1), n_boot=1, seed=42,
+                 estimator="mean", errorbar=("ci",95), n_boot=1000, seed=42,
                  linestyle="solid", err_style="band", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q25"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("sd",1), n_boot=1, seed=42,
+                 estimator="mean", errorbar=("ci",95), n_boot=1000, seed=42,
                  linestyle="dashed", err_style="band", palette=palette,
                  ax=ax1)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q75"))),
                  hue="Site", hue_order=sites,
-                 estimator="mean", errorbar=("sd",1), n_boot=1, seed=42,
+                 estimator="mean", errorbar=("ci",95), n_boot=1000, seed=42,
                  linestyle="dashdot", err_style="band", palette=palette,
                  ax=ax1)
     ax1.set_title(title)
@@ -290,7 +290,7 @@ def run(args=parser.parse_args()):
     # and plot
     for quantity in QUANTITIES.values():
         logger.info("Plotting {}".format(quantity["ident"]))
-        plotVariationbands(df, quantity["ident"], sites, "", out_dir)
+        plotVariationbands(df, quantity["ident"], sites, "", out_dir, "", "")
 
 
 if __name__ == "__main__":
