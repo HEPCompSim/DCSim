@@ -18,7 +18,7 @@ source /cvmfs/grid.cern.ch/umd-c7ui-latest/etc/profile.d/setup-c7-ui-example.sh
 # source /cvmfs/etp.kit.edu/DCSim/pre_0.2/setup.sh
 
 echo "GETTING CONDA ENVIRONMENT FROM REMOTE STORAGE"
-gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env.tar.gz dcsim-env.tar.gz
+gfal-copy davs://cmsdcache-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env.tar.gz dcsim-env.tar.gz
 
 echo "EXTRACTING AND SETTING CONDA ENVIRONMENT"
 mkdir -p dcsim-env
