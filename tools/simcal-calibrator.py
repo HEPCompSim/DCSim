@@ -13,7 +13,7 @@ import glob
 import simcal as sc
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
-
+    
 
 toolsDir = Path(
 	os.path.dirname(os.path.realpath(__file__)))  # Get path to THIS folder where the simulator lives
@@ -235,30 +235,43 @@ def loss(reference, simulated):
 	print(total/count)
 	return total/count
 
-# do whatever
-data = dataLoader({"test":[glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/diskCache/SG*1Gbps*")),
-				  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/ramCache/SG*1Gbps*")),
-				  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/diskCache/SG*10Gbps*")),
-				  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/ramCache/SG*10Ggps*"))]
-				  })
-	   
-simulator = Simulator("dc-sim")
-#calibrator = sc.calibrators.Debug(sys.stdout)
-#calibrator = sc.calibrators.Grid()
-#calibrator = sc.calibrators.Random()
-calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
-calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
-calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
-calibrator.add_param("disk", sc.parameter.Exponential(20, 40).format("%.2f"))
-calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
-calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
-calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
+if __name__=="__main__":
 
-dataDir=toolsDir/"../data"
-samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json")},data)
-coordinator = sc.coordinators.ThreadPool(pool_size=16) 
-maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
-print("Max's",maxs)
-cal=calibrator.calibrate(samplePoint, timelimit=36000, coordinator=coordinator)
-print ("We should now be printing the calibration")
-print(cal)
+	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
+	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
+	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
+	args = parser.parse_args()
+	# do whatever
+	data = dataLoader({"test":[
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/diskCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/ramCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/diskCache/SG*10Gbps*")),
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/ramCache/SG*10Ggps*"))],
+					  
+					  "copy":[
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/diskCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/ramCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/diskCache/SG*10Gbps*")),
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/ramCache/SG*10Ggps*"))]
+					  })
+		   
+	simulator = Simulator("dc-sim")
+	#calibrator = sc.calibrators.Debug(sys.stdout)
+	#calibrator = sc.calibrators.Grid()
+	#calibrator = sc.calibrators.Random()
+	calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
+	calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
+	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
+	calibrator.add_param("disk", sc.parameter.Exponential(20, 40).format("%.2f"))
+	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
+	calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
+	calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
+
+	dataDir=toolsDir/"../data"
+	samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data)
+	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
+	maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
+	print("Max's",maxs)
+	cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit, coordinator=coordinator)
+	print ("We should now be printing the calibration")
+	print(cal)
