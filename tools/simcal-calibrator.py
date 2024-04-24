@@ -13,7 +13,7 @@ import glob
 import simcal as sc
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
-    
+import time    
 
 toolsDir = Path(
 	os.path.dirname(os.path.realpath(__file__)))  # Get path to THIS folder where the simulator lives
@@ -273,8 +273,11 @@ if __name__=="__main__":
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 	print("Max's",maxs)
+	t0 = time.time()
 	cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit, coordinator=coordinator)
+	t1 = time.time()
 	print ("We should now be printing the calibration")
 	print(cal)
-	sys.exit()
+	print(t1-t0)
+
 	
