@@ -276,3 +276,5 @@ if __name__=="__main__":
 	cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit, coordinator=coordinator)
 	print ("We should now be printing the calibration")
 	print(cal)
+	sys.exit()
+	
