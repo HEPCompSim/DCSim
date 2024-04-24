@@ -273,6 +273,6 @@ if __name__=="__main__":
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 	print("Max's",maxs)
-	cal=calibrator.calibrate(samplePoint, soft_timelimit=args.timelimit, coordinator=coordinator)
+	cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit, coordinator=coordinator)
 	print ("We should now be printing the calibration")
 	print(cal)
