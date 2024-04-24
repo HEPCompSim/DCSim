@@ -269,9 +269,9 @@ if __name__=="__main__":
 
 	dataDir=toolsDir/"../data"
 	samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data)
-	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
+	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores, timelimit=args.timelimit) 
 	maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 	print("Max's",maxs)
-	cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit, coordinator=coordinator)
+	cal=calibrator.calibrate(samplePoint, soft_timelimit=args.timelimit, coordinator=coordinator)
 	print ("We should now be printing the calibration")
 	print(cal)
