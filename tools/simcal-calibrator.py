@@ -195,7 +195,7 @@ def buildTensor(data):
 		cpu=float(data['job.computetime'])
 		#print(i,start,end,cpu)
 		tensor[i,0]=end-start
-		tensor[i,1]=(end-start)/cpu
+		tensor[i,1]=(end-start)/max(1,cpu)
 	#print(tensor)
 	return tensor
 def loss(reference, simulated):
@@ -247,13 +247,13 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/diskCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/ramCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/diskCache/SG*10Gbps*")),
-					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/ramCache/SG*10Ggps*"))],
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/testjob/ramCache/SG*10Gbps*"))],
 					  
 					  "copy":[
 					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/diskCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/ramCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/diskCache/SG*10Gbps*")),
-					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/ramCache/SG*10Ggps*"))]
+					  glob.glob(os.path.expanduser("~/hep-testjob/data/copyjob/ramCache/SG*10Gbps*"))]
 					  })
 		   
 	simulator = Simulator("dc-sim")
