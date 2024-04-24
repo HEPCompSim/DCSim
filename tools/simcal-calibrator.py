@@ -155,8 +155,9 @@ class SamplePoint:
 		platform.close()
 		return restructure(inter)
 
-	def __call__(self, args, stop_time):
-		env = sc.Environment(stop_time)
+	def __call__(self, args, stop_time = None):
+		
+		env = sc.Environment(stoptime=stop_time)
 		with env:
 			env.tmp_dir(".",keep=False)
 			scsn = self.call_platform(env, 
