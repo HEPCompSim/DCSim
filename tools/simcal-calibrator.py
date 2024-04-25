@@ -14,7 +14,7 @@ import simcal as sc
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
 import time    
-#pip install git+https://github.com/dgerosa/processify
+from processify import processify #pip install git+https://github.com/dgerosa/processify
 
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives
