@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from simcal_calibrator import *
 from time import time
 if __name__=="__main__":
