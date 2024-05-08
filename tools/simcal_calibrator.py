@@ -266,10 +266,10 @@ if __name__=="__main__":
 	calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
 	calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
-	calibrator.add_param("disk", sc.parameter.Exponential(20, 40).format("%.2f"))
-	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
-	calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
-	calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 40).format("%.2f"))
+	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
+	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 
 	dataDir=toolsDir/"../data"
 	samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data)
