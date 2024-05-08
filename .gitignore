@@ -39,6 +39,7 @@ tmp
 *.png
 *.csv
 *.txt
+tools/tmp*
 
 # logs and tests
 logs
