@@ -45,7 +45,7 @@ if __name__=="__main__":
 			#maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 			#print("Max's",maxs)
 			t0 = time()
-			cal=calibrator.calibrate(samplePoint, 3600)#, coordinator=coordinator)
+			#cal=calibrator.calibrate(samplePoint, 3600, coordinator=coordinator)
 			cal=calibrator.descend(samplePoint,{'cpuSpeed': 1959376102.6873443, 'ramDisk': 7960898256.745884, 'disk': 13264014.962423073, 'internalNetwork': 7958060335.116626, 'externalFastNetwork': 4258718314.2515693, 'externalSlowNetwork': 5966513.835689467},stoptime)
 			t1 = time()
 			#print ("We should now be printing the calibration")
