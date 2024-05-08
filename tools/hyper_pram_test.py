@@ -41,11 +41,11 @@ if __name__=="__main__":
 
 			dataDir=toolsDir/"../data"
 			samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data)
-			coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
+			#coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 			#maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 			#print("Max's",maxs)
 			t0 = time()
-			cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit, coordinator=coordinator)
+			cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit)#, coordinator=coordinator)
 			cal=calibrator.descend(samplePoint,{'cpuSpeed': 1959376102.6873443, 'ramDisk': 7960898256.745884, 'disk': 13264014.962423073, 'internalNetwork': 7958060335.116626, 'externalFastNetwork': 4258718314.2515693, 'externalSlowNetwork': 5966513.835689467},stoptime)
 			t1 = time()
 			#print ("We should now be printing the calibration")
