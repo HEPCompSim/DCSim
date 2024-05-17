@@ -262,8 +262,9 @@ if __name__=="__main__":
 	simulator = Simulator("dc-sim")
 	#calibrator = sc.calibrators.Debug(sys.stdout)
 	#calibrator = sc.calibrators.Grid()
-	#calibrator = sc.calibrators.Random()
-	calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
+	#calibrator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
+	#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
+	calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
 	calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
