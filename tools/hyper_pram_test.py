@@ -34,7 +34,7 @@ if __name__=="__main__":
 	for j in range(10):
 		stoptime=time()+3600
 		print(0.01,100/10**j)
-		calibrator = sc.calibrators.GradientDescent(0.01,100/10**j,early_reject_loss=1.0)
+		calibrator = sc.calibrators.GradientDescent(0.01,100/10**j)
 		calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
 		calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 		calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
