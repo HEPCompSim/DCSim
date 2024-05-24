@@ -202,41 +202,45 @@ def buildTensor(data):
 	return tensor
 @processify	
 def MRELoss(reference, simulated):
-	calculation = ddks.methods.ddKS()
-	count=0
-	total=0
-	for platform in zip(reference,simulated):
-		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
-			sim=platform[1][expiriment]
-			for ref in platform[0][expiriment]:
-				for machine in sorted(sim.keys()&ref.keys()):
-					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
-						#break
-						#N dimensional KS test (ddks) 
-						#unless we can find n dimensional k sample anderson darling
-						#Apparently we are doing Wasserstein 
-						#psych! we are doing ddKS
-						refTime=float(ref[machine][hitrate]['job.end'])-float(ref[machine][hitrate]['job.start'])
-						
-						simTime=float(sim[machine][hitrate]['job.end'])-float(sim[machine][hitrate]['job.start'])
-						#print(refTensor,simTensor)
-						
-						#print(type(ref[machine][hitrate]))
-						#print(type(sim[machine][hitrate]))
-						#print(len(ref[machine][hitrate]))
-						#print(len(sim[machine][hitrate]))
-						#print(sim[machine][hitrate])
-						#print(ref[machine][hitrate])
-						#print(refTensor,simTensor)
-						total+=  abs(refTime-simTime)/refTime
-						#print(distance)
-						count+=1
-						#There are a different number of results for each machine in each dataset
-						#return total
-						#print("\t",expiriment,machine,hitrate,total,count)
-	if(count==0):
-		count=1
-	print(total/count)
+	try:
+		calculation = ddks.methods.ddKS()
+		count=0
+		total=0
+		for platform in zip(reference,simulated):
+			for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+				sim=platform[1][expiriment]
+				for ref in platform[0][expiriment]:
+					for machine in sorted(sim.keys()&ref.keys()):
+						for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+							#break
+							#N dimensional KS test (ddks) 
+							#unless we can find n dimensional k sample anderson darling
+							#Apparently we are doing Wasserstein 
+							#psych! we are doing ddKS
+							refTime=float(ref[machine][hitrate]['job.end'])-float(ref[machine][hitrate]['job.start'])
+							
+							simTime=float(sim[machine][hitrate]['job.end'])-float(sim[machine][hitrate]['job.start'])
+							#print(refTensor,simTensor)
+							
+							#print(type(ref[machine][hitrate]))
+							#print(type(sim[machine][hitrate]))
+							#print(len(ref[machine][hitrate]))
+							#print(len(sim[machine][hitrate]))
+							#print(sim[machine][hitrate])
+							#print(ref[machine][hitrate])
+							#print(refTensor,simTensor)
+							total+=  abs(refTime-simTime)/refTime
+							#print(distance)
+							count+=1
+							#There are a different number of results for each machine in each dataset
+							#return total
+							#print("\t",expiriment,machine,hitrate,total,count)
+		if(count==0):
+			count=1
+		print(total/count)
+	except TypeError e:
+		print(e)
+		raise
 	return total/count
 
 @processify	
