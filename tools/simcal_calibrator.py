@@ -299,7 +299,7 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/diskCache/SG*10Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
 					  })
-	if parser.mre:
+	if args.mre:
 		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
 	else:
 		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
@@ -316,7 +316,7 @@ if __name__=="__main__":
 	calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 
 	dataDir=toolsDir/"../data"
-	if parser.mre:
+	if args.mre:
 	
 		samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data, MRELoss)
 	else:
