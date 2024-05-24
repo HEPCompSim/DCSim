@@ -238,7 +238,7 @@ def MRELoss(reference, simulated):
 		if(count==0):
 			count=1
 		print(total/count)
-	except TypeError e:
+	except TypeError as e:
 		print(e)
 		raise
 	return total/count
