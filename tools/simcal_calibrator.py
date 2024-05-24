@@ -202,50 +202,46 @@ def buildTensor(data):
 	return tensor
 @processify	
 def MRELoss(reference, simulated):
-	try:
-		calculation = ddks.methods.ddKS()
-		count=0
-		total=0
-		for platform in zip(reference,simulated):
-			for expiriment in sorted(platform[1].keys() & platform[0].keys()):
-				sim=platform[1][expiriment]
-				for ref in platform[0][expiriment]:
-					for machine in sorted(sim.keys()&ref.keys()):
-						for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
-							#break
-							#N dimensional KS test (ddks) 
-							#unless we can find n dimensional k sample anderson darling
-							#Apparently we are doing Wasserstein 
-							#psych! we are doing ddKS
-							refTime=0
-							for data in ref[machine][hitrate]:
-								refTime+=float(data['job.end'])-float(data['job.start'])
-							refTime/=len(ref[machine][hitrate])
-							simTime=0
-							for data in sim[machine][hitrate]:
-								simTime+=float(data['job.end'])-float(data['job.start'])
-							simTime/=len(sim[machine][hitrate])
-							#print(refTensor,simTensor)
-							
-							#print(type(ref[machine][hitrate]))
-							#print(type(sim[machine][hitrate]))
-							#print(len(ref[machine][hitrate]))
-							#print(len(sim[machine][hitrate]))
-							#print(sim[machine][hitrate])
-							#print(ref[machine][hitrate])
-							#print(refTensor,simTensor)
-							total+=  abs(refTime-simTime)/refTime
-							#print(distance)
-							count+=1
-							#There are a different number of results for each machine in each dataset
-							#return total
-							#print("\t",expiriment,machine,hitrate,total,count)
-		if(count==0):
-			count=1
-		print(total/count)
-	except TypeError as e:
-		print(e)
-		raise
+	calculation = ddks.methods.ddKS()
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						#break
+						#N dimensional KS test (ddks) 
+						#unless we can find n dimensional k sample anderson darling
+						#Apparently we are doing Wasserstein 
+						#psych! we are doing ddKS
+						refTime=0
+						for data in ref[machine][hitrate]:
+							refTime+=float(data['job.end'])-float(data['job.start'])
+						refTime/=len(ref[machine][hitrate])
+						simTime=0
+						for data in sim[machine][hitrate]:
+							simTime+=float(data['job.end'])-float(data['job.start'])
+						simTime/=len(sim[machine][hitrate])
+						#print(refTensor,simTensor)
+						
+						#print(type(ref[machine][hitrate]))
+						#print(type(sim[machine][hitrate]))
+						#print(len(ref[machine][hitrate]))
+						#print(len(sim[machine][hitrate]))
+						#print(sim[machine][hitrate])
+						#print(ref[machine][hitrate])
+						#print(refTensor,simTensor)
+						total+=  abs(refTime-simTime)/refTime
+						#print(distance)
+						count+=1
+						#There are a different number of results for each machine in each dataset
+						#return total
+						#print("\t",expiriment,machine,hitrate,total,count)
+	if(count==0):
+		count=1
+	print(total/count)
 	return total/count
 
 @processify	
@@ -309,7 +305,7 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
 					  })
 	if args.mre:
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.001)
 	else:
 		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
 		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
