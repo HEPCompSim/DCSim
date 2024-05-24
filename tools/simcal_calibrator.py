@@ -119,13 +119,14 @@ class Simulator(sc.Simulator):
 
 
 class SamplePoint:
-	def __init__(self, simulator,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data):
+	def __init__(self, simulator,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss):
 		self.simulator = simulator
 		self.hitrates = hitrates
 		self.xrootd_blocksize = xrootd_blocksize
 		self.network_blocksize = network_blocksize
 		self.workloads = workloads
 		self.data=data
+		self.loss=loss
 		with open(xml_template, 'r') as f:
 			self.template = f.read()
 
@@ -187,7 +188,7 @@ class SamplePoint:
 				 })
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
-		return loss(self.data,(scsn,scfn,fcsn,fcfn))
+		return self.loss(self.data,(scsn,scfn,fcsn,fcfn))
 def buildTensor(data):
 	tensor=torch.empty((len(data),2), dtype=torch.float32)
 	for i,data in enumerate(data):
@@ -200,7 +201,46 @@ def buildTensor(data):
 	#print(tensor)
 	return tensor
 @processify	
-def loss(reference, simulated):
+def MRELoss(reference, simulated):
+	calculation = ddks.methods.ddKS()
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						#break
+						#N dimensional KS test (ddks) 
+						#unless we can find n dimensional k sample anderson darling
+						#Apparently we are doing Wasserstein 
+						#psych! we are doing ddKS
+						refTime=float(ref[machine][hitrate]['job.end'])-float(ref[machine][hitrate]['job.start'])
+						
+						simTime=float(sim[machine][hitrate]['job.end'])-float(sim[machine][hitrate]['job.start'])
+						#print(refTensor,simTensor)
+						
+						#print(type(ref[machine][hitrate]))
+						#print(type(sim[machine][hitrate]))
+						#print(len(ref[machine][hitrate]))
+						#print(len(sim[machine][hitrate]))
+						#print(sim[machine][hitrate])
+						#print(ref[machine][hitrate])
+						#print(refTensor,simTensor)
+						total+=  abs(refTime-simTime)/refTime
+						#print(distance)
+						count+=1
+						#There are a different number of results for each machine in each dataset
+						#return total
+						#print("\t",expiriment,machine,hitrate,total,count)
+	if(count==0):
+		count=1
+	print(total/count)
+	return total/count
+
+@processify	
+def ddksLoss(reference, simulated):
 	calculation = ddks.methods.ddKS()
 	count=0
 	total=0
@@ -237,13 +277,14 @@ def loss(reference, simulated):
 		count=1
 	print(total/count)
 	return total/count
-
+	
 if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
+	parser.add_argument('--mre', action='store_true')
 	args = parser.parse_args()
 	# do whatever
 	data = dataLoader({"test":[
@@ -258,13 +299,15 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/diskCache/SG*10Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
 					  })
-		   
+	if parser.mre:
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
+	else:
+		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
 	simulator = Simulator("dc-sim")
 	#calibrator = sc.calibrators.Debug(sys.stdout)
 	#calibrator = sc.calibrators.Grid()
 	#calibrator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
-	#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
-	calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
 	calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
@@ -273,7 +316,12 @@ if __name__=="__main__":
 	calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 
 	dataDir=toolsDir/"../data"
-	samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data)
+	if parser.mre:
+	
+		samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data, MRELoss)
+	else:
+		samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data,ddksLoss)
+	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 	print("Max's",maxs)
