@@ -217,9 +217,14 @@ def MRELoss(reference, simulated):
 							#unless we can find n dimensional k sample anderson darling
 							#Apparently we are doing Wasserstein 
 							#psych! we are doing ddKS
-							refTime=float(ref[machine][hitrate]['job.end'])-float(ref[machine][hitrate]['job.start'])
-							
-							simTime=float(sim[machine][hitrate]['job.end'])-float(sim[machine][hitrate]['job.start'])
+							refTime=0
+							for data in ref[machine][hitrate]:
+								refTime+=float(data['job.end'])-float(data['job.start'])
+							refTime/=len(ref[machine][hitrate])
+							simTime=0
+							for data in sim[machine][hitrate]:
+								simTime+=float(data['job.end'])-float(data['job.start'])
+							simTime/=len(sim[machine][hitrate])
 							#print(refTensor,simTensor)
 							
 							#print(type(ref[machine][hitrate]))
