@@ -305,7 +305,7 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
 					  })
 	if args.mre:
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.001)
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
 	else:
 		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
 		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
