@@ -169,7 +169,7 @@ class SamplePoint:
 			args["externalFastNetwork"]=args["externalNetwork"]*self.ratio
 			args["externalSlowNetwork"]=args["externalNetwork"]
 		with env:
-			env.tmp_dir(".",keep=False)
+			env.tmp_dir(keep=False)
 			
 			scsn = self.call_platform(env, 
 				{"cpuSpeed": args["cpuSpeed"],
