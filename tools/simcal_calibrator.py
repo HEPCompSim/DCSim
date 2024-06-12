@@ -119,7 +119,7 @@ class Simulator(sc.Simulator):
 
 
 class SamplePoint:
-	def __init__(self, simulator,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss):
+	def __init__(self, simulator,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss,nocpu,ratio):
 		self.simulator = simulator
 		self.hitrates = hitrates
 		self.xrootd_blocksize = xrootd_blocksize
@@ -127,6 +127,8 @@ class SamplePoint:
 		self.workloads = workloads
 		self.data=data
 		self.loss=loss
+		self.nocpu=nocpu
+		self.ratio=ratio
 		with open(xml_template, 'r') as f:
 			self.template = f.read()
 
@@ -157,11 +159,18 @@ class SamplePoint:
 		platform.close()
 		return restructure(inter)
 
-	def __call__(self, args, stop_time = None):
+	def __call__(self, iargs, stop_time = None):
 		
 		env = sc.Environment(stoptime=stop_time)
+		args=dict(iargs)
+		if self.nocpu:
+			args["cpuSpeed"]="1960000000",
+		if self.ratio:
+			args["externalFastNetwork"]=args["externalNetwork"]*self.ratio
+			args["externalSlowNetwork"]=args["externalNetwork"]
 		with env:
 			env.tmp_dir(".",keep=False)
+			
 			scsn = self.call_platform(env, 
 				{"cpuSpeed": args["cpuSpeed"],
 				 "cacheSpeed": args["disk"],
@@ -289,8 +298,20 @@ if __name__=="__main__":
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
-	parser.add_argument('--mre', action='store_true')
+	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
+	parser.add_argument('--nocpu', action='store_true')
+	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	args = parser.parse_args()
+	if args.loss=="mre":
+		loss=MRELoss
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+	elif args.loss=="ddks":
+		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
+		loss=ddksLoss
+	else:
+		print("unrecgongized loss function",args.loss)
+		sys.exit()
 	# do whatever
 	data = dataLoader({"test":[
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/diskCache/SG*1Gbps*")),
@@ -304,28 +325,26 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/diskCache/SG*10Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
 					  })
-	if args.mre:
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
-	else:
-		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
+	
 	simulator = Simulator("dc-sim")
 	#calibrator = sc.calibrators.Debug(sys.stdout)
 	#calibrator = sc.calibrators.Grid()
 	#calibrator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
-	calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
+	if not args.nocpu:
+		calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
 	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
-	calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
-	calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	
+	if args.networkratio:
+		calibrator.add_param("externalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	else:
+		calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+		calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 
 	dataDir=toolsDir/"../data"
-	if args.mre:
 	
-		samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data, MRELoss)
-	else:
-		samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data,ddksLoss)
+	samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data,loss,args.nocpu,args.networkratio)
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps",	"externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
