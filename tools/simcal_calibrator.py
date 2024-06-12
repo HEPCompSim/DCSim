@@ -164,7 +164,7 @@ class SamplePoint:
 		env = sc.Environment(stoptime=stop_time)
 		args=dict(iargs)
 		if self.nocpu:
-			args["cpuSpeed"]="1960000000",
+			args["cpuSpeed"]="1960000000"
 		if self.ratio:
 			args["externalFastNetwork"]=args["externalNetwork"]*self.ratio
 			args["externalSlowNetwork"]=args["externalNetwork"]
