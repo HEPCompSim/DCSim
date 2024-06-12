@@ -268,7 +268,6 @@ def MRELossRatio(reference, simulated):
 						#psych! we are doing ddKS
 						refTime=0
 						refRatio=0
-								start=float(data['job.start'])
 						for data in ref[machine][hitrate]:
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
