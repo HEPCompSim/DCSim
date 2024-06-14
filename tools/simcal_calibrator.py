@@ -76,13 +76,22 @@ def dataLoader(sets):
 
 
 class Simulator(sc.Simulator):
-	def __init__(self, path):
+	def __init__(self, path,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss,nocpu,ratio):
 		super().__init__()
 		self.path = path
+		self.hitrates = hitrates
+		self.xrootd_blocksize = xrootd_blocksize
+		self.network_blocksize = network_blocksize
+		self.workloads = workloads
+		self.data=data
+		self.loss=loss
+		self.nocpu=nocpu
+		self.ratio=ratio
+		with open(xml_template, 'r') as f:
+			self.template = f.read()
 
-	
 
-	def run(self, env, args):
+	def dcsim(self, env, args):
 		# Args structure
 		# {
 		#	 "platform",
@@ -116,21 +125,7 @@ class Simulator(sc.Simulator):
 				 args=cargs)
 		#print(o[1])
 		return extract(output.name)
-
-
-class SamplePoint:
-	def __init__(self, simulator,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss,nocpu,ratio):
-		self.simulator = simulator
-		self.hitrates = hitrates
-		self.xrootd_blocksize = xrootd_blocksize
-		self.network_blocksize = network_blocksize
-		self.workloads = workloads
-		self.data=data
-		self.loss=loss
-		self.nocpu=nocpu
-		self.ratio=ratio
-		with open(xml_template, 'r') as f:
-			self.template = f.read()
+	
 
 	def fill_template(self, env, args):
 		# Get the command-line arguments
@@ -155,13 +150,12 @@ class SamplePoint:
 		for workload in self.workloads:
 			inter[workload] = {}
 			for hitrate in self.hitrates:
-				inter[workload][hitrate] = self.simulator({"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize}, env=env)
+				inter[workload][hitrate] = self.dcsim({"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize}, env=env)
 		platform.close()
 		return restructure(inter)
 
-	def __call__(self, iargs, stop_time = None):
+	def run(self, env, iargs):
 		
-		env = sc.Environment(stoptime=stop_time)
 		args=dict(iargs)
 		if self.nocpu:
 			args["cpuSpeed"]="1960000000"
@@ -198,6 +192,9 @@ class SamplePoint:
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		return self.loss(self.data,(scsn,scfn,fcsn,fcfn))
+
+
+	
 def buildTensor(data):
 	tensor=torch.empty((len(data),2), dtype=torch.float32)
 	for i,data in enumerate(data):
@@ -380,7 +377,7 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
 					  })
 	
-	simulator = Simulator("dc-sim")
+
 	#calibrator = sc.calibrators.Debug(sys.stdout)
 	#calibrator = sc.calibrators.Grid()
 	#calibrator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
@@ -397,16 +394,26 @@ if __name__=="__main__":
 		calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 
 	dataDir=toolsDir/"../data"
-	
-	samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data,loss,False,False)
+	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
+		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
+		dataDir/"workload-configs/crown_ttbar_testjob.json"),
+		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
+		dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
-	maxs=samplePoint(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
+	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 	print("Max's",maxs)
-	samplePoint = SamplePoint(simulator,dataDir/"platform-files/sgbatch_validation_template.xml", [1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, {"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",dataDir/"workload-configs/crown_ttbar_testjob.json"),"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",dataDir/"workload-configs/crown_ttbar_copyjob.json")},data,loss,args.nocpu,args.networkratio)
-	
+	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
+		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
+		dataDir/"workload-configs/crown_ttbar_testjob.json"),
+		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
+		dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+		data,loss,args.nocpu,args.networkratio)	
 	t0 = time.time()
-	cal=calibrator.calibrate(samplePoint, timelimit=args.timelimit, coordinator=coordinator)
+	cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
 	t1 = time.time()
 	print ("We should now be printing the calibration")
 	print(cal)
