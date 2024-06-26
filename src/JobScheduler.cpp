@@ -38,7 +38,7 @@ void JobScheduler::addExecutionController(WorkloadExecutionController *execution
  */
 void JobScheduler::jobDone(const std::shared_ptr<wrench::CompoundJob> &job) {
     // Num cores
-    std::get<0>(this->available_resources[job->getParentComputeService()])++;
+    std::get<0>(this->available_resources[job->getParentComputeService()]) += job->getMinimumRequiredNumCores();
     // RAM   TODO: Check that the RAM is what we think it is
     std::get<1>(this->available_resources[job->getParentComputeService()]) += job->getMinimumRequiredMemory();
     this->total_num_idle_cores += job->getMinimumRequiredNumCores();
@@ -55,6 +55,7 @@ void JobScheduler::schedule() {
 
     // Go through the workload execution controllers in order
     for (auto const &ec: this->execution_controllers) {
+        // TODO: Remove the execution controller from the list
         if (ec->isWorkloadEmpty()) {
             continue; // all jobs have been submitted fo this execution controller
         }
@@ -70,7 +71,7 @@ void JobScheduler::schedule() {
                 return;
             }
 
-            // See if there is an compute service that can accommodate the job
+            // See if there is a compute service that can accommodate the job
             auto target_cs = pickComputeService(num_cores, total_ram);
             if (target_cs) {
                 ec->createAndSubmitJob(job_name, target_cs);

@@ -619,7 +619,7 @@ int main(int argc, char **argv) {
 
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
-    for (auto host: SimpleSimulator::cache_hosts) {
+    for (auto const &host: SimpleSimulator::cache_hosts) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
         auto storage_service = simulation->add(
@@ -633,7 +633,7 @@ int main(int argc, char **argv) {
     // and remote storages that are able to serve all file requests
 
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
-    for (auto host: SimpleSimulator::storage_hosts) {
+    for (auto const &host: SimpleSimulator::storage_hosts) {
         auto storage_service = simulation->add(
                 wrench::SimpleStorageService::createSimpleStorageService(
                         host, {"/"},
@@ -714,7 +714,6 @@ int main(int argc, char **argv) {
         }
         std::cerr << "Total number of execution controllers: " << workload_execution_controllers.size() << "\n";
     }
-
 
 
     /* Instantiate inputfiles and set outfile destinations*/

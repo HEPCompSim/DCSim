@@ -65,7 +65,6 @@ WorkloadExecutionController::WorkloadExecutionController(
  */
 std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmitJob(const std::string &job_name,
                                                                                      const std::shared_ptr<wrench::ComputeService> &cs) {
-    // Pick the first job
     auto job_spec = this->workload_spec[job_name];
     auto job = job_manager->createCompoundJob(job_name);
 
@@ -266,7 +265,6 @@ WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wren
 */
 void WorkloadExecutionController::processEventCompoundJobCompletion(
         std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
-
 
     this->job_scheduler->jobDone(event->job);
     this->num_completed_jobs++;
