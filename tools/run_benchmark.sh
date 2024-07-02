@@ -1,10 +1,12 @@
-#! /bin/bash
+#! /bin/zsh
+
 
 # script for execution of simulation scenarios to test the runtime and memory scaling of the simulator
 #
 #
 parent="$( dirname "$base" )"
 PLATFORM1="$parent/data/platform-files/WLCG_disklessTier2.xml"
+PLATFORM1_FATPIPE="$parent/data/platform-files/WLCG_disklessTier2_FATPIPE.xml"
 PLATFORM2="$parent/data/platform-files/WLCG_disklessTier2_Tier1_MODIFIED.xml"
 PLATFORM3="$parent/data/platform-files/WLCG_disklessTier2_Tier1_Tier2_MODIFIED.xml"
 WORKLOAD="$parent/data/workload-configs/simScaling.json"
@@ -17,16 +19,19 @@ SCENARIO="wlcg"
 #BUFFER_SIZE=0
 BUFFER_SIZE=0
 
+export DYLD_LIBRARY_PATH="/opt/local/lib:/usr/local/lib"
+
 if [ ! -d "tmp/monitor/$SCENARIO" ]; then
     mkdir -p tmp/monitor/$SCENARIO
 fi
 
 
-for NJOBS in 400
+for NJOBS in 300
 do
     for XRDBLOCKSIZE in 1000000000
     do
-	for PLATFORM in $PLATFORM1 $PLATFORM2 $PLATFORM3
+	#for PLATFORM in $PLATFORM1 $PLATFORM2 $PLATFORM3
+	for PLATFORM in $PLATFORM1 $PLATFORM1_FATPIPE
 	do
 		echo "PLATFORM: $PLATFORM"
 		PLATFORM_NAME=`echo $PLATFORM | sed "s/.*\///"`
@@ -39,6 +44,8 @@ do
     		sed -i "" "s/\"num_files\": [0-9]*,/\"num_files\": $NFILES,/" "$DATASET_TMP"
 		OUTFILE=/tmp/benchmark_xrtd_$PLATFORM_NAME.stdout
 		ERRFILE=/tmp/benchmark_xrtd_$PLATFORM_NAME.stderr
+
+
     		/opt/local/bin/gtime -v dc-sim --platform "$PLATFORM" \
         		--duplications ${DUPLICATIONS} \
         		--hitrate 1.0 \

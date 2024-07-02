@@ -47,28 +47,28 @@
 
                     <router id="GridKAgateway"/>
 
-                    <link id="GridKA_sched" bandwidth="10Gbps" latency="0us" sharing_policy="SHARED"/>
+                    <link id="GridKA_sched" bandwidth="10Gbps" latency="0us" sharing_policy="FATPIPE"/>
 
-                    <link id="GridKA_Tier1_SHARED" bandwidth="100Gbps" latency="0us" sharing_policy="SHARED"/>
-                    <link id="GridKA_Tier1" bandwidth="200Gbps" latency="0us" sharing_policy="SHARED"/>
+                    <link id="GridKA_Tier1_FATPIPE" bandwidth="100Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                    <link id="GridKA_Tier1" bandwidth="200Gbps" latency="0us" sharing_policy="FATPIPE"/>
 
                     <!-- <link id="GridKA_dcache" bandwidth="100Gbps" latency="0us"/> -->
 
-                    <link id="GridKA_dcachepool_SHARED" bandwidth="40Gbps" latency="0us" sharing_policy="SHARED"/>
-                    <link id="GridKA_dcachepool" bandwidth="80Gbps" latency="0us" sharing_policy="SHARED"/>
+                    <link id="GridKA_dcachepool_FATPIPE" bandwidth="40Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                    <link id="GridKA_dcachepool" bandwidth="80Gbps" latency="0us" sharing_policy="FATPIPE"/>
 
                     <route src="GridKAgateway" dst="WMSHost">
                         <link_ctn id="GridKA_sched"/>
                     </route>
 
                     <route src="GridKAgateway" dst="GridKA_dCache">
-                        <link_ctn id="GridKA_dcachepool_SHARED"/>
+                        <link_ctn id="GridKA_dcachepool_FATPIPE"/>
                         <link_ctn id="GridKA_dcachepool"/>
                     </route>
                 </zone>
 
                 <zoneRoute src="GridKA-service" dst="Tier1" gw_src="GridKAgateway" gw_dst="Tier1Tier1_router">
-                    <link_ctn id="GridKA_Tier1_SHARED"/>
+                    <link_ctn id="GridKA_Tier1_FATPIPE"/>
                     <link_ctn id="GridKA_Tier1"/>
                 </zoneRoute>
 
@@ -79,8 +79,8 @@
 
                 <router id="KITgateway"/>
 
-                <link id="GridKA_to_KIT" bandwidth="100Gbps" latency="0us" sharing_policy="SHARED"/>
-                <link id="KIT_to_DESY" bandwidth="100Gbps" latency="0us" sharing_policy="SHARED"/>
+                <link id="GridKA_to_KIT" bandwidth="100Gbps" latency="0us" sharing_policy="FATPIPE"/>
+                <link id="KIT_to_DESY" bandwidth="100Gbps" latency="0us" sharing_policy="FATPIPE"/>
             
             </zone>
 
@@ -111,9 +111,9 @@
 
                 <router id="DESYGridgateway"/>
 
-                <link id="DESY_Tier2" bandwidth="40Gbps" latency="0us" sharing_policy="SHARED"/>
+                <link id="DESY_Tier2" bandwidth="40Gbps" latency="0us" sharing_policy="FATPIPE"/>
 
-                <link id="DESY_dCachepool" bandwidth="40Gbps" latency="0us" sharing_policy="SHARED"/>
+                <link id="DESY_dCachepool" bandwidth="40Gbps" latency="0us" sharing_policy="FATPIPE"/>
 
                 <route src="DESYGridgateway" dst="Tier2">
                     <link_ctn id="DESY_Tier2"/>
@@ -129,7 +129,7 @@
 
                 <router id="DESYgateway"/>
 
-                <link id="DESYGrid_to_DESY" bandwidth="100Gbps" latency="0us" sharing_policy="SHARED"/>
+                <link id="DESYGrid_to_DESY" bandwidth="100Gbps" latency="0us" sharing_policy="FATPIPE"/>
             
             </zone>
 
