@@ -13,7 +13,8 @@ import glob
 import simcal as sc
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
-from pytorch3d.loss import chamfer_distance#pip install pytorch3d
+from pytorch3d.loss import chamfer_distance#pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+#conda install pytorch3d -c pytorch3d
 from scipy.spatial.distance import directed_hausdorff
 import ot #pip install POT
 from sklearn.metrics import mean_squared_error, mean_relative_error
