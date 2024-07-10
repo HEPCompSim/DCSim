@@ -511,10 +511,10 @@ if __name__=="__main__":
 		calibrator = sc.calibrators.GradientDescent(0.01, 1)
 		loss=wassersteinLoss
 	elif args.loss== "sorted":
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		calibrator = sc.calibrators.GradientDescent(0.01, 1)
 		loss=sortedMRELoss
 	elif args.loss== "double":
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		calibrator = sc.calibrators.GradientDescent(0.01, 1)
 		loss=doubleSortedMRELoss
 	else:
 		print("unrecgongized loss function",args.loss)
