@@ -13,7 +13,7 @@ import glob
 import simcal as sc
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
-from pytorch3d.loss import chamfer_distance#pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+#from pytorch3d.loss import chamfer_distance#pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 #conda install pytorch3d -c pytorch3d
 from scipy.spatial.distance import directed_hausdorff
 import ot #pip install POT
@@ -330,6 +330,19 @@ def ddksLoss(reference, simulated):
 		count=1
 	print(total/count)
 	return total/count
+import numpy as np
+from scipy.spatial import KDTree
+
+def chamfer_distance(A, B):
+    """
+    Computes the chamfer distance between two sets of points A and B.
+    """
+    tree = KDTree(B)
+    dist_A = tree.query(A)[0]
+    tree = KDTree(A)
+    dist_B = tree.query(B)[0]
+    return np.mean(dist_A) + np.mean(dist_B)
+	
 @processify	
 def chamferLoss(reference, simulated):
 	calculation = chamfer_distance
