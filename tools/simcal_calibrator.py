@@ -17,7 +17,7 @@ import torch #pip install torchvision
 #conda install pytorch3d -c pytorch3d
 from scipy.spatial.distance import directed_hausdorff
 import ot #pip install POT
-from sklearn.metrics import mean_squared_error, mean_relative_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
 import time    
@@ -429,8 +429,8 @@ def sortedMRELoss(reference, simulated):
 						#simTime/=len(sim[machine][hitrate])
 						#simRatio/=len(sim[machine][hitrate])
 
-						total+=  mean_relative_error(refTime,simTime)
-						total+=  mean_relative_error(refRatio,simRatio)*10
+						total+=  mean_absolute_error(refTime,simTime)
+						total+=  mean_absolute_error(refRatio,simRatio)*10
 
 						count+=1
 
@@ -471,8 +471,8 @@ def doubleSortedMRELoss(reference, simulated):
 						#simTime/=len(sim[machine][hitrate])
 						#simRatio/=len(sim[machine][hitrate])
 
-						total+=  mean_relative_error(refTime,simTime)
-						total+=  mean_relative_error(refRatio,simRatio)*10
+						total+=  mean_absolute_error(refTime,simTime)
+						total+=  mean_absolute_error(refRatio,simRatio)*10
 
 						count+=1
 
