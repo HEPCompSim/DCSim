@@ -13,6 +13,12 @@ import glob
 import simcal as sc
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
+from pytorch3d.loss import chamfer_distance#pip install pytorch3d
+from scipy.spatial.distance import directed_hausdorff
+import ot #pip install POT
+from sklearn.metrics import mean_squared_error, mean_relative_error
+
+
 import time    
 from skywalker import processify #pip install skywalker
 
@@ -258,11 +264,6 @@ def MRELossRatio(reference, simulated):
 			for ref in platform[0][expiriment]:
 				for machine in sorted(sim.keys()&ref.keys()):
 					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
-						#break
-						#N dimensional KS test (ddks) 
-						#unless we can find n dimensional k sample anderson darling
-						#Apparently we are doing Wasserstein 
-						#psych! we are doing ddKS
 						refTime=0
 						refRatio=0
 						for data in ref[machine][hitrate]:
@@ -281,21 +282,11 @@ def MRELossRatio(reference, simulated):
 							simRatio+=time/max(1,cpu)
 						simTime/=len(sim[machine][hitrate])
 						simRatio/=len(sim[machine][hitrate])
-						#print(refTensor,simTensor)
-						
-						#print(type(ref[machine][hitrate]))
-						#print(type(sim[machine][hitrate]))
-						#print(len(ref[machine][hitrate]))
-						#print(len(sim[machine][hitrate]))
-						#print(sim[machine][hitrate])
-						#print(ref[machine][hitrate])
-						#print(refTensor,simTensor)
+
 						total+=  abs(refTime-simTime)/refTime+abs(simRatio-refRatio)
-						#print(distance)
+
 						count+=1
-						#There are a different number of results for each machine in each dataset
-						#return total
-						#print("\t",expiriment,machine,hitrate,total,count)
+
 	if(count==0):
 		count=1
 	print(total/count)
@@ -338,7 +329,143 @@ def ddksLoss(reference, simulated):
 		count=1
 	print(total/count)
 	return total/count
-	
+@processify	
+def chamferLoss(reference, simulated):
+	calculation = chamfer_distance
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						refTensor=buildTensor(ref[machine][hitrate])
+						simTensor=buildTensor(sim[machine][hitrate])
+						total+=  float(calculation(refTensor,simTensor))
+						count+=1
+	if(count==0):
+		count=1
+	print(total/count)
+	return total/count
+@processify	
+def hausdorffLoss(reference, simulated):
+	calculation = directed_hausdorff
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						refTensor=buildTensor(ref[machine][hitrate])
+						simTensor=buildTensor(sim[machine][hitrate])
+						total+=  float(calculation(refTensor,simTensor))
+						count+=1
+	if(count==0):
+		count=1
+	print(total/count)
+	return total/count	
+@processify	
+def wassersteinLoss(reference, simulated):
+	calculation = ot.sliced.max_sliced_wasserstein_distance
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						refTensor=buildTensor(ref[machine][hitrate])
+						simTensor=buildTensor(sim[machine][hitrate])
+						total+=  float(calculation(refTensor,simTensor))
+						count+=1
+	if(count==0):
+		count=1
+	print(total/count)
+	return total/count		
+@processify	
+def sortedMRELoss(reference, simulated):
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						refTime=[]
+						refRatio=[]
+						for data in sorted(ref[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+							time=float(data['job.end'])-float(data['job.start'])
+							cpu=float(data['job.computetime'])
+							refTime.append(time)
+							refRatio.append(time/max(1,cpu))
+						#refRatio/=len(ref[machine][hitrate])
+						#refTime/=len(ref[machine][hitrate])
+						simTime=[]
+						simRatio=[]
+						for data in sorted(sim[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+							time=float(data['job.end'])-float(data['job.start'])
+							cpu=float(data['job.computetime'])
+							simTime.append(time)
+							simRatio.append(time/max(1,cpu))
+						#simTime/=len(sim[machine][hitrate])
+						#simRatio/=len(sim[machine][hitrate])
+
+						total+=  mean_relative_error(refTime,simTime)
+						total+=  mean_relative_error(refRatio,simRatio)*10
+
+						count+=1
+
+	if(count==0):
+		count=1
+	print(total/count)
+	return total/count
+@processify	
+def doubleSortedMRELoss(reference, simulated):
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						refTime=[]
+						refRatio=[]
+						for data in sorted(ref[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+							time=float(data['job.end'])-float(data['job.start'])
+							refTime.append(time)
+						for data in sorted(ref[machine][hitrate],key=lambda item: (float(data['job.end'])-float(data['job.start']))/max(1,float(data['job.computetime']))):
+							time=float(data['job.end'])-float(data['job.start'])
+							cpu=float(data['job.computetime'])
+							refRatio.append(time/max(1,cpu))
+						#refRatio/=len(ref[machine][hitrate])
+						#refTime/=len(ref[machine][hitrate])
+						simTime=[]
+						simRatio=[]
+						for data in sorted(sim[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+							time=float(data['job.end'])-float(data['job.start'])
+							simTime.append(time)
+						for data in sorted(sim[machine][hitrate],key=lambda item: (float(data['job.end'])-float(data['job.start']))/max(1,float(data['job.computetime']))):
+							time=float(data['job.end'])-float(data['job.start'])
+							cpu=float(data['job.computetime'])
+							simRatio.append(time/max(1,cpu))
+						#simTime/=len(sim[machine][hitrate])
+						#simRatio/=len(sim[machine][hitrate])
+
+						total+=  mean_relative_error(refTime,simTime)
+						total+=  mean_relative_error(refRatio,simRatio)*10
+
+						count+=1
+
+	if(count==0):
+		count=1
+	print(total/count)
+	return total/count
 if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
@@ -360,6 +487,21 @@ if __name__=="__main__":
 		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
 		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
 		loss=MRELossRatio
+	elif args.loss== "chamfer":
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		loss=chamferLoss
+	elif args.loss== "hausdorff":
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		loss=hausdorffLoss
+	elif args.loss== "wasserstein":
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		loss=wassersteinLoss
+	elif args.loss== "sorted":
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		loss=sortedMRELoss
+	elif args.loss== "double":
+		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		loss=doubleSortedMRELoss
 	else:
 		print("unrecgongized loss function",args.loss)
 		sys.exit()
