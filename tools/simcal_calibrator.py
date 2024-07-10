@@ -375,7 +375,7 @@ def hausdorffLoss(reference, simulated):
 					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
 						refTensor=buildTensor(ref[machine][hitrate])
 						simTensor=buildTensor(sim[machine][hitrate])
-						total+=  float(calculation(refTensor,simTensor))
+						total+=  float(calculation(refTensor,simTensor)[0])
 						count+=1
 	if(count==0):
 		count=1
@@ -412,7 +412,7 @@ def sortedMRELoss(reference, simulated):
 					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
 						refTime=[]
 						refRatio=[]
-						for data in sorted(ref[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+						for data in sorted(ref[machine][hitrate],key=lambda item: float(item['job.end'])-float(item['job.start'])):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							refTime.append(time)
@@ -421,7 +421,7 @@ def sortedMRELoss(reference, simulated):
 						#refTime/=len(ref[machine][hitrate])
 						simTime=[]
 						simRatio=[]
-						for data in sorted(sim[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+						for data in sorted(sim[machine][hitrate],key=lambda item: float(item['job.end'])-float(item['job.start'])):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							simTime.append(time)
@@ -450,10 +450,10 @@ def doubleSortedMRELoss(reference, simulated):
 					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
 						refTime=[]
 						refRatio=[]
-						for data in sorted(ref[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+						for data in sorted(ref[machine][hitrate],key=lambda item: float(item['job.end'])-float(item['job.start'])):
 							time=float(data['job.end'])-float(data['job.start'])
 							refTime.append(time)
-						for data in sorted(ref[machine][hitrate],key=lambda item: (float(data['job.end'])-float(data['job.start']))/max(1,float(data['job.computetime']))):
+						for data in sorted(ref[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(data['job.computetime']))):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							refRatio.append(time/max(1,cpu))
@@ -461,10 +461,10 @@ def doubleSortedMRELoss(reference, simulated):
 						#refTime/=len(ref[machine][hitrate])
 						simTime=[]
 						simRatio=[]
-						for data in sorted(sim[machine][hitrate],key=lambda item: float(data['job.end'])-float(data['job.start'])):
+						for data in sorted(sim[machine][hitrate],key=lambda item: float(item['job.end'])-float(item['job.start'])):
 							time=float(data['job.end'])-float(data['job.start'])
 							simTime.append(time)
-						for data in sorted(sim[machine][hitrate],key=lambda item: (float(data['job.end'])-float(data['job.start']))/max(1,float(data['job.computetime']))):
+						for data in sorted(sim[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(data['job.computetime']))):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							simRatio.append(time/max(1,cpu))
@@ -502,13 +502,13 @@ if __name__=="__main__":
 		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
 		loss=MRELossRatio
 	elif args.loss== "chamfer":
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		calibrator = sc.calibrators.GradientDescent(0.01, 1)
 		loss=chamferLoss
 	elif args.loss== "hausdorff":
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		calibrator = sc.calibrators.GradientDescent(0.01, 1)
 		loss=hausdorffLoss
 	elif args.loss== "wasserstein":
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		calibrator = sc.calibrators.GradientDescent(0.01, 1)
 		loss=wassersteinLoss
 	elif args.loss== "sorted":
 		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
