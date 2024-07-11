@@ -83,7 +83,7 @@ def dataLoader(sets):
 
 
 class Simulator(sc.Simulator):
-	def __init__(self, path,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss,nocpu,ratio):
+	def __init__(self, path,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss,nocpu,ratio,plot=False):
 		super().__init__()
 		self.path = path
 		self.hitrates = hitrates
@@ -94,6 +94,7 @@ class Simulator(sc.Simulator):
 		self.loss=loss
 		self.nocpu=nocpu
 		self.ratio=ratio
+		self.plot=plot
 		with open(xml_template, 'r') as f:
 			self.template = f.read()
 
@@ -198,9 +199,18 @@ class Simulator(sc.Simulator):
 				 })
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
+		if self.plot:
+			plot(self.data,(scsn,scfn,fcsn,fcfn))
 		return self.loss(self.data,(scsn,scfn,fcsn,fcfn))
-
-
+		
+def plot(reference,simulated):
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			#for ref in platform[0][expiriment]:
+			#	for machine in sorted(sim.keys()&ref.keys()):
+			#		for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+			print(platform[0][expiriment])
 	
 def buildTensor(data):
 	tensor=torch.empty((len(data),2), dtype=torch.float32)
@@ -487,8 +497,10 @@ if __name__=="__main__":
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
-	parser.add_argument('--nocpu', action='store_true')
+	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
+	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
+	parser.add_argument('--plot', action='store_true', help="If Evaluating, generate a plot")
 	args = parser.parse_args()
 	if args.loss=="mre":
 		loss=MRELoss
@@ -561,18 +573,31 @@ if __name__=="__main__":
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 	print("Max's",maxs)
-	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
-		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
-		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
-		dataDir/"workload-configs/crown_ttbar_testjob.json"),
-		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-		dataDir/"workload-configs/crown_ttbar_copyjob.json")},
-		data,loss,args.nocpu,args.networkratio)	
-	t0 = time.time()
-	cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
-	t1 = time.time()
-	print ("We should now be printing the calibration")
-	print(cal)
-	print(t1-t0)
+	if args.evaluate:
+		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
+			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+			{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
+			dataDir/"workload-configs/crown_ttbar_testjob.json"),
+			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
+			dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+			data,loss,args.nocpu,args.networkratio,args.plot)	
+		result=simulator(eval(args.evaluate))
+		print("Evaluation",result)
+		
+	else:
+		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
+			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+			{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
+			dataDir/"workload-configs/crown_ttbar_testjob.json"),
+			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
+			dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+			data,loss,args.nocpu,args.networkratio)	
+	
+		t0 = time.time()
+		cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
+		t1 = time.time()
+		print ("We should now be printing the calibration")
+		print(cal)
+		print(t1-t0)
 
 	
