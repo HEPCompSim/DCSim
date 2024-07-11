@@ -13,6 +13,7 @@ import glob
 import simcal as sc
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
+import matplotlib.pyplot as plt
 #from pytorch3d.loss import chamfer_distance#pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 #conda install pytorch3d -c pytorch3d
 from scipy.spatial.distance import directed_hausdorff
@@ -204,13 +205,50 @@ class Simulator(sc.Simulator):
 		return self.loss(self.data,(scsn,scfn,fcsn,fcfn))
 		
 def plot(reference,simulated):
+	index=0
 	for platform in zip(reference,simulated):
+		index+=1
 		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			#print(expiriment)
 			sim=platform[1][expiriment]
-			#for ref in platform[0][expiriment]:
-			#	for machine in sorted(sim.keys()&ref.keys()):
-			#		for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
-			print(platform[0][expiriment])
+			sim_means=[]
+			sim_stds=[]
+			ref_means=[]
+			ref_stds=[]
+			hitrates=[]
+			for ref in platform[0][expiriment]:
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						sim_data = sim[machine][hitrate]
+						ref_data = ref[machine][hitrate]
+						hitrates.append(hitrate)
+						# Calculate job times for simulated data
+						sim_times = [float(entry['job.end']) - float(entry['job.start']) for entry in sim_data]
+						sim_mean = np.mean(sim_times)
+						sim_std = np.std(sim_times)
+						
+						# Calculate job times for reference data
+						ref_times = [float(entry['job.end']) - float(entry['job.start']) for entry in ref_data]
+						ref_mean = np.mean(ref_times)
+						ref_std = np.std(ref_times)
+						
+						sim_means.append(sim_mean)
+						sim_stds.append(sim_std)
+						ref_means.append(ref_mean)
+						ref_stds.append(ref_std)
+			# Create plot
+			plt.figure()
+			plt.errorbar(hitrates, ref_means, yerr=ref_std, fmt='o', label='Reference')
+			plt.errorbar(hitrates, sim_means, yerr=sim_stds, fmt='o', label='Simulated')
+			
+			plt.xlabel('Hitrate')
+			plt.ylabel('Job Time')
+			plt.title(f'Platform {index} - {expiriment}')
+			plt.legend()
+			
+			# Save plot to file
+			plt.savefig(f'platform_{index}_{expiriment}.png')
+			plt.close()
 	
 def buildTensor(data):
 	tensor=torch.empty((len(data),2), dtype=torch.float32)
@@ -574,6 +612,7 @@ if __name__=="__main__":
 	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
 	print("Max's",maxs)
 	if args.evaluate:
+		print(args.evaluate)
 		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
 			{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
