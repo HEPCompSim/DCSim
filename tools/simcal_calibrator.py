@@ -215,31 +215,55 @@ def plot(reference,simulated):
 			sim_stds=[]
 			ref_means=[]
 			ref_stds=[]
-			hitrates=[]
+			ref_hitrates=[]
+			sim_hitrates=[]
+			reorg={}
+
 			for ref in platform[0][expiriment]:
-				for machine in sorted(sim.keys()&ref.keys()):
-					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
-						sim_data = sim[machine][hitrate]
+				for machine in sorted(ref.keys()):
+					if not machine in reorg:
+						reorg[machine]={}
+					for hitrate in sorted(ref[machine].keys()):
+						if not hitrate in reorg[machine]:
+							reorg[machine][hitrate]=[]
+						
 						ref_data = ref[machine][hitrate]
-						hitrates.append(hitrate)
-						# Calculate job times for simulated data
-						sim_times = [float(entry['job.end']) - float(entry['job.start']) for entry in sim_data]
-						sim_mean = np.mean(sim_times)
-						sim_std = np.std(sim_times)
+						ref_times = [(float(entry['job.end']) - float(entry['job.start']))/60 for entry in ref_data]
+						
+						reorg[machine][hitrate]+=ref_times
+						
 						
 						# Calculate job times for reference data
-						ref_times = [float(entry['job.end']) - float(entry['job.start']) for entry in ref_data]
-						ref_mean = np.mean(ref_times)
-						ref_std = np.std(ref_times)
-						
-						sim_means.append(sim_mean)
-						sim_stds.append(sim_std)
-						ref_means.append(ref_mean)
-						ref_stds.append(ref_std)
+			for machine in sorted(reorg.keys()):
+				for hitrate in sorted(reorg[machine].keys()):
+					ref_data = reorg[machine][hitrate]
+					ref_hitrates.append(hitrate)
+					ref_mean = np.mean(ref_data)
+					ref_std = np.std(ref_data)
+					
+					ref_means.append(ref_mean)
+					ref_stds.append(ref_std)
+			for machine in sorted(sim.keys()):
+				for hitrate in sorted(sim[machine].keys()):
+					sim_hitrates.append(hitrate)
+					sim_data = sim[machine][hitrate]
+					# Calculate job times for simulated data
+					sim_times = [(float(entry['job.end']) - float(entry['job.start']))/60 for entry in sim_data]
+					sim_mean = np.mean(sim_times)
+					sim_std = np.std(sim_times)
+					sim_means.append(sim_mean)
+					sim_stds.append(sim_std)
+				
+			#print("")			
 			# Create plot
 			plt.figure()
-			plt.errorbar(hitrates, ref_means, yerr=ref_std, fmt='o', label='Reference')
-			plt.errorbar(hitrates, sim_means, yerr=sim_stds, fmt='o', label='Simulated')
+			#print(reorg)
+			#print(ref_hitrates)
+			#print(ref_means)
+			#print(expiriment)
+			#print(sim_means)
+			plt.errorbar(ref_hitrates, ref_means, yerr=ref_std, fmt='o', label='Reference')
+			plt.errorbar(sim_hitrates, sim_means, yerr=sim_stds, fmt='o', label='Simulated')
 			
 			plt.xlabel('Hitrate')
 			plt.ylabel('Job Time')
