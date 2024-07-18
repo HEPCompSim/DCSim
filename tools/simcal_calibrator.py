@@ -674,7 +674,7 @@ if __name__=="__main__":
 				print(t1-t0)
 				if best is None or cal[1]<bestLoss:
 					bestLoss=cal[1]
-					best=(0.01,100/10**j)
+					best=(0.01,10**j)
 			print(best,bestLoss)
 
 	else:
