@@ -665,6 +665,7 @@ if __name__=="__main__":
 							int(math.log10(args.hyper_test_high))+1):
 				stoptime=time.time()+3600
 				print(0.01,10**j)
+				calibrator.epsilon=10**j
 				t0 = time.time()
 				#cal=calibrator.calibrate(samplePoint, 3600, coordinator=coordinator)
 				cal=calibrator.descend(simulator,eval(args.evaluate),stoptime)
