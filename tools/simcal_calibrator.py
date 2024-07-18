@@ -203,6 +203,7 @@ class Simulator(sc.Simulator):
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		if self.plot:
 			plot(self.data,(scsn,scfn,fcsn,fcfn))
+			plotCPU(self.data,(scsn,scfn,fcsn,fcfn))
 		return self.loss(self.data,(scsn,scfn,fcsn,fcfn))
 		
 def plot(reference,simulated):
@@ -274,7 +275,75 @@ def plot(reference,simulated):
 			# Save plot to file
 			plt.savefig(f'platform_{index}_{expiriment}.png')
 			plt.close()
-	
+def plotCPU(reference,simulated):
+	index=0
+	for platform in zip(reference,simulated):
+		index+=1
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			#print(expiriment)
+			sim=platform[1][expiriment]
+			sim_means=[]
+			sim_stds=[]
+			ref_means=[]
+			ref_stds=[]
+			ref_hitrates=[]
+			sim_hitrates=[]
+			reorg={}
+
+			for ref in platform[0][expiriment]:
+				for machine in sorted(ref.keys()):
+					if not machine in reorg:
+						reorg[machine]={}
+					for hitrate in sorted(ref[machine].keys()):
+						if not hitrate in reorg[machine]:
+							reorg[machine][hitrate]=[]
+						
+						ref_data = ref[machine][hitrate]
+						ref_times = [data['job.computetime']/60 for entry in ref_data]
+						
+						reorg[machine][hitrate]+=ref_times
+						
+						
+						# Calculate job times for reference data
+			for machine in sorted(reorg.keys()):
+				for hitrate in sorted(reorg[machine].keys()):
+					ref_data = reorg[machine][hitrate]
+					ref_hitrates.append(hitrate)
+					ref_mean = np.mean(ref_data)
+					ref_std = np.std(ref_data)
+					
+					ref_means.append(ref_mean)
+					ref_stds.append(ref_std)
+			for machine in sorted(sim.keys()):
+				for hitrate in sorted(sim[machine].keys()):
+					sim_hitrates.append(hitrate)
+					sim_data = sim[machine][hitrate]
+					# Calculate job times for simulated data
+					sim_times = [data['job.computetime']/60 for entry in sim_data]
+					sim_mean = np.mean(sim_times)
+					sim_std = np.std(sim_times)
+					sim_means.append(sim_mean)
+					sim_stds.append(sim_std)
+				
+			#print("")			
+			# Create plot
+			plt.figure()
+			#print(reorg)
+			#print(ref_hitrates)
+			#print(ref_means)
+			#print(expiriment)
+			#print(sim_means)
+			plt.errorbar(ref_hitrates, ref_means, yerr=ref_std, fmt='o', label='Reference')
+			plt.errorbar(sim_hitrates, sim_means, yerr=sim_stds, fmt='o', label='Simulated')
+			
+			plt.xlabel('Hitrate')
+			plt.ylabel('Job Time')
+			plt.title(f'Platform {index} - {expiriment} - CPU')
+			plt.legend()
+			
+			# Save plot to file
+			plt.savefig(f'platform_{index}_{expiriment} - CPU.png')
+			plt.close()	
 def buildTensor(data):
 	tensor=torch.empty((len(data),2), dtype=torch.float32)
 	for i,data in enumerate(data):
