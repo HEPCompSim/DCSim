@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import glob
 import simcal as sc
+import math
 import ddks#pip install git+https://github.com/pnnl/DDKS 
 import torch #pip install torchvision
 import matplotlib.pyplot as plt
@@ -550,7 +551,7 @@ def doubleSortedMRELoss(reference, simulated):
 
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count
 if __name__=="__main__":
 
@@ -563,6 +564,10 @@ if __name__=="__main__":
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
 	parser.add_argument('--plot', action='store_true', help="If Evaluating, generate a plot")
+	parser.add_argument('--hyper_test', action='store_true', help="Run a new gradient descent starting from the point with various hyper parameters")
+	parser.add_argument("-htl", "--hyper_test_low", type=float, help="The low bound of the hyper parameter test")
+	parser.add_argument("-hth", "--hyper_test_high", type=float, help="The upper bound of the hyper parameter test")
+	
 	args = parser.parse_args()
 	if args.loss=="mre":
 		loss=MRELoss
@@ -646,7 +651,31 @@ if __name__=="__main__":
 			data,loss,args.nocpu,args.networkratio,args.plot)	
 		result=simulator(eval(args.evaluate))
 		print("Evaluation",result)
-		
+		if args.hyper_test:
+			best=None
+			bestLoss=None
+			simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
+				[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+				{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
+				dataDir/"workload-configs/crown_ttbar_testjob.json"),
+				"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
+				dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+				data,loss,args.nocpu,args.networkratio)
+			for j in range(int(math.log10(args.hyper_test_low)),
+							int(math.log10(args.hyper_test_high))+1):
+				stoptime=time.time()+3600
+				print(0.01,10**j)
+				t0 = time.time()
+				#cal=calibrator.calibrate(samplePoint, 3600, coordinator=coordinator)
+				cal=calibrator.descend(simulator,eval(args.evaluate),stoptime)
+				t1 = time.time()
+				print(cal)
+				print(t1-t0)
+				if best is None or cal[1]<bestLoss:
+					bestLoss=cal[1]
+					best=(0.01,100/10**j)
+			print(best,bestLoss)
+
 	else:
 		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
