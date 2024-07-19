@@ -352,7 +352,7 @@ def buildTensor(data):
 		cpu=float(data['job.computetime'])
 		#print(i,start,end,cpu)
 		tensor[i,0]=end-start
-		tensor[i,1]=(end-start)/max(1,cpu)
+		tensor[i,1]=cpu
 	#print(tensor)
 	return tensor
 @processify	
@@ -413,7 +413,7 @@ def MRELossRatio(reference, simulated):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							refTime+=time
-							refRatio+=time/max(1,cpu)
+							refRatio+=cpu
 						refRatio/=len(ref[machine][hitrate])
 						refTime/=len(ref[machine][hitrate])
 						simTime=0
@@ -422,7 +422,7 @@ def MRELossRatio(reference, simulated):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							simTime+=time
-							simRatio+=time/max(1,cpu)
+							simRatio+=cpu
 						simTime/=len(sim[machine][hitrate])
 						simRatio/=len(sim[machine][hitrate])
 
@@ -558,7 +558,7 @@ def sortedMRELoss(reference, simulated):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							refTime.append(time)
-							refRatio.append(time/max(1,cpu))
+							refRatio.append(cpu)
 						#refRatio/=len(ref[machine][hitrate])
 						#refTime/=len(ref[machine][hitrate])
 						simTime=[]
@@ -567,12 +567,12 @@ def sortedMRELoss(reference, simulated):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							simTime.append(time)
-							simRatio.append(time/max(1,cpu))
+							simRatio.append(cpu)
 						#simTime/=len(sim[machine][hitrate])
 						#simRatio/=len(sim[machine][hitrate])
 
 						total+=  mean_absolute_error(refTime,simTime)
-						total+=  mean_absolute_error(refRatio,simRatio)*10
+						total+=  mean_absolute_error(refRatio,simRatio)
 
 						count+=1
 
@@ -598,7 +598,7 @@ def doubleSortedMRELoss(reference, simulated):
 						for data in sorted(ref[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(data['job.computetime']))):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
-							refRatio.append(time/max(1,cpu))
+							refRatio.append(cpu)
 						#refRatio/=len(ref[machine][hitrate])
 						#refTime/=len(ref[machine][hitrate])
 						simTime=[]
@@ -609,12 +609,12 @@ def doubleSortedMRELoss(reference, simulated):
 						for data in sorted(sim[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(data['job.computetime']))):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
-							simRatio.append(time/max(1,cpu))
+							simRatio.append(cpu)
 						#simTime/=len(sim[machine][hitrate])
 						#simRatio/=len(sim[machine][hitrate])
 
 						total+=  mean_absolute_error(refTime,simTime)
-						total+=  mean_absolute_error(refRatio,simRatio)*10
+						total+=  mean_absolute_error(refRatio,simRatio)
 
 						count+=1
 
