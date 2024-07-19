@@ -395,7 +395,7 @@ def MRELoss(reference, simulated):
 						#print("\t",expiriment,machine,hitrate,total,count)
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count
 @processify	
 def MRELossRatio(reference, simulated):
@@ -432,7 +432,7 @@ def MRELossRatio(reference, simulated):
 
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count
 @processify	
 def ddksLoss(reference, simulated):
@@ -470,7 +470,7 @@ def ddksLoss(reference, simulated):
 						#print("\t",expiriment,machine,hitrate,total,count)
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count
 import numpy as np
 from scipy.spatial import KDTree
@@ -502,7 +502,7 @@ def chamferLoss(reference, simulated):
 						count+=1
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count
 @processify	
 def hausdorffLoss(reference, simulated):
@@ -521,7 +521,7 @@ def hausdorffLoss(reference, simulated):
 						count+=1
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count	
 @processify	
 def wassersteinLoss(reference, simulated):
@@ -540,7 +540,7 @@ def wassersteinLoss(reference, simulated):
 						count+=1
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count		
 @processify	
 def sortedMRELoss(reference, simulated):
@@ -578,7 +578,7 @@ def sortedMRELoss(reference, simulated):
 
 	if(count==0):
 		count=1
-	print(total/count)
+	#print(total/count)
 	return total/count
 @processify	
 def doubleSortedMRELoss(reference, simulated):
