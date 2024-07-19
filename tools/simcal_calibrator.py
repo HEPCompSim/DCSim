@@ -299,7 +299,7 @@ def plotCPU(reference,simulated):
 							reorg[machine][hitrate]=[]
 						
 						ref_data = ref[machine][hitrate]
-						ref_times = [data['job.computetime']/60 for entry in ref_data]
+						ref_times = [float(data['job.computetime'])/60 for entry in ref_data]
 						
 						reorg[machine][hitrate]+=ref_times
 						
@@ -319,7 +319,7 @@ def plotCPU(reference,simulated):
 					sim_hitrates.append(hitrate)
 					sim_data = sim[machine][hitrate]
 					# Calculate job times for simulated data
-					sim_times = [data['job.computetime']/60 for entry in sim_data]
+					sim_times = [float(data['job.computetime'])/60 for entry in sim_data]
 					sim_mean = np.mean(sim_times)
 					sim_std = np.std(sim_times)
 					sim_means.append(sim_mean)
