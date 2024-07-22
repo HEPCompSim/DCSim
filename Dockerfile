@@ -16,7 +16,7 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
-        cmake python3 pip gcc make gfortran libboost-all-dev git && \
+        cmake python3-full pip gcc make gfortran libboost-all-dev git && \
     apt-get -y autoclean && apt-get -y autoremove && \
     rm -rf /var/lib/apt-get/lists/*
 RUN python3 -m pip install --upgrade --no-input \
