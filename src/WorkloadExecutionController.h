@@ -7,8 +7,8 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
-#ifndef MY_SIMPLE_EXECUTION_CONTROLLER_H
-#define MY_SIMPLE_EXECUTION_CONTROLLER_H
+#ifndef DCSIM_WORKLOAD_EXECUTION_CONTROLLER_H
+#define DCSIM_WORKLOAD_EXECUTION_CONTROLLER_H
 
 #include <wrench-dev.h>
 #include <iostream>
@@ -16,6 +16,7 @@
 #include <utility>
 
 #include "JobSpecification.h"
+#include "JobScheduler.h"
 #include "Workload.h"
 #include "LRU_FileList.h"
 
@@ -28,7 +29,7 @@ public:
     // Constructor
     WorkloadExecutionController(
             const Workload &workload_spec,
-            const std::set<std::shared_ptr<wrench::HTCondorComputeService>> &htcondor_compute_services,
+            const std::shared_ptr<JobScheduler> &job_scheduler,
             const std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
             const std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
             const std::string &hostname,
@@ -43,24 +44,23 @@ public:
         this->workload_spec = std::move(w);
     }
 
+    std::shared_ptr<wrench::CompoundJob> createAndSubmitJob(const std::string &job_name,
+                                                            const std::shared_ptr<wrench::ComputeService> &cs);
+    void setJobSubmitted(const std::string &job_name);
+
+    bool isWorkloadEmpty();
 
 protected:
     void processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent>) override;
     void processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent>) override;
 
 private:
-    std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
+    std::map<std::string, JobSpecification> workload_spec;
+    std::map<std::string, JobSpecification> workload_spec_submitted;
+    std::shared_ptr<JobScheduler> job_scheduler;
+
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
-
-    /** @brief job batch to submit with all specs **/
-    std::map<std::string, JobSpecification> workload_spec;
-
-    std::shared_ptr<wrench::CompoundJob> createJob(const std::string& job_name);
-    unsigned long submitBatchOfJobs(const std::shared_ptr<wrench::HTCondorComputeService>& htcondor_compute_service,
-                                    std::vector<const std::string *> job_spec_keys,
-                                    size_t batch_index, size_t batch_size);
-
 
     int main() override;
 
@@ -100,4 +100,4 @@ private:
     std::mt19937 generator;
 };
 
-#endif//MY_SIMPLE_EXECUTION_CONTROLLER_H
+#endif//DCSIM_WORKLOAD_EXECUTION_CONTROLLER_H

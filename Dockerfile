@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
 LABEL org.opencontainers.image.authors="maximilian.horzela@kit.edu"
 
