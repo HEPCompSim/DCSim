@@ -2,6 +2,7 @@
 import argparse
 import atexit
 import csv
+import tempfile
 import json
 import os
 import sys
@@ -172,33 +173,33 @@ class Simulator(sc.Simulator):
 		if self.ratio:
 			args["externalFastNetwork"]=args["externalNetwork"]*self.ratio
 			args["externalSlowNetwork"]=args["externalNetwork"]
-		with env:
-			env.tmp_dir(keep=False)
-			
-			scsn = self.call_platform(env, 
-				{"cpuSpeed": args["cpuSpeed"],
-				 "cacheSpeed": args["disk"],
-				 "internalNetworkSpeed": args["internalNetwork"],
-				 "externalNetworkSpeed": args["externalSlowNetwork"]
-				 })
-			fcsn = self.call_platform(env, 
-				{"cpuSpeed": args["cpuSpeed"],
-				 "cacheSpeed": args["ramDisk"],
-				 "internalNetworkSpeed": args["internalNetwork"],
-				 "externalNetworkSpeed": args["externalSlowNetwork"]
-				 })
-			fcfn = self.call_platform(env, 
-				{"cpuSpeed": args["cpuSpeed"],
-				 "cacheSpeed": args["ramDisk"],
-				 "internalNetworkSpeed": args["internalNetwork"],
-				 "externalNetworkSpeed": args["externalFastNetwork"]
-				 })
-			scfn = self.call_platform(env, 
-				{"cpuSpeed": args["cpuSpeed"],
-				 "cacheSpeed": args["disk"],
-				 "internalNetworkSpeed": args["internalNetwork"],
-				 "externalNetworkSpeed": args["externalFastNetwork"]
-				 })
+		#with env:
+		env.tmp_dir(tempfile.gettempdir(),keep=False)
+		
+		scsn = self.call_platform(env, 
+			{"cpuSpeed": args["cpuSpeed"],
+			 "cacheSpeed": args["disk"],
+			 "internalNetworkSpeed": args["internalNetwork"],
+			 "externalNetworkSpeed": args["externalSlowNetwork"]
+			 })
+		fcsn = self.call_platform(env, 
+			{"cpuSpeed": args["cpuSpeed"],
+			 "cacheSpeed": args["ramDisk"],
+			 "internalNetworkSpeed": args["internalNetwork"],
+			 "externalNetworkSpeed": args["externalSlowNetwork"]
+			 })
+		fcfn = self.call_platform(env, 
+			{"cpuSpeed": args["cpuSpeed"],
+			 "cacheSpeed": args["ramDisk"],
+			 "internalNetworkSpeed": args["internalNetwork"],
+			 "externalNetworkSpeed": args["externalFastNetwork"]
+			 })
+		scfn = self.call_platform(env, 
+			{"cpuSpeed": args["cpuSpeed"],
+			 "cacheSpeed": args["disk"],
+			 "internalNetworkSpeed": args["internalNetwork"],
+			 "externalNetworkSpeed": args["externalFastNetwork"]
+			 })
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		if self.plot:
