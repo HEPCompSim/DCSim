@@ -704,7 +704,7 @@ if __name__=="__main__":
 		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-		dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
 		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
@@ -717,7 +717,7 @@ if __name__=="__main__":
 			{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
 			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-			dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
 			data,loss,args.nocpu,args.networkratio,args.plot)	
 		result=simulator(eval(args.evaluate))
 		print("Evaluation",result)
@@ -729,7 +729,7 @@ if __name__=="__main__":
 				{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
 				dataDir/"workload-configs/crown_ttbar_testjob.json"),
 				"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-				dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+				dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
 				data,loss,args.nocpu,args.networkratio)
 			for j in range(int(math.log10(args.hyper_test_low)),
 							int(math.log10(args.hyper_test_high))+1):
@@ -752,8 +752,8 @@ if __name__=="__main__":
 			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
 			{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
-			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob_no_cpu.json",
-			dataDir/"workload-configs/crown_ttbar_copyjob.json")},
+			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
+			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
 			data,loss,args.nocpu,args.networkratio)	
 	
 		t0 = time.time()
