@@ -10,8 +10,8 @@ def update_csv_files(directory):
 				file_path = os.path.join(root, file)
 				try:
 					df = pd.read_csv(file_path)
-					if 'job.computetime' in df.columns:
-						df['job.computetime'] = 0
+					if ' job.computetime' in df.columns:
+						df[' job.computetime'] = 0
 						df.to_csv(file_path, index=False)
 						print(f"Updated {file_path}")
 					else:
