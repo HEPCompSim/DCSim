@@ -21,18 +21,22 @@ public:
     static std::set<std::string> network_monitors;// hosts configured to monitor network
 
     static void fillHostsInSiblingZonesMap(bool include_subzones);
-    static bool local_cache_scope;
 
     static std::map<std::string, std::set<std::string>> hosts_in_zones;// map holding information of all hosts present in network zones
+    static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;// map holding files informations
 
+    // global simulator settings and parameters
     static bool infile_caching_on;
     static bool prefetching_on;
+    static bool local_cache_scope;
+
     static bool shuffle_jobs;
-    static std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> global_file_map;
+
     static double xrd_block_size;
+    static double xrd_add_flops_per_time;
     static std::mt19937 gen;
 
-    // Cores required
+    /*// Cores required
     static int req_cores;
     // Flops distribution
     static double mean_flops;
@@ -49,7 +53,7 @@ public:
     // Output-file distribution
     static double mean_outsize;
     static double sigma_outsize;
-    static std::normal_distribution<double> *outsize_dist;
+    static std::normal_distribution<double> *outsize_dist;*/
 
     /** @brief Output filestream object to write out dump */
     static std::ofstream filedump;
