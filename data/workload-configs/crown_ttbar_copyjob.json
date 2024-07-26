@@ -7,7 +7,7 @@
         },
         "flops": {
             "type": "gaussian",
-            "average": 1174794431328,
+            "average": 79613793103,
             "sigma": 0
         },
         "memory": {
