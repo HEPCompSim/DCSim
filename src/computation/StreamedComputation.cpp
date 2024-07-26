@@ -36,6 +36,8 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
 
     auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction());// executed action
 
+    double job_start_time = wrench::Simulation::getCurrentSimulatedDate();
+
     double infile_transfer_time = 0.;
     double compute_time = 0.;
 
@@ -67,6 +69,10 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             double num_bytes = std::min<double>(SimpleSimulator::xrd_block_size, data_to_process);
             double num_flops = determineFlops(num_bytes, total_data_size);
             WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
+            // Add XRootD FLOPs overhead that increments with execution time
+            double xrd_overhead_flops = SimpleSimulator::xrd_add_flops_per_time * (wrench::Simulation::getCurrentSimulatedDate() - job_start_time);
+            num_flops += xrd_overhead_flops;
+            WRENCH_DEBUG("       + %.2lf flops XRootD overhead", xrd_overhead_flops);
             // Start the computation asynchronously
             simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
             double exec_start_time = 0.0;
