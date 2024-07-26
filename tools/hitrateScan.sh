@@ -16,8 +16,8 @@ action() {
     local parent="$( dirname "$base" )"
 
     local PLATFORM="$parent/data/platform-files/sgbatch_validation.xml"
-    local WORKLOAD="$parent/data/workload-configs/crown_ttbar_validation.json"
-    local DATASET="$parent/data/dataset-configs/sample.json"
+    local WORKLOAD="$parent/data/workload-configs/crown_ttbar_copyjob.json"
+    local DATASET="$parent/data/dataset-configs/crown_ttbar_copyjob.json"
 
     # local NJOBS=1
     # local NINFILES=20 #10
@@ -32,12 +32,12 @@ action() {
 
     local DUPLICATIONS=48
 
-    local XRD_BLOCKSIZE=100000000
-    local STORAGE_BUFFER_SIZE=1048576
+    local XRD_BLOCKSIZE=10000000000
+    local STORAGE_BUFFER_SIZE=0
 
-    local SCENARIO="fullstream" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
+    local SCENARIO="fastNetworkfastCache" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
-    local OUTDIR="$parent/tmp/outputs"
+    local OUTDIR="$parent/tmp/outputs/copyjobs"
     if [ ! -d $OUTDIR ]; then
         mkdir -p $OUTDIR
     fi
@@ -45,15 +45,16 @@ action() {
     for hitrate in $(LANG=en_UK seq 0.0 0.1 1.0)
     do 
         dc-sim --platform "$PLATFORM" \
-            --hitrate ${hitrate} \
-            --duplications $DUPLICATIONS \
-            --xrd-blocksize $XRD_BLOCKSIZE \
-            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv \
-            --cfg=network/loopback-bw:100000000000000 \
-            --storage-buffer-size $STORAGE_BUFFER_SIZE \
-            --no-caching \
             --workload-configurations "$WORKLOAD" \
-            --dataset-configurations "$DATASET" #\
+            --dataset-configurations "$DATASET" \
+            --duplications $DUPLICATIONS \
+            --hitrate ${hitrate} \
+            --xrd-blocksize $XRD_BLOCKSIZE \
+            --storage-buffer-size $STORAGE_BUFFER_SIZE \
+            --cfg=network/loopback-bw:100000000000000 \
+            --no-caching \
+            --seed 42 \
+            --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv
             # --no-streaming \
             # --wrench-full-log
             # --log=simple_wms.threshold=debug \
