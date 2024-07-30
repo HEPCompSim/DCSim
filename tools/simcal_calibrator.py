@@ -127,7 +127,8 @@ class Simulator(sc.Simulator):
 				 "--duplications", "48",
 				 "--cfg=network/loopback-bw:100000000000000",
 				 "--no-caching",
-				 "--seed", 0
+				 "--seed", 0,
+				 "--xrd-flops-per-time",args["xrootd_flops"]
 			 ]
 		for i in range(len(cargs)):
 			cargs[i]=str(cargs[i])
@@ -691,6 +692,7 @@ if __name__=="__main__":
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
 	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	calibrator.add_param("xrootd-flops", sc.parameter.Exponential(20, 47).format("%.2f"))
 	
 	if args.networkratio:
 		calibrator.add_param("externalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
@@ -708,7 +710,7 @@ if __name__=="__main__":
 		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
-	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps"})
+	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps","xrootd_flops":20000000000})
 	print("Max's",maxs)
 	if args.evaluate:
 		print(args.evaluate)
