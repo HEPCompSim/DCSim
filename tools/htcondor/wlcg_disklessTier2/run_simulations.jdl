@@ -15,10 +15,11 @@ error = logs/err.$(ClusterId).$(ProcId)
 
 accounting_group=cms.production
 Requirements = TARGET.ProvidesIO && (CloudSite =!= topas) && (TARGET.Machine =!= "sg01.etp.kit.edu") && (TARGET.Machine =!= "sg03.etp.kit.edu") && (TARGET.Machine =!= "sg04.etp.kit.edu")
+#Requirements = TARGET.ProvidesIO && (TARGET.Machine is "ms01.etp.kit.edu")
 +RemoteJob = True
 
 universe = docker
-docker_image = mhorzela/dcsim
+docker_image = mhorzela/dcsim:test
 
 +RequestWalltime = (7200 + (2*3600*NumJobStarts))
 request_cpus = 1

@@ -15,8 +15,8 @@ ls $(pwd)
 #source /cvmfs/grid.cern.ch/umd-c7ui-latest/etc/profile.d/setup-c7-ui-example.sh
 
 #echo "GETTING CONDA ENVIRONMENT FROM REMOTE STORAGE"
-#xrdcp root://cmsxrootd-kit-disk.gridka.de:1094/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env.tar.gz dcsim-env.tar.gz
-## gfal-copy davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/aakhmets/dcsim-env.tar.gz dcsim-env.tar.gz
+#xrdcp root://cmsdcache-kit-disk.gridka.de:1094/pnfs/gridka.de/cms/disk-only/store/user/mhorzela/dcsim-env.tar.gz dcsim-env.tar.gz
+## gfal-copy davs://cmsdcache-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only/store/user/aakhmets/dcsim-env.tar.gz dcsim-env.tar.gz
 #echo "EXTRACTING AND SETTING CONDA ENVIRONMENT"
 #mkdir -p dcsim-env
 #tar -zxvf dcsim-env.tar.gz -C dcsim-env
@@ -37,7 +37,7 @@ SEED="${5}"
 BUFFERSIZE=0
 DUPLICATIONS=1
 HITRATE="${4}"
-XRDBLOCKSIZE=1000000
+XRDBLOCKSIZE=100000000
 
 echo "Starting execution of simulation..."
 
@@ -52,6 +52,7 @@ echo "Starting execution of simulation..."
         --hitrate ${HITRATE}\
         --xrd-blocksize ${XRDBLOCKSIZE} \
         --storage-buffer-size ${BUFFERSIZE} \
+	--seed ${SEED} \
         --output-file "${PLATFORM}_H${HITRATE}_S${SEED}.csv" 
 #    & TEST_PID=$!
 

@@ -22,6 +22,8 @@ include_directories(src/ ${SimGrid_INCLUDE_DIR}/include /usr/local/include /opt/
 set(SOURCE_FILES
         src/WorkloadExecutionController.h
         src/WorkloadExecutionController.cpp
+        src/JobScheduler.h
+        src/JobScheduler.cpp
         src/SimpleSimulator.h
         src/SimpleSimulator.cpp
         src/JobSpecification.h
@@ -40,7 +42,7 @@ set(SOURCE_FILES
         src/computation/StreamedComputation.cpp
         src/computation/CopyComputation.h
         src/computation/CopyComputation.cpp
-        )
+        src/JobScheduler.cpp src/JobScheduler.h)
 
 # test files
 set(TEST_FILES

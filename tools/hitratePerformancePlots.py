@@ -224,8 +224,9 @@ for quantity, qstyle in QUANTITIES.items():
             hue="Site", hue_order=sites,
             data=df,
             estimator="median", errorbar=("pi",95), # ci = Confidence Interval, pi = Percentile Interval, sd = Standard Deviation, se = Standard Error of Mean
-            dodge=True, join=False,
-            markers=markers, capsize=0.5/len(sites), errwidth=1.,
+            dodge=True,
+            linestyle='none',
+            markers=markers, capsize=0.5/len(sites), err_kws={'linewidth': 1.0},
             palette=sns.color_palette("colorblind", n_colors=len(sites)),
             ax=ax1
         )

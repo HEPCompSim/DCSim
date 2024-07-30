@@ -11,6 +11,7 @@
 #include "SimpleSimulator.h"
 #include "WorkloadExecutionController.h"
 #include "JobSpecification.h"
+#include "JobScheduler.h"
 
 #include "util/Utils.h"
 
@@ -51,6 +52,7 @@ bool SimpleSimulator::infile_caching_on = true;                  // flag to turn
 bool SimpleSimulator::prefetching_on = true;                     // flag to enable prefetching during streaming
 bool SimpleSimulator::shuffle_jobs = false;                      // flag to enable job shuffling during submission
 double SimpleSimulator::xrd_block_size = 1. * 1000 * 1000 * 1000;// maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
+double SimpleSimulator::xrd_add_flops_per_time = 20000000000;// flops overhead introduced by XRootD streaming per second
 // TODO: The initialized below is likely bogus (at compile time?)
 std::set<std::string> SimpleSimulator::cache_hosts;
 std::set<std::string> SimpleSimulator::storage_hosts;
@@ -242,6 +244,7 @@ po::variables_map process_program_options(int argc, char **argv) {
     bool shuffle_jobs = false;
 
     double xrd_block_size = 1000. * 1000 * 1000;
+    double xrd_add_flops_per_time = 20000000000;
     std::string storage_service_buffer_size = "1048576";// 1MiB
 
     unsigned int seed = 42;
@@ -255,6 +258,7 @@ po::variables_map process_program_options(int argc, char **argv) {
     op("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")("shuffle-jobs", po::bool_switch()->default_value(shuffle_jobs), "switch to turn on/off shuffling jobs during submission");
     op("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation");
     op("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data");
+    op("xrd-flops-per-time", po::value<double>()->default_value(xrd_add_flops_per_time), "flops overhead introduced by XRootD data streaming per second");
     op("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks");
     op("seed,s", po::value<unsigned int>()->default_value(seed), "Set the seed for the random generator");
 
@@ -449,6 +453,7 @@ int main(int argc, char **argv) {
 
     // Set XRootD block size
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
+    SimpleSimulator::xrd_add_flops_per_time = vm["xrd-flops-per-time"].as<double>();
 
     // Set StorageService buffer size/type
     std::string buffer_size = vm["storage-buffer-size"].as<StorageServiceBufferValue>().get();
@@ -618,7 +623,7 @@ int main(int argc, char **argv) {
 
     // Create a list of cache storage services
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
-    for (auto host: SimpleSimulator::cache_hosts) {
+    for (auto const &host: SimpleSimulator::cache_hosts) {
         //TODO: Support more than one type of cache mounted differently?
         //TODO: This might not be necessary since different cache layers are typically on different hosts
         auto storage_service = simulation->add(
@@ -632,7 +637,7 @@ int main(int argc, char **argv) {
     // and remote storages that are able to serve all file requests
 
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
-    for (auto host: SimpleSimulator::storage_hosts) {
+    for (auto const &host: SimpleSimulator::storage_hosts) {
         auto storage_service = simulation->add(
                 wrench::SimpleStorageService::createSimpleStorageService(
                         host, {"/"},
@@ -642,9 +647,9 @@ int main(int argc, char **argv) {
     }
 
     // Create a list of compute services that will be used by the HTCondorService
-    std::set<std::shared_ptr<wrench::ComputeService>> condor_compute_resources;
-    for (auto host: SimpleSimulator::worker_hosts) {
-        condor_compute_resources.insert(
+    std::vector<std::shared_ptr<wrench::ComputeService>> compute_services;
+    for (auto const &host: SimpleSimulator::worker_hosts) {
+        compute_services.push_back(
                 simulation->add(
                         new wrench::BareMetalComputeService(
                                 host,
@@ -656,50 +661,52 @@ int main(int argc, char **argv) {
                                 "")));
     }
 
-    // Instantiate a HTcondorComputeService and add it to the simulation
-    std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
-    //TODO: Think of a way to support more than one HTCondor scheduler
-    if (SimpleSimulator::scheduler_hosts.size() != 1) {
-        throw std::runtime_error("Currently this simulator supports only a single HTCondor scheduler!");
-    }
-    for (auto host: SimpleSimulator::scheduler_hosts) {
-        htcondor_compute_services.insert(
-                simulation->add(
-                        new wrench::HTCondorComputeService(
-                                host,
-                                condor_compute_resources,
-                                {{wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "0.0"},
-                                 {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "0.0"},
-                                 {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "0.0"},
-                                 {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "0.0"},
-                                 {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "0.0"}},
-                                {})));
-    }
+//    // Instantiate a HTcondorComputeService and add it to the simulation
+//    std::set<std::shared_ptr<wrench::HTCondorComputeService>> htcondor_compute_services;
+//    //TODO: Think of a way to support more than one HTCondor scheduler
+//    if (SimpleSimulator::scheduler_hosts.size() != 1) {
+//        throw std::runtime_error("Currently this simulator supports only a single HTCondor scheduler!");
+//    }
+//    for (auto host: SimpleSimulator::scheduler_hosts) {
+//        htcondor_compute_services.insert(
+//                simulation->add(
+//                        new wrench::HTCondorComputeService(
+//                                host,
+//                                condor_compute_resources,
+//                                {{wrench::HTCondorComputeServiceProperty::NEGOTIATOR_OVERHEAD, "0.0"},
+//                                 {wrench::HTCondorComputeServiceProperty::GRID_PRE_EXECUTION_DELAY, "0.0"},
+//                                 {wrench::HTCondorComputeServiceProperty::GRID_POST_EXECUTION_DELAY, "0.0"},
+//                                 {wrench::HTCondorComputeServiceProperty::NON_GRID_PRE_EXECUTION_DELAY, "0.0"},
+//                                 {wrench::HTCondorComputeServiceProperty::NON_GRID_POST_EXECUTION_DELAY, "0.0"}},
+//                                {})));
+//    }
 
 
     /* Instantiate file registry services */
     std::set<std::shared_ptr<wrench::FileRegistryService>> file_registry_services;
-    for (auto host: SimpleSimulator::file_registries) {
+    for (auto const &host : SimpleSimulator::file_registries) {
         std::cerr << "Instantiating a FileRegistryService on " << host << "..." << std::endl;
         auto file_registry_service = simulation->add(new wrench::FileRegistryService(host));
         file_registry_services.insert(file_registry_service);
     }
 
+    /* Create the JobScheduler */
+    auto job_scheduler = std::make_shared<JobScheduler>(compute_services);
 
     /* Instantiate Execution Controllers */
-    std::set<std::shared_ptr<WorkloadExecutionController>> workload_execution_controllers;
+    std::vector<std::shared_ptr<WorkloadExecutionController>> workload_execution_controllers;
     //TODO: Think of a way to support more than one execution controller host
     if (SimpleSimulator::executors.size() != 1) {
         throw std::runtime_error("Currently this simulator supports only a single host running workload execution controllers!");
     }
     std::cerr << "Creating workload execution controllers..."
               << "\n";
-    for (auto host: SimpleSimulator::executors) {
+    for (auto const &host: SimpleSimulator::executors) {
         for (auto &workload_spec: workload_specs) {
             auto wms = simulation->add(
                     new WorkloadExecutionController(
                             workload_spec,
-                            htcondor_compute_services,
+                            job_scheduler,
                             grid_storage_services,
                             cache_storage_services,
                             host,
@@ -707,10 +714,11 @@ int main(int argc, char **argv) {
                             SimpleSimulator::shuffle_jobs,
                             SimpleSimulator::gen));
             std::cerr << "\tCreated execution controller " << wms->getName() << " executing workload " << &workload_spec << " with " << workload_spec.job_batch.size() << " jobs to simulate\n";
-            workload_execution_controllers.insert(wms);
+            workload_execution_controllers.push_back(wms);
         }
         std::cerr << "Total number of execution controllers: " << workload_execution_controllers.size() << "\n";
     }
+
 
     /* Instantiate inputfiles and set outfile destinations*/
     std::cerr << "Creating and staging input files" << std::endl;
@@ -722,7 +730,7 @@ int main(int argc, char **argv) {
             for (auto const &f: dss.files) {
                 // Distribute the dataset files on specified GRID storages
                 //TODO: Think of a more realistic distribution pattern and avoid duplications
-                for (auto storage_service: grid_storage_services) {
+                for (auto const &storage_service: grid_storage_services) {
                     if (std::find(dss.hostnames.begin(), dss.hostnames.end(), storage_service->getHostname()) == dss.hostnames.end())
                         continue;
                     simulation->stageFile(wrench::FileLocation::LOCATION(storage_service, f));
@@ -730,7 +738,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        for (auto wms: workload_execution_controllers) {
+        for (auto const &wms: workload_execution_controllers) {
             for (auto &job_spec: wms->get_workload_spec()) {
                 double incr_infile_size = 0.;
                 double cached_files_size = 0.;
@@ -761,12 +769,12 @@ int main(int argc, char **argv) {
         return 0;
     }
     std::cerr << "Set destination of output files..." << std::endl;
-    for (auto wms: workload_execution_controllers) {
+    for (auto const &wms: workload_execution_controllers) {
         try {
             for (auto &job_spec: wms->get_workload_spec()) {
                 // Set outfile destinations
                 // TODO: Think of a way to identify a specific (GRID) storage
-                for (auto storage_service: grid_storage_services) {
+                for (auto const &storage_service: grid_storage_services) {
                     job_spec.second.outfile_destination = wrench::FileLocation::LOCATION(storage_service, job_spec.second.outfile);
                     break;
                 }
@@ -780,7 +788,7 @@ int main(int argc, char **argv) {
     std::cerr << "Duplicating workloads ... "
               << "\n";
     size_t num_total_jobs = 0;
-    for (auto wms: workload_execution_controllers) {
+    for (auto const &wms: workload_execution_controllers) {
         /* Duplicate the workload */
         auto new_workload_spec = duplicateJobs(wms->get_workload_spec(), duplications, grid_storage_services);
         wms->set_workload_spec(new_workload_spec);
