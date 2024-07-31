@@ -103,7 +103,6 @@ class Simulator(sc.Simulator):
 
 
 	def dcsim(self, env, args):
-		print(args)
 		# Args structure
 		# {
 		#	 "platform",
@@ -168,7 +167,6 @@ class Simulator(sc.Simulator):
 		return restructure(inter)
 
 	def run(self, env, iargs):
-		print(iargs)
 		args=dict(iargs)
 		if self.nocpu:
 			args["cpuSpeed"]="1960000000"
@@ -182,25 +180,29 @@ class Simulator(sc.Simulator):
 			{"cpuSpeed": args["cpuSpeed"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalSlowNetwork"]
+			 "externalNetworkSpeed": args["externalSlowNetwork"],
+			 "xrootd_flops":args["xrootd_flops"]
 			 })
 		fcsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalSlowNetwork"]
+			 "externalNetworkSpeed": args["externalSlowNetwork"],
+			 "xrootd_flops":args["xrootd_flops"]
 			 })
 		fcfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalFastNetwork"]
+			 "externalNetworkSpeed": args["externalFastNetwork"],
+			 "xrootd_flops":args["xrootd_flops"]
 			 })
 		scfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalFastNetwork"]
+			 "externalNetworkSpeed": args["externalFastNetwork"],
+			 "xrootd_flops":args["xrootd_flops"]
 			 })
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
