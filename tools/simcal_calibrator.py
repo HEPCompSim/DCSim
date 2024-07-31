@@ -692,7 +692,7 @@ if __name__=="__main__":
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
 	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
-	calibrator.add_param("xrootd-flops", sc.parameter.Exponential(20, 47).format("%.2f"))
+	calibrator.add_param("xrootd_flops", sc.parameter.Exponential(20, 47).format("%.2f"))
 	
 	if args.networkratio:
 		calibrator.add_param("externalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
