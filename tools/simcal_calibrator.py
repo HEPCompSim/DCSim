@@ -162,7 +162,7 @@ class Simulator(sc.Simulator):
 		for workload in self.workloads:
 			inter[workload] = {}
 			for hitrate in self.hitrates:
-				inter[workload][hitrate] = self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize})
+				inter[workload][hitrate] = self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"]})
 		platform.close()
 		return restructure(inter)
 
