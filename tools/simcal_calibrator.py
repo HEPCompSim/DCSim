@@ -103,6 +103,7 @@ class Simulator(sc.Simulator):
 
 
 	def dcsim(self, env, args):
+		print(args)
 		# Args structure
 		# {
 		#	 "platform",
@@ -167,7 +168,7 @@ class Simulator(sc.Simulator):
 		return restructure(inter)
 
 	def run(self, env, iargs):
-		
+		print(iargs)
 		args=dict(iargs)
 		if self.nocpu:
 			args["cpuSpeed"]="1960000000"
