@@ -53,6 +53,7 @@ bool SimpleSimulator::prefetching_on = true;                     // flag to enab
 bool SimpleSimulator::shuffle_jobs = false;                      // flag to enable job shuffling during submission
 double SimpleSimulator::xrd_block_size = 1. * 1000 * 1000 * 1000;// maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
 double SimpleSimulator::xrd_add_flops_per_time = 20000000000;// flops overhead introduced by XRootD streaming per second
+double SimpleSimulator::xrd_add_flops_local_per_time = 0;
 // TODO: The initialized below is likely bogus (at compile time?)
 std::set<std::string> SimpleSimulator::cache_hosts;
 std::set<std::string> SimpleSimulator::storage_hosts;
@@ -245,6 +246,7 @@ po::variables_map process_program_options(int argc, char **argv) {
 
     double xrd_block_size = 1000. * 1000 * 1000;
     double xrd_add_flops_per_time = 20000000000;
+    double xrd_add_flops_local_per_time = 0;
     std::string storage_service_buffer_size = "1048576";// 1MiB
 
     unsigned int seed = 42;
@@ -258,7 +260,8 @@ po::variables_map process_program_options(int argc, char **argv) {
     op("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")("shuffle-jobs", po::bool_switch()->default_value(shuffle_jobs), "switch to turn on/off shuffling jobs during submission");
     op("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation");
     op("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data");
-    op("xrd-flops-per-time", po::value<double>()->default_value(xrd_add_flops_per_time), "flops overhead introduced by XRootD data streaming per second");
+    op("xrd-flops-per-time", po::value<double>()->default_value(xrd_add_flops_per_time), "flops overhead introduced by XRootD data streaming over network per second");
+    op("xrd-flops-per-time-local", po::value<double>()->default_value(xrd_add_flops_local_per_time), "flops overhead introduced by XRootD data streaming from local storage per second");
     op("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks");
     op("seed,s", po::value<unsigned int>()->default_value(seed), "Set the seed for the random generator");
 
@@ -454,6 +457,7 @@ int main(int argc, char **argv) {
     // Set XRootD block size
     SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
     SimpleSimulator::xrd_add_flops_per_time = vm["xrd-flops-per-time"].as<double>();
+    SimpleSimulator::xrd_add_flops_local_per_time = vm["xrd-flops-per-time-local"].as<double>();
 
     // Set StorageService buffer size/type
     std::string buffer_size = vm["storage-buffer-size"].as<StorageServiceBufferValue>().get();
