@@ -74,6 +74,8 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             double xrd_overhead_flops;
             if (!file_local) {
                 xrd_overhead_flops = SimpleSimulator::xrd_add_flops_per_time * (wrench::Simulation::getCurrentSimulatedDate() - xrd_block_start_time);
+            } else {
+                xrd_overhead_flops = SimpleSimulator::xrd_add_flops_local_per_time * (wrench::Simulation::getCurrentSimulatedDate() - xrd_block_start_time);
             }
             num_flops += xrd_overhead_flops;
             WRENCH_DEBUG("       + %.2lf flops XRootD overhead", xrd_overhead_flops);
