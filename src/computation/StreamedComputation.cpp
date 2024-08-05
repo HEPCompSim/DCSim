@@ -71,7 +71,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             double num_flops = determineFlops(num_bytes, total_data_size);
             WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
             // Add XRootD FLOPs overhead that increments with execution time
-            double xrd_overhead_flops;
+            double xrd_overhead_flops = 0;
             if (!file_local) {
                 xrd_overhead_flops = SimpleSimulator::xrd_add_flops_per_time * (wrench::Simulation::getCurrentSimulatedDate() - xrd_block_start_time);
             } else {
@@ -102,7 +102,6 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 fs.second->getStorageService()->readFile(fs.second, num_bytes);
                 read_end_time = wrench::Simulation::getCurrentSimulatedDate();
             }
-            xrd_block_start_time = read_start_time;
             data_to_process -= num_bytes;
             if (exec_end_time >= exec_start_time) {
                 compute_time += exec_end_time - exec_start_time;
@@ -114,6 +113,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             }
             if (read_end_time > read_start_time) {
                 infile_transfer_time += read_end_time - read_start_time;
+                xrd_block_start_time = read_start_time;
                 WRENCH_INFO("Streaming computation received block %d of file %s", i, fs.first->getID().c_str());
             } else {
                 throw std::runtime_error(
