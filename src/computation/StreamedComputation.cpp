@@ -36,8 +36,6 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
 
     auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction());// executed action
 
-    double job_start_time = wrench::Simulation::getCurrentSimulatedDate();
-
     double infile_transfer_time = 0.;
     double compute_time = 0.;
 
@@ -45,6 +43,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
     // Incremental size of all input files to be processed
     auto total_data_size = this->total_data_size;
     for (auto const &fs: this->file_sources) {
+        bool file_local = (fs.second->getStorageService()->getHostname() == wrench::Simulation::getHostName());
         WRENCH_INFO("Streaming computation for input file %s in location %s", fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
         double data_to_process = fs.first->getSize();
 
@@ -52,11 +51,13 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         int num_blocks = int(std::ceil(data_to_process / (double) SimpleSimulator::xrd_block_size));
 
         // Read the first block
+        double xrd_block_start_time;
         double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
         fs.second->getStorageService()->readFile(fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
         double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
         if (read_end_time > read_start_time) {
             infile_transfer_time += read_end_time - read_start_time;
+            xrd_block_start_time = read_start_time;
             WRENCH_INFO("Streaming computation received block %d of file %s", 0, fs.first->getID().c_str());
         } else {
             throw std::runtime_error(
@@ -70,7 +71,10 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
             double num_flops = determineFlops(num_bytes, total_data_size);
             WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
             // Add XRootD FLOPs overhead that increments with execution time
-            double xrd_overhead_flops = SimpleSimulator::xrd_add_flops_per_time * (wrench::Simulation::getCurrentSimulatedDate() - job_start_time);
+            double xrd_overhead_flops;
+            if (!file_local) {
+                xrd_overhead_flops = SimpleSimulator::xrd_add_flops_per_time * (wrench::Simulation::getCurrentSimulatedDate() - xrd_block_start_time);
+            }
             num_flops += xrd_overhead_flops;
             WRENCH_DEBUG("       + %.2lf flops XRootD overhead", xrd_overhead_flops);
             // Start the computation asynchronously
@@ -96,6 +100,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
                 fs.second->getStorageService()->readFile(fs.second, num_bytes);
                 read_end_time = wrench::Simulation::getCurrentSimulatedDate();
             }
+            xrd_block_start_time = read_start_time;
             data_to_process -= num_bytes;
             if (exec_end_time >= exec_start_time) {
                 compute_time += exec_end_time - exec_start_time;
