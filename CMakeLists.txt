@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 
 find_package(SimGrid REQUIRED)
+find_package(WRENCH REQUIRED)
 find_package(Boost COMPONENTS program_options regex REQUIRED)
 
 
