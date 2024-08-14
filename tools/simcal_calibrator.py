@@ -400,6 +400,7 @@ def MRELoss(reference, simulated):
 						#print("\t",expiriment,machine,hitrate,total,count)
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count
 @processify	
@@ -437,6 +438,7 @@ def MRELossRatio(reference, simulated):
 
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count
 @processify	
@@ -475,6 +477,7 @@ def ddksLoss(reference, simulated):
 						#print("\t",expiriment,machine,hitrate,total,count)
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count
 import numpy as np
@@ -507,6 +510,7 @@ def chamferLoss(reference, simulated):
 						count+=1
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count
 @processify	
@@ -526,6 +530,7 @@ def hausdorffLoss(reference, simulated):
 						count+=1
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count	
 @processify	
@@ -545,6 +550,7 @@ def wassersteinLoss(reference, simulated):
 						count+=1
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count		
 @processify	
@@ -583,6 +589,7 @@ def sortedMRELoss(reference, simulated):
 
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count
 @processify	
@@ -625,6 +632,7 @@ def doubleSortedMRELoss(reference, simulated):
 
 	if(count==0):
 		count=1
+		return float('inf')
 	#print(total/count)
 	return total/count
 if __name__=="__main__":
