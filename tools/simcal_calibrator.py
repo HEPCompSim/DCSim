@@ -136,7 +136,7 @@ class Simulator(sc.Simulator):
 		o=env.bash(self.path,
 				 args=cargs)
 		#print(o[1])
-		return extract(output.name)
+		return (extract(output.name),o[1])
 	
 
 	def fill_template(self, env, args):
@@ -207,9 +207,18 @@ class Simulator(sc.Simulator):
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		if self.plot:
-			plot(self.data,(scsn,scfn,fcsn,fcfn))
-			plotCPU(self.data,(scsn,scfn,fcsn,fcfn))
-		return self.loss(self.data,(scsn,scfn,fcsn,fcfn))
+			plot(self.data,(scsn[0],scfn[0],fcsn[0],fcfn[0]))
+			plotCPU(self.data,(scsn[0],scfn[0],fcsn[0],fcfn[0]))
+		loss = self.loss(self.data,(scsn[0],scfn[0],fcsn[0],fcfn[0]))
+		if loss== float("inf"):
+			print("infinte loss")
+			print(args)
+			print(scsn[1])
+			print(scfn[1])
+			print(fcsn[1])
+			print(fcfn[1])
+			raise sc.exception.InvalidSimulation("A simulation resulted in an infinte loss value",(scsn[1],scfn[1],fcsn[1],fcfn[1]))
+		return loss
 		
 def plot(reference,simulated):
 	index=0
