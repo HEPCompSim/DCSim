@@ -51,6 +51,7 @@ def restructure(inter):
 		if not workload in ret:
 			ret[workload]={}
 		for hitrate, machines in hitrates.items():
+			#print(machines)
 			for machine, data in machines.items():
 				if not machine in ret[workload]:
 					ret[workload][machine]={}
@@ -158,13 +159,17 @@ class Simulator(sc.Simulator):
 
 	def call_platform(self, env, args):
 		inter = {}
+		out = {}
 		platform = self.fill_template(env, args)
 		for workload in self.workloads:
 			inter[workload] = {}
+			out[workload] = {}
 			for hitrate in self.hitrates:
-				inter[workload][hitrate] = self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"]})
+				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"]})
+				inter[workload][hitrate] = i
+				out[workload][hitrate] = o
 		platform.close()
-		return restructure(inter)
+		return restructure(inter),out
 
 	def run(self, env, iargs):
 		args=dict(iargs)
