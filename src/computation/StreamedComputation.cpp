@@ -122,7 +122,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         double exec_start_time = exec->get_start_time();
         exec->wait();
         double exec_end_time = exec->get_finish_time();
-        if (exec_end_time > exec_start_time) {
+        if (exec_end_time >= exec_start_time) {
             compute_time += exec_end_time - exec_start_time;
             WRENCH_INFO("Streaming computation completed block %d of file %s", num_blocks - 1, the_action->getJob()->getName().c_str());
         } else {
