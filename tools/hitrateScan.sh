@@ -35,7 +35,7 @@ action() {
     local XRD_BLOCKSIZE=10000000000
     local STORAGE_BUFFER_SIZE=0
 
-    local SCENARIO="fastNetworkfastCache" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
+    local SCENARIO="fastNetworkfastCache_new" # further options synchronized with plotting script "copy", "simplifiedstream", "fullstream"
 
     local OUTDIR="$parent/tmp/outputs/copyjobs"
     if [ ! -d $OUTDIR ]; then
@@ -55,6 +55,7 @@ action() {
             --no-caching \
             --seed 42 \
             --output-file ${OUTDIR}/hitratescaling_${SCENARIO}_xrd${XRD_BLOCKSIZE}_${NJOBS}jobs_hitrate${hitrate}.csv
+            # --log=streamed_computation.threshold=debug
             # --no-streaming \
             # --wrench-full-log
             # --log=simple_wms.threshold=debug \
