@@ -118,7 +118,7 @@ if __name__=="__main__":
 
 	t0 = time.time()
 	#TODO correctly parse args
-	cal=evaluator.find_cloud(simulator, args.args, args.target, args.search, args.epsilon,timelimit=args.timelimit, coordinator=coordinator)
+	cal=evaluator.find_cloud(simulator, eval(args.args), args.target, args.search, args.epsilon,timelimit=args.timelimit, coordinator=coordinator)
 	t1 = time.time()
 	print ("Finished")
 	print(cal)
