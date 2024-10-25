@@ -31,7 +31,7 @@ toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))
 
 if __name__=="__main__":
 
-	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
+	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal\nsimcal -l chamfer -t 60 -c `nproc` -g ../../hep-testjob/ -a "{'cpuSpeed': 2013316592.69, 'ramDisk': 520603672718.03, 'disk': 31870835.63, 'internalNetwork': 612634952.36, 'xrootd_flops': 3615900.89, 'externalFastNetwork': 1435159079.45, 'externalSlowNetwork': 218960749.30}" -d x -s x -e 1 -f ./shell")
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
@@ -97,17 +97,9 @@ if __name__=="__main__":
 		evaluator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 
 	dataDir=toolsDir/"../data"
-	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
-		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
-		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
-		dataDir/"workload-configs/crown_ttbar_testjob.json"),
-		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
-	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps","xrootd_flops":20000000000})
-	
+
 	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
 		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
@@ -117,7 +109,6 @@ if __name__=="__main__":
 		data,loss,args.nocpu,args.networkratio)	
 
 	t0 = time.time()
-	#TODO correctly parse args
 	cal=evaluator.find_cloud(simulator, eval(args.args), args.target, args.search, args.epsilon,timelimit=args.timelimit, coordinator=coordinator)
 	t1 = time.time()
 	print ("Finished")
