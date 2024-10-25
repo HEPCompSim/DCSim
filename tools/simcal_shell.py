@@ -41,27 +41,35 @@ if __name__=="__main__":
 	parser.add_argument("-a", "--args", type=str, help="args to shell about")
 	parser.add_argument("-d", "--target", type=float, help="The target loss variation to find the shell about")
 	parser.add_argument("-s", "--search", type=float, help="The search loss variation to find the shell within")
-	parser.add_argument("-e", "--epsilon", type=float, help="Loss tolerance")
+	#parser.add_argument("-e", "--epsilon", type=float, help="Loss tolerance")
 	parser.add_argument("-f", "--file", type=str, help="file to save shell too")
 	args = parser.parse_args()
 	evaluator=sc.evaluation.LossCloud()
 	#TODO code initial epsilons based on Grad descent
 	if args.loss=="mre":
 		loss=MRELoss
+		epsilon=0.01
 	elif args.loss=="ddks":
 		loss=ddksLoss
+		epsilon=0.001
 	elif args.loss=="ratio":
 		loss=MRELossRatio
+		epsilon=0.01
 	elif args.loss== "chamfer":
+		epsilon=1
 		loss=chamferLoss
 	elif args.loss== "hausdorff":
 		loss=hausdorffLoss
+		epsilon=1
 	elif args.loss== "wasserstein":
 		loss=wassersteinLoss
+		epsilon=1
 	elif args.loss== "sorted":
 		loss=sortedMRELoss
+		epsilon=1
 	elif args.loss== "double":
 		loss=doubleSortedMRELoss
+		epsilon=1
 	else:
 		print("unrecgongized loss function",args.loss)
 		sys.exit()
@@ -109,7 +117,7 @@ if __name__=="__main__":
 		data,loss,args.nocpu,args.networkratio)	
 
 	t0 = time.time()
-	cal=evaluator.find_cloud(simulator, eval(args.args), args.target, args.search, args.epsilon,timelimit=args.timelimit, coordinator=coordinator)
+	cal=evaluator.find_cloud(simulator, eval(args.args), args.target, args.search, epsilon,0.1,timelimit=args.timelimit, coordinator=coordinator)
 	t1 = time.time()
 	print ("Finished")
 	print(cal)
