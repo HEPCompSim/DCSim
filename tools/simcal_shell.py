@@ -31,7 +31,7 @@ toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))
 
 if __name__=="__main__":
 
-	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal\nsimcal -l chamfer -t 60 -c `nproc` -g ../../hep-testjob/ -a "{'cpuSpeed': 2013316592.69, 'ramDisk': 520603672718.03, 'disk': 31870835.63, 'internalNetwork': 612634952.36, 'xrootd_flops': 3615900.89, 'externalFastNetwork': 1435159079.45, 'externalSlowNetwork': 218960749.30}" -d x -s x -e 1 -f ./shell")
+	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal\nsimcal -l chamfer -t 60 -c `nproc` -g ../../hep-testjob/ -a \"{'cpuSpeed': 2013316592.69, 'ramDisk': 520603672718.03, 'disk': 31870835.63, 'internalNetwork': 612634952.36, 'xrootd_flops': 3615900.89, 'externalFastNetwork': 1435159079.45, 'externalSlowNetwork': 218960749.30}\" -d x -s x -e 1 -f ./shell")
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
