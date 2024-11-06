@@ -42,7 +42,7 @@ if __name__=="__main__":
 	parser.add_argument("-d", "--target", type=float, help="The target loss variation to find the shell about")
 	parser.add_argument("-s", "--search", type=float, help="The search loss variation to find the shell within")
 	#parser.add_argument("-e", "--epsilon", type=float, help="Loss tolerance")
-	parser.add_argument("-f", "--dir", type=str, help="folder to save shell too")
+	parser.add_argument("-f", "--dir", type=str, help="folder to save shell too",default="")
 	args = parser.parse_args()
 	evaluator=sc.evaluation.LossCloud()
 	#TODO code initial epsilons based on Grad descent
