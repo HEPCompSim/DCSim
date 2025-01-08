@@ -82,7 +82,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
 #endif
             if (has_file) {
                 source_ss = ss;
-                WRENCH_DEBUG("Found file %s with size %.2f in cache %s", f->getID().c_str(), f->getSize(), source_ss->getHostname().c_str());
+                WRENCH_DEBUG("Found file %s with size %llu in cache %s", f->getID().c_str(), f->getSize(), source_ss->getHostname().c_str());
                 cached_data_size += f->getSize();
                 break;
             }
@@ -121,7 +121,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
             auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
             // Evict files while to create space, using an LRU scheme!
-            double free_space = destination_ss->getTotalFreeSpace();
+            auto free_space = destination_ss->getTotalFreeSpace();
             while (free_space < f->getSize()) {
                 auto to_evict = SimpleSimulator::global_file_map[destination_ss].removeLRUFile();
                 WRENCH_INFO("Evicting file %s from storage service on host %s",

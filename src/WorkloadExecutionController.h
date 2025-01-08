@@ -51,8 +51,8 @@ public:
     bool isWorkloadEmpty();
 
 protected:
-    void processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent>) override;
-    void processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent>) override;
+    void processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent>);
+    void processEventCompoundJobCompletion(std::shared_ptr<wrench::CompoundJobCompletedEvent>);
 
 private:
     std::map<std::string, JobSpecification> workload_spec;

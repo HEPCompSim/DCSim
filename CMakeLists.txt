@@ -13,6 +13,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 
 find_package(SimGrid REQUIRED)
 find_package(WRENCH REQUIRED)
+find_package(FSMod REQUIRED)
+
 find_package(Boost COMPONENTS program_options regex REQUIRED)
 
 
@@ -70,12 +72,14 @@ add_executable(dc-sim ${SOURCE_FILES})
 if (ENABLE_BATSCHED)
 target_link_libraries(dc-sim
                        ${WRENCH_LIBRARY}
+		       ${FSMOD_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
                       -lzmq )
 else()
 target_link_libraries(dc-sim
                        ${WRENCH_LIBRARY}
+		       ${FSMOD_LIBRARY}
                        ${SimGrid_LIBRARY}
                        ${Boost_LIBRARIES}
                       )
