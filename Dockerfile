@@ -68,6 +68,7 @@ RUN git clone https://github.com/wrench-project/wrench.git && \
 
 RUN git clone https://github.com/HEPCompSim/DCSim.git && \
     mkdir -p DCSim/build && pushd DCSim/build && \
+    git checkout simcal-calibrator && \
     cmake .. && make -j${NCORES} && make install && popd && ldconfig && \
     mkdir -p /home/DCSim/data && cp -r DCSim/data/* /home/DCSim/data && \
     rm -rf DCSim
