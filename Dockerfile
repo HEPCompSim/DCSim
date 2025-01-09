@@ -68,6 +68,14 @@ RUN git clone https://github.com/HEPCompSim/DCSim.git && \
     rm -rf DCSim
 
 ###########################################################
+# Install simcal calibration framework
+###########################################################
+RUN git clone git@github.com:HerrHorizontal/Grand-Unified-Calibration-Framework.git && \
+    pushd Grand-Unified-Calibration-Framework && \
+    python3 -m pip install && popd && \
+    rm -rf Grand-Unified-Calibration-Framework
+
+###########################################################
 # Set user
 ###########################################################
 
