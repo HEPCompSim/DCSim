@@ -25,8 +25,9 @@ else
 fi
 
 # Release tag for SimGrid and WRENCH. If not specified will directly clone the repository
-SimGrid_tag="v3.34"
-WRENCH_tag="v2.2"
+SimGrid_tag="v3.36"
+SimGridFS_tag="v0.2"
+WRENCH_tag="v2.5"
 
 # checking out packages from git as prerequisites for WRENCH:
 #
@@ -100,6 +101,23 @@ cmake ..
 make -j "$num_procs"; sudo make install
 popd
 
+# 5) simgrid file-system-module, git: https://github.com/simgrid/file-system-module 
+if [ ! -d "$work_dir/file-system-module" ]; then
+    if [ -n "$SimGridFS_tag" ]; then
+        # If SimGridFS_tag is specified, run the git clone command with the tag
+        git clone --depth 1 --branch "$SimGridFS_tag" https://github.com/simgrid/file-system-module.git
+    else
+        # If SimGridFS_tag is not specified, clone the repository without a specific tag
+        git clone https://github.com/simgrid/file-system-module.git
+    fi
+fi
+pushd file-system-module
+mkdir -p build
+cd build
+cmake ..
+make -j "$num_procs"; sudo make install
+popd
+
 # installing WRENCH 2.0:
 echo "Installing WRENCH..."
 # if [ ! -d "$work_dir/wrench-2.1" ]; then
@@ -126,8 +144,8 @@ make -j "$num_procs"; sudo make install
 # make -j "$num_procs" examples; sudo make install examples # needed additionally, since not done by default
 popd
 
-# install the sgbatch simulator
-echo "Installing the DistCacheSim simulator..."
+# install the dcsim simulator
+echo "Installing the DCSim simulator..."
 pushd $this_dir/../
 mkdir -p build
 cd build

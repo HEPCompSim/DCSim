@@ -42,7 +42,7 @@ echo "PIP PACKAGES OUTDATED:"
 python -m pip list --outdated
 
 echo "INSTALLING SIMULATION SOFWARE PACKAGES"
-mkdir -p CachingSimulation; cd CachingSimulation
+mkdir -p DCSim; cd DCSim
 
 # pugixml
 git clone https://github.com/zeux/pugixml.git
@@ -78,7 +78,17 @@ popd
 git clone https://framagit.org/simgrid/simgrid.git
 mkdir -p simgrid/build
 pushd simgrid/build
-# git checkout tags/v3.32
+git checkout tags/v3.36
+cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
+make -j${NCORES}
+make install
+popd
+
+# simgrid file-system-module
+git clone https://framagit.org/simgrid/file-system-module.git
+mkdir -p file-system-module/build
+pushd file-system-module/build
+git checkout tags/v0.2
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -88,7 +98,7 @@ popd
 git clone https://github.com/wrench-project/wrench.git
 mkdir -p wrench/build
 pushd wrench/build
-# git checkout tags/v.2.1
+git checkout tags/v2.5
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
