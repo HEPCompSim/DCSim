@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL org.opencontainers.image.authors="maximilian.horzela@kit.edu"
 
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get -y autoclean && apt-get -y autoremove && \
     rm -rf /var/lib/apt-get/lists/*
 RUN python3 -m pip install --upgrade --no-input \
-        pip setuptools numpy matplotlib scipy pandas
+        pip setuptools wheel numpy matplotlib scipy pandas
 
 ###########################################################
 # Compile and install prerequisite software packages
@@ -78,6 +78,7 @@ RUN git clone https://github.com/HEPCompSim/DCSim.git && \
 ###########################################################
 RUN git clone https://github.com/HerrHorizontal/Grand-Unified-Calibration-Framework.git && \
     pushd Grand-Unified-Calibration-Framework && \
+    # python3 -m pip install -r requirements.txt && \
     python3 -m pip install . && popd && \
     rm -rf Grand-Unified-Calibration-Framework
 
