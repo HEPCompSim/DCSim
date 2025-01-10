@@ -16,11 +16,12 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
-        cmake python3 pip gcc make gfortran libboost-all-dev git && \
+        cmake python3 pip gcc make gfortran libboost-all-dev git \
+        python3-pip python3-setuptools python3-wheel && \
     apt-get -y autoclean && apt-get -y autoremove && \
     rm -rf /var/lib/apt-get/lists/*
-RUN python3 -m pip install --upgrade --no-input --break-system-packages \
-        pip setuptools wheel numpy matplotlib scipy pandas
+RUN python3 -m pip install --upgrade --no-input \
+        numpy matplotlib scipy pandas
 
 ###########################################################
 # Compile and install prerequisite software packages
