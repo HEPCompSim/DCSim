@@ -20,7 +20,7 @@ RUN apt-get update && apt-get upgrade -y && \
         python3-pip python3-setuptools python3-wheel && \
     apt-get -y autoclean && apt-get -y autoremove && \
     rm -rf /var/lib/apt-get/lists/*
-RUN python3 -m pip install --upgrade --no-input \
+RUN python3 -m pip install --upgrade --no-input --break-system-packages \
         numpy matplotlib scipy pandas
 
 ###########################################################
@@ -80,7 +80,7 @@ RUN git clone https://github.com/HEPCompSim/DCSim.git && \
 RUN git clone https://github.com/HerrHorizontal/Grand-Unified-Calibration-Framework.git && \
     pushd Grand-Unified-Calibration-Framework && \
     # python3 -m pip install -r requirements.txt && \
-    python3 -m pip install . && popd && \
+    python3 -m pip install --break-system-packages . && popd && \
     rm -rf Grand-Unified-Calibration-Framework
 
 ###########################################################
