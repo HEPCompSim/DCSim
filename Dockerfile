@@ -19,7 +19,7 @@ RUN apt-get update && apt-get upgrade -y && \
         cmake python3 pip gcc make gfortran libboost-all-dev git && \
     apt-get -y autoclean && apt-get -y autoremove && \
     rm -rf /var/lib/apt-get/lists/*
-RUN python3 -m pip install --upgrade --no-input \
+RUN python3 -m pip install --upgrade --no-input --break-system-packages \
         pip setuptools wheel numpy matplotlib scipy pandas
 
 ###########################################################
