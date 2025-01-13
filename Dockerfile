@@ -20,8 +20,10 @@ RUN apt-get update && apt-get upgrade -y && \
         python3-pip python3-setuptools python3-wheel && \
     apt-get -y autoclean && apt-get -y autoremove && \
     rm -rf /var/lib/apt-get/lists/*
-RUN python3 -m pip install --upgrade --no-input --break-system-packages \
-        numpy matplotlib scipy pandas
+RUN apt-get install -y \
+        python3-numpy python3-matplotlib python3-scipy python3-pandas
+# RUN python3 -m pip install --upgrade --no-input --break-system-packages \
+#         numpy matplotlib scipy pandas
 
 ###########################################################
 # Compile and install prerequisite software packages
