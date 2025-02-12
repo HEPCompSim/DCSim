@@ -735,7 +735,7 @@ if __name__=="__main__":
 		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
-	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10GBps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps","xrootd_flops":20000000000})
+	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10Gbps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps","xrootd_flops":20000000000})
 	print("Max's",maxs)
 	if args.evaluate:
 		print(args.evaluate)
