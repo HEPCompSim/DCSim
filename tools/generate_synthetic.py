@@ -21,7 +21,7 @@ from skywalker import processify #pip install skywalker
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives
 def extract(file):
-	print(file)
+	#print(file)
 	hitrate_data = defaultdict(list)
 	if os.stat(file).st_size == 0:
 		raise RuntimeError("Simulation produced empty output file")
@@ -125,7 +125,7 @@ class Simulator(sc.Simulator):
 		#print('dc-sim', ' '.join(cargs))
 		o=env.bash(self.path,
 				 args=cargs)
-		#print(o[1])
+		print(o[1])
 		return (extract(output),o[1])
 	
 
