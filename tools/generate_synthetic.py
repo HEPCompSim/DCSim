@@ -126,7 +126,7 @@ class Simulator(sc.Simulator):
 		o=env.bash(self.path,
 				 args=cargs)
 		#print(o[1])
-		return (extract(output.name),o[1])
+		return (extract(output),o[1])
 	
 
 	def fill_template(self, env, args):
