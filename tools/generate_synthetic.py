@@ -21,6 +21,7 @@ from skywalker import processify #pip install skywalker
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives
 def extract(file):
+	print(file)
 	hitrate_data = defaultdict(list)
 	if os.stat(file).st_size == 0:
 		raise RuntimeError("Simulation produced empty output file")
@@ -219,7 +220,7 @@ if __name__=="__main__":
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-o", "--output", type=str, required=True, help="folder to put the new synthetic data in")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
-	parser.add_argument("-a", "--args", type=str, required=True, help="args to gen synthetic data for about")
+	parser.add_argument("-a", "--args", type=str, required=True, help="args to gen synthetic data for")
 	args = parser.parse_args()
 	
 	
@@ -258,4 +259,4 @@ if __name__=="__main__":
 	#print(cal)
 	#print(t1-t0)
 
-	
+#./generate_synthetic.py -g "$(subRoot.sh)/hep-testjob-copy" -o "$(subRoot.sh)/synthetic" -c $(nproc) -a "{'cpuSpeed': 1950000000, 'ramDisk': 27000000000, 'disk': 23000000, 'internalNetwork': 1900000000, 'xrootd_flops': 1000000000000, 'externalFastNetwork': 4000000000, 'externalSlowNetwork': 218000000}"	
