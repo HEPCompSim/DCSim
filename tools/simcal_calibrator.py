@@ -653,6 +653,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
+	parser.add_argument("-a", "--alg", type=str, required=True, help="Algorithm to use [grad|skopt.gp|skopt.gbrt|skopt.et|skopt.rf]")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
@@ -665,34 +666,53 @@ if __name__=="__main__":
 	parser.add_argument("-hth", "--hyper_test_high", type=float, help="The upper bound of the hyper parameter test")
 	
 	args = parser.parse_args()
+
+
+	gdp=0
+	er=None
 	if args.loss=="mre":
 		loss=MRELoss
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		gdp=0.01
 	elif args.loss=="ddks":
 		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.001,early_reject_loss=1.0)
+		gdp=0.001
+		er=1.0
 		loss=ddksLoss
 	elif args.loss=="ratio":
 		#calibrator = sc.calibrators.GradientDescent(0.001,0.00001,early_reject_loss=1.0)
-		calibrator = sc.calibrators.GradientDescent(0.01, 0.01)
+		gdp=0.01
 		loss=MRELossRatio
 	elif args.loss== "chamfer":
-		calibrator = sc.calibrators.GradientDescent(0.01, 1)
+		gdp=1
 		loss=chamferLoss
 	elif args.loss== "hausdorff":
-		calibrator = sc.calibrators.GradientDescent(0.01, 1)
+		gdp=1
 		loss=hausdorffLoss
 	elif args.loss== "wasserstein":
-		calibrator = sc.calibrators.GradientDescent(0.01, 1)
+		gdp=1
 		loss=wassersteinLoss
 	elif args.loss== "sorted":
-		calibrator = sc.calibrators.GradientDescent(0.01, 1)
+		gdp=1
 		loss=sortedMRELoss
 	elif args.loss== "double":
-		calibrator = sc.calibrators.GradientDescent(0.01, 1)
+		gdp=1
 		loss=doubleSortedMRELoss
 	else:
 		print("unrecgongized loss function",args.loss)
+		sys.exit()
+	calibrator=None
+	if args.alg == "grad":
+		calibrator = sc.calibrators.GradientDescent(0.01, gdp, early_reject_loss=er)
+	elif args.alg == "skopt.gp":
+		calibrator = sc.calibrators.ScikitOptimizer(1000,"GP",seed=0)
+	elif args.alg == "skopt.gbrt":
+		calibrator = sc.calibrators.ScikitOptimizer(1000,"GBRT",seed=0)
+	elif args.alg == "skopt.et":
+		calibrator = sc.calibrators.ScikitOptimizer(1000,"ET",seed=0)
+	elif args.alg == "skopt.rf":
+		calibrator = sc.calibrators.ScikitOptimizer(1000,"RF",seed=0)
+	else:
+		print("unrecgongized calibrator alg function",args.alg)
 		sys.exit()
 	# do whatever
 	data = dataLoader({"test":[
