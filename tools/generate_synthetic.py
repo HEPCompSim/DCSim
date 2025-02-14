@@ -153,6 +153,7 @@ class Simulator(sc.Simulator):
 
 			for hitrate in self.hitrates:
 				#print(workload,hitrate,)
+				os.makedirs(args["output"]/workload/args["cacheName"]/args["SGname"], exist_ok=True)
 				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"],"output":args["output"]/workload/args["cacheName"]/args["SGname"]/("synthetic_hitrate_"+str(hitrate)+".csv")})
 
 		platform.close()
