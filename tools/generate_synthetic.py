@@ -108,7 +108,7 @@ class Simulator(sc.Simulator):
 		output=args["output"]
 		cargs=[
 				 "--platform", args["platform"],
-				 "--output-file", output.name,
+				 "--output-file", output,
 				 "--workload-configurations", args["workload"][1],
 				 "--dataset-configurations", args["workload"][0],
 				 "--hitrate", args["hitrate"],
@@ -125,7 +125,7 @@ class Simulator(sc.Simulator):
 		#print('dc-sim', ' '.join(cargs))
 		o=env.bash(self.path,
 				 args=cargs)
-		print(o[1])
+		#print(o[1])
 		return (extract(output),o[1])
 	
 
