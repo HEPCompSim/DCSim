@@ -653,7 +653,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
-	parser.add_argument("-a", "--alg", type=str, required=True, help="Algorithm to use [grad|skopt.gp|skopt.gbrt|skopt.et|skopt.rf]")
+	parser.add_argument("-a", "--alg", type=str, required=True, help="Algorithm to use [grad|skopt.gp|skopt.gbrt|skopt.et|skopt.rf|random]")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
@@ -711,6 +711,8 @@ if __name__=="__main__":
 		calibrator = sc.calibrators.ScikitOptimizer(1000,"ET",seed=0)
 	elif args.alg == "skopt.rf":
 		calibrator = sc.calibrators.ScikitOptimizer(1000,"RF",seed=0)
+	elif args.alg == "random":
+		calibrator = sc.calibrators.Random(seed=0)
 	else:
 		print("unrecgongized calibrator alg function",args.alg)
 		sys.exit()

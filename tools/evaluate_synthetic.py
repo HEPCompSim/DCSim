@@ -28,6 +28,8 @@ def main(args):
 						cal[0]["externalSlowNetwork"]=cal[0]["externalNetwork"]
 						del cal[0]["externalNetwork"]
 					for key in cal[0]:
+						if key == "xrootd_flops":
+							continue
 						error+=relative_error(args[key],cal[0][key])
 					print(error,cal[1],file)
 					break
