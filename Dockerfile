@@ -36,7 +36,7 @@ RUN git clone https://github.com/zeux/pugixml.git && \
     rm -rf pugixml
 RUN git clone https://github.com/nlohmann/json.git && \
     mkdir -p json/build && pushd json/build && \
-    git checkout tags/v3.11.2 && \
+    git checkout tags/v3.11.3 && \
     cmake .. && make -j${NCORES} && make install && popd && \
     rm -rf json
 RUN git clone https://github.com/google/googletest.git && \
@@ -77,6 +77,14 @@ RUN git clone https://github.com/HEPCompSim/DCSim.git && \
     rm -rf DCSim
 
 ###########################################################
+# Set user
+###########################################################
+RUN useradd -ms /bin/bash dcsim
+USER dcsim
+WORKDIR /home/dcsim
+RUN id -a && pwd
+
+###########################################################
 # Install simcal calibration framework
 ###########################################################
 RUN git clone https://github.com/HerrHorizontal/Grand-Unified-Calibration-Framework.git && \
@@ -85,13 +93,8 @@ RUN git clone https://github.com/HerrHorizontal/Grand-Unified-Calibration-Framew
     python3 -m pip install --break-system-packages . && popd && \
     rm -rf Grand-Unified-Calibration-Framework
 
-###########################################################
-# Set user
-###########################################################
-
-#USER wrench
-WORKDIR /home/dcsim
-
 # set user's environment variable
 ENV CXX="g++" CC="gcc"
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
+
+RUN dc-sim --help
