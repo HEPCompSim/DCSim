@@ -74,6 +74,7 @@ RUN git clone https://github.com/HEPCompSim/DCSim.git && \
     git checkout simcal-calibrator && \
     cmake .. && make -j${NCORES} && make install && popd && ldconfig && \
     mkdir -p /home/DCSim/data && cp -r DCSim/data/* /home/DCSim/data && \
+    mkdir -p /home/DCSim/tools && cp -r DCSim/tools/* /home/DCSim/tools && \
     rm -rf DCSim
 
 ###########################################################
@@ -96,5 +97,6 @@ RUN git clone https://github.com/HerrHorizontal/Grand-Unified-Calibration-Framew
 # set user's environment variable
 ENV CXX="g++" CC="gcc"
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
+ENV PATH=${PATH}:/home/dcsim/.local/bin
 
 RUN dc-sim --help
