@@ -248,7 +248,7 @@ int WorkloadExecutionController::main() {
  * @param event: an execution event
  */
 void
-WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent> event) {
+WorkloadExecutionController::processEventCompoundJobFailure(const std::shared_ptr<wrench::CompoundJobFailedEvent> &event) {
     WRENCH_INFO("Notified that compound job %s has failed!", event->job->getName().c_str());
     WRENCH_INFO("Failure cause: %s", event->failure_cause->toString().c_str());
     WRENCH_INFO("As a WorkloadExecutionController, I abort as soon as there is a failure");
@@ -264,7 +264,7 @@ WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wren
 * @param event: an execution event
 */
 void WorkloadExecutionController::processEventCompoundJobCompletion(
-        std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
+        const std::shared_ptr<wrench::CompoundJobCompletedEvent> &event) {
 
     this->job_scheduler->jobDone(event->job);
     this->num_completed_jobs++;
