@@ -51,17 +51,17 @@ RUN git clone https://github.com/google/googletest.git && \
 
 RUN git clone https://framagit.org/simgrid/simgrid.git && \
     mkdir -p simgrid/build && pushd simgrid/build && \
-    git checkout tags/v3.36 && \
+    git checkout tags/v4.0 && \
     cmake .. && make -j${NCORES} && make install && popd && \
     rm -rf simgrid
 RUN git clone https://github.com/simgrid/file-system-module.git && \
     mkdir -p file-system-module/build && pushd file-system-module/build && \
-    git checkout tags/v0.2 && \
+    git checkout tags/v0.3 && \
     cmake .. && make -j${NCORES} && make install && popd && \
     rm -rf file-system-module
 RUN git clone https://github.com/wrench-project/wrench.git && \
     mkdir -p wrench/build && pushd wrench/build && \
-    git checkout tags/v2.5 && \
+    git checkout tags/v2.7 && \
     cmake .. && make -j${NCORES} && make install && popd && \
     rm -rf wrench
 
@@ -71,7 +71,7 @@ RUN git clone https://github.com/wrench-project/wrench.git && \
 
 RUN git clone https://github.com/HEPCompSim/DCSim.git && \
     mkdir -p DCSim/build && pushd DCSim/build && \
-    git checkout simcal-calibrator && \
+    git checkout simcal-calibrator-latest-simgrid-wrench && \
     cmake .. && make -j${NCORES} && make install && popd && ldconfig && \
     mkdir -p /home/DCSim/data && cp -r DCSim/data/* /home/DCSim/data && \
     mkdir -p /home/DCSim/tools && cp -r DCSim/tools/* /home/DCSim/tools && \
