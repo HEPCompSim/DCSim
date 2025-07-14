@@ -71,7 +71,7 @@ if __name__=="__main__":
 		loss=doubleSortedMRELoss
 		epsilon=1
 	else:
-		print("unrecgongized loss function",args.loss)
+		print("unrecognized loss function",args.loss)
 		sys.exit()
 	# do whatever
 	data = dataLoader({"test":[
