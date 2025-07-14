@@ -13,18 +13,18 @@ import re
 import glob
 import simcal as sc
 import math
-import ddks#pip install git+https://github.com/pnnl/DDKS 
-import torch #pip install torchvision
+import ddks
+import torch
 import matplotlib.pyplot as plt
-#from pytorch3d.loss import chamfer_distance#pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+#from pytorch3d.loss import chamfer_distance
 #conda install pytorch3d -c pytorch3d
 from scipy.spatial.distance import directed_hausdorff
-import ot #pip install POT
+import ot
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
 import time    
-from skywalker import processify #pip install skywalker
+from skywalker import processify
 
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives
