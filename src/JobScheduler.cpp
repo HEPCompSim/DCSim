@@ -17,7 +17,7 @@ JobScheduler::JobScheduler(const std::vector<std::shared_ptr<wrench::ComputeServ
             throw std::invalid_argument("JobScheduler::init(): Only 1-host compute services are supported!");
         }
         unsigned long num_cores = cs->getPerHostNumCores().begin()->second;
-        double ram = cs->getMemoryCapacity().begin()->second;
+        double ram = cs->getPerHostMemoryCapacity().begin()->second;
         this->total_num_idle_cores += num_cores;
 
         this->available_resources[cs] = std::tuple(num_cores, ram);
