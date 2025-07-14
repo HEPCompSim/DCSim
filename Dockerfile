@@ -84,6 +84,7 @@ RUN useradd -ms /bin/bash dcsim
 USER dcsim
 WORKDIR /home/dcsim
 RUN id -a && pwd
+ENV PATH=${PATH}:/home/dcsim/.local/bin
 
 ###########################################################
 # Install simcal calibration framework
@@ -96,7 +97,6 @@ RUN git clone https://github.com/HerrHorizontal/Grand-Unified-Calibration-Framew
 
 # set user's environment variable
 ENV CXX="g++" CC="gcc"
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
-ENV PATH=${PATH}:/home/dcsim/.local/bin
+ENV LD_LIBRARY_PATH=/home/dcsim/.local/lib:/usr/lib/x86_64-linux-gnu:/usr/lib:/usr/local/lib64:/usr/local/lib
 
 RUN dc-sim --help
