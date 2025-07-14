@@ -714,7 +714,7 @@ if __name__=="__main__":
 	elif args.alg == "random":
 		calibrator = sc.calibrators.Random(seed=0)
 	else:
-		print("unrecgongized calibrator alg function",args.alg)
+		print("unrecognized calibrator alg function",args.alg)
 		sys.exit()
 	# do whatever
 	data = dataLoader({"test":[
