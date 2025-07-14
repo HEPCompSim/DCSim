@@ -698,7 +698,7 @@ if __name__=="__main__":
 		gdp=1
 		loss=doubleSortedMRELoss
 	else:
-		print("unrecgongized loss function",args.loss)
+		print("unrecognized loss function",args.loss)
 		sys.exit()
 	calibrator=None
 	if args.alg == "grad":
