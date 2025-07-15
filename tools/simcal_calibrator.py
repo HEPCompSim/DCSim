@@ -87,7 +87,18 @@ def dataLoader(sets):
 
 
 class Simulator(sc.Simulator):
-	def __init__(self, path,xml_template, hitrates, xrootd_blocksize, network_blocksize, workloads,data,loss,nocpu,ratio,plot=False):
+	def __init__(self,
+				path,
+				xml_template,
+				hitrates,
+				xrootd_blocksize,
+				network_blocksize,
+				workloads,
+				data,
+				loss,
+				nocpu,
+				ratio,
+				plot=False):
 		super().__init__()
 		self.path = path
 		self.hitrates = hitrates
@@ -621,7 +632,7 @@ def doubleSortedMRELoss(reference, simulated):
 						for data in sorted(ref[machine][hitrate],key=lambda item: float(item['job.end'])-float(item['job.start'])):
 							time=float(data['job.end'])-float(data['job.start'])
 							refTime.append(time)
-						for data in sorted(ref[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(data['job.computetime']))):
+						for data in sorted(ref[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(item['job.computetime']))):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							refRatio.append(cpu)
@@ -632,7 +643,7 @@ def doubleSortedMRELoss(reference, simulated):
 						for data in sorted(sim[machine][hitrate],key=lambda item: float(item['job.end'])-float(item['job.start'])):
 							time=float(data['job.end'])-float(data['job.start'])
 							simTime.append(time)
-						for data in sorted(sim[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(data['job.computetime']))):
+						for data in sorted(sim[machine][hitrate],key=lambda item: (float(item['job.end'])-float(item['job.start']))/max(1,float(item['job.computetime']))):
 							time=float(data['job.end'])-float(data['job.start'])
 							cpu=float(data['job.computetime'])
 							simRatio.append(cpu)
