@@ -68,7 +68,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         for (int i = 0; i < num_blocks - 1; i++) {
             auto num_bytes = std::min<sg_size_t>(SimpleSimulator::xrd_block_size, data_to_process);
             double num_flops = determineFlops(num_bytes, total_data_size);
-            WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
+            WRENCH_INFO("Chunk: %llu bytes / %.2lf flops", num_bytes, num_flops);
             // Add XRootD FLOPs overhead that increments with execution time
             double xrd_overhead_flops = SimpleSimulator::xrd_add_flops_per_time * (wrench::Simulation::getCurrentSimulatedDate() - job_start_time);
             num_flops += xrd_overhead_flops;
