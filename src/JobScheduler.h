@@ -19,11 +19,11 @@ public:
     void jobDone(const std::shared_ptr<wrench::CompoundJob> &job);
 
 private:
-    std::map<std::shared_ptr<wrench::ComputeService>, std::tuple<unsigned long, double>> available_resources;
+    std::map<std::shared_ptr<wrench::ComputeService>, std::tuple<unsigned long, sg_size_t>> available_resources;
     std::vector<WorkloadExecutionController *> execution_controllers;
     unsigned long total_num_idle_cores;
 
-    std::shared_ptr<wrench::ComputeService> pickComputeService(unsigned long num_cores, double total_ram);
+    std::shared_ptr<wrench::ComputeService> pickComputeService(unsigned long num_cores, sg_size_t total_ram);
 
 };
 

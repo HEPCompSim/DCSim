@@ -45,8 +45,8 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
     std::string netzone = host->get_englobing_zone()->get_name();                            // network zone executing host belongs to
     auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction());// executed action
 
-    double cached_data_size = 0.;
-    double remote_data_size = 0.;
+    sg_size_t cached_data_size = 0;
+    sg_size_t remote_data_size = 0;
 
     // Identify all cache storage services that can be reached from
     // this host, which runs the streaming action
@@ -153,11 +153,13 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
     }
 
     // Fill monitoring information
-    if (std::abs(cached_data_size + remote_data_size - this->total_data_size) > 1.) {
+    if (cached_data_size + remote_data_size > this->total_data_size) {
         throw std::runtime_error("There is more or less data read from cache plus remote than the job's input-data size!");
     }
-    WRENCH_DEBUG("Hitrate: %.2f (Cached data: %.2f, total data: %.2f)", cached_data_size / this->total_data_size, cached_data_size, this->total_data_size);
-    the_action->set_hitrate(cached_data_size / this->total_data_size);
+    WRENCH_DEBUG("Hitrate: %.2f (Cached data: %llu, total data: %llu)",
+        static_cast<double>(cached_data_size) / static_cast<double>(this->total_data_size),
+        cached_data_size, this->total_data_size);
+    the_action->set_hitrate(static_cast<double>(cached_data_size) / static_cast<double>(this->total_data_size));
 }
 
 //? Question for Henri: put this into determineFileSources function to prevent two times the same loop?
@@ -167,8 +169,8 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
  * @param files Input files of the job to consider
  * @return double
  */
-double CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
-    double incr_file_size = 0.0;
+sg_size_t CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
+    sg_size_t incr_file_size = 0;
     for (auto const &f: this->files) {
         incr_file_size += f->getSize();
     }
@@ -199,8 +201,8 @@ void CacheComputation::operator()(std::shared_ptr<wrench::ActionExecutor> action
  * @param total_data_size Total incremental size of all input-files
  * @return double 
  */
-double CacheComputation::determineFlops(double data_size, double total_data_size) {
-    double flops = this->total_flops * data_size / total_data_size;
+double CacheComputation::determineFlops(sg_size_t data_size, sg_size_t total_data_size) const {
+    double flops = this->total_flops * static_cast<double>(data_size) / static_cast<double>(total_data_size);
     return flops;
 }
 

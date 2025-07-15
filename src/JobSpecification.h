@@ -26,7 +26,7 @@ public:
     // Total number of FLOPS to be computed for the job to finish
     double total_flops;
     // Memory consumption of the job
-    double total_mem;
+    sg_size_t total_mem;
 };
 
 #endif//S_JOB_SPECIFICATION_H

@@ -22,7 +22,7 @@ public:
 
     void operator()(std::shared_ptr<wrench::ActionExecutor> action_executor);
 
-    double determineFlops(double data_size, double total_data_size);
+    double determineFlops(sg_size_t data_size, sg_size_t total_data_size) const;
 
     virtual void performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) = 0;
 
@@ -34,8 +34,8 @@ protected:
 
     std::vector<std::pair<std::shared_ptr<wrench::DataFile>, std::shared_ptr<wrench::FileLocation>>> file_sources;
 
-    double determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files);
-    double total_data_size;
+    sg_size_t determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files);
+    sg_size_t total_data_size;
 };
 
 #endif//S_CACHECOMPUTATION_H

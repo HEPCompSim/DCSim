@@ -46,14 +46,14 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
     auto total_data_size = this->total_data_size;
     for (auto const &fs: this->file_sources) {
         WRENCH_INFO("Streaming computation for input file %s in location %s", fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
-        double data_to_process = fs.first->getSize();
+        sg_size_t data_to_process = fs.first->getSize();
 
         // Compute the number of blocks
-        int num_blocks = int(std::ceil(data_to_process / (double) SimpleSimulator::xrd_block_size));
+        auto num_blocks = static_cast<int>(std::ceil(data_to_process / static_cast<double>(SimpleSimulator::xrd_block_size)));
 
         // Read the first block
         double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
-        fs.second->getStorageService()->readFile(fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
+        fs.second->getStorageService()->readFile(fs.second, std::min<sg_size_t>(SimpleSimulator::xrd_block_size, data_to_process));
         double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
         if (read_end_time > read_start_time) {
             infile_transfer_time += read_end_time - read_start_time;
@@ -66,7 +66,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
 
         // Process next blocks: compute block i while reading block i+i
         for (int i = 0; i < num_blocks - 1; i++) {
-            double num_bytes = std::min<double>(SimpleSimulator::xrd_block_size, data_to_process);
+            auto num_bytes = std::min<sg_size_t>(SimpleSimulator::xrd_block_size, data_to_process);
             double num_flops = determineFlops(num_bytes, total_data_size);
             WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
             // Add XRootD FLOPs overhead that increments with execution time

@@ -9,9 +9,10 @@ class Dataset {
 public:
     // Constructor
     Dataset(
-            const std::vector<std::string> hostname, const double num_files,
-            nlohmann::json file_size,
-            const std::string name_suffix,
+            const std::vector<std::string> &hostname,
+            size_t num_files,
+            const nlohmann::json &file_size,
+            const std::string &name_suffix,
             const std::mt19937 &generator);
     std::vector<std::string> hostnames;
     std::vector<std::shared_ptr<wrench::DataFile>> files;
@@ -19,7 +20,7 @@ public:
 
 private:
     std::function<double(std::mt19937 &)> size_dist;
-    std::function<double(std::mt19937 &)> initializeRNG(nlohmann::json json);
+    static std::function<double(std::mt19937 &)> createRNG(nlohmann::json json);
     std::mt19937 generator;
 };
 

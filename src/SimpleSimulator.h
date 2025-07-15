@@ -32,7 +32,7 @@ public:
 
     static bool shuffle_jobs;
 
-    static double xrd_block_size;
+    static sg_size_t xrd_block_size;
     static double xrd_add_flops_per_time;
     static std::mt19937 gen;
 
