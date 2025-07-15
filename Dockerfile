@@ -1,4 +1,3 @@
-```dockerfile
 ARG IMAGE_REGISTRY
 FROM ${IMAGE_REGISTRY}/dcsim:latest AS base
 
@@ -28,4 +27,3 @@ COPY --chown=dcsim:dcsim data/ /home/DCSim/data/
 COPY --chown=dcsim:dcsim tools/ /home/DCSim/tools/
 
 RUN dc-sim --help
-```
