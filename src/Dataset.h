@@ -9,7 +9,7 @@ class Dataset {
 public:
     // Constructor
     Dataset(
-            const std::vector<std::string> &hostname,
+            const std::vector<std::string> &hostnames,
             size_t num_files,
             const nlohmann::json &file_size,
             const std::string &name_suffix,

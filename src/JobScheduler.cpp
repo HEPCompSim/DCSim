@@ -95,7 +95,7 @@ void JobScheduler::schedule() {
  * @param total_ram: the needed RAM footprint
  * @return a compute service
  */
-std::shared_ptr<wrench::ComputeService> JobScheduler::pickComputeService(unsigned long num_cores, sg_size_t total_ram) {
+std::shared_ptr<wrench::ComputeService> JobScheduler::pickComputeService(const unsigned long num_cores, const sg_size_t total_ram) const {
     // Just a linear search right now, picking the first
     // compute service that works
     for (auto const &entry: this->available_resources) {

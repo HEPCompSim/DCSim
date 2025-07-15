@@ -24,6 +24,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
+#include <utility>
 
 
 namespace po = boost::program_options;
@@ -70,7 +71,7 @@ bool SimpleSimulator::local_cache_scope = false;// flag to consider only local c
  * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
  */
 struct cacheScope {
-    cacheScope(std::string const &val) : value(val) {}
+    explicit cacheScope(std::string val) : value(std::move(val)) {}
     std::string value;
 };
 /**
@@ -111,7 +112,7 @@ void validate(boost::any &v, std::vector<std::string> const &values, cacheScope 
  * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
  */
 struct WorkloadTypeStruct {
-    WorkloadTypeStruct(std::string const &val) : value(boost::to_lower_copy(val)) {}
+    explicit WorkloadTypeStruct(std::string const &val) : value(boost::to_lower_copy(val)) {}
     std::string value;
     // getter function
     WorkloadType get() const {
@@ -334,15 +335,15 @@ std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobS
  * 
  * @throw std::runtime_error, std::invalid_argument
  */
-void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation) {
-    std::vector<std::string> hostname_list = simulation->getHostnameList();
-    if (hostname_list.size() == 0) {
+void SimpleSimulator::identifyHostTypes(const std::shared_ptr<wrench::Simulation> &simulation) {
+    std::vector<std::string> hostname_list = wrench::Simulation::getHostnameList();
+    if (hostname_list.empty()) {
         throw std::runtime_error("Empty hostname list! Have you instantiated the platform already?");
     }
     for (const auto &hostname: hostname_list) {
         auto hostProperties = wrench::S4U_Simulation::getHostProperty(hostname, "type");
         bool validType = false;
-        if (hostProperties == "") {
+        if (hostProperties.empty()) {
             throw std::runtime_error("Configuration property \"type\" missing for host " + hostname);
         }
         if (hostProperties.find("executor") != std::string::npos) {

@@ -1,4 +1,6 @@
 #include "Workload.h"
+
+#include <utility>
 #include "Dataset.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(workload, "Log category for WorkloadExecutionController");
@@ -8,9 +10,9 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(workload, "Log category for WorkloadExecutionContro
 const char *workload_type_names[] = {WORKLOAD_TYPES(F) nullptr};
 #undef F
 
-std::string workload_type_to_string(WorkloadType workload) {
-    return ((int) workload < (int) NumWorkloadTypes)
-                   ? workload_type_names[(int) workload]
+std::string workload_type_to_string(const WorkloadType workload) {
+    return (static_cast<int>(workload) < static_cast<int>(NumWorkloadTypes))
+                   ? workload_type_names[static_cast<int>(workload)]
                    : "";
 }
 
@@ -32,6 +34,7 @@ std::string workload_type_to_string(WorkloadType workload) {
  * @param flops: json object containing type and parameters for the flops distribution
  * @param memory: json object containing type and parameters for the memory distribution
  * @param outfile_size: json object containing type and parameters for the output-file size distribution
+ * @param workload_type: The workload type
  * @param name_suffix: part of job name to distinguish between different workloads
  * @param arrival_time: submission time offset relative to simulation start
  * @param generator: random number generator objects to draw from
@@ -56,10 +59,11 @@ Workload::Workload(
     std::string potential_separator = (name_suffix.empty() ? "" : "_");
 
     // Initialize random number generators
-    this->core_dist = Workload::createIntRNG(cores);
-    this->flops_dist = Workload::createDoubleRNG(flops);
-    this->mem_dist = Workload::createDoubleRNG(memory);
-    this->outsize_dist = Workload::createDoubleRNG(outfile_size);
+    this->core_dist = Workload::createIntRNG(std::move(cores));
+    this->flops_dist = Workload::createDoubleRNG(std::move(flops));
+    this->mem_dist = Workload::createDoubleRNG(std::move(memory));
+    this->outsize_dist = Workload::createDoubleRNG(std::move(outfile_size));
+    batch.reserve(num_jobs);
     for (size_t j = 0; j < num_jobs; j++) {
         batch.push_back(sampleJob(j, name_suffix, potential_separator));
     }
@@ -120,7 +124,7 @@ std::function<int(std::mt19937 &)> Workload::createIntRNG(nlohmann::json json) {
 }
 
 
-JobSpecification Workload::sampleJob(size_t job_id, const std::string &name_suffix, const std::string &potential_separator) {
+JobSpecification Workload::sampleJob(const size_t job_id, const std::string &name_suffix, const std::string &potential_separator) {
     // Create a job specification
     JobSpecification job_specification;
 
@@ -169,7 +173,7 @@ void Workload::assignFiles(std::vector<Dataset> const &dataset_specs) {
             [&](Dataset const &ds) { return &ds; });
     if (matching_ds.empty())
         throw std::runtime_error("ERROR: no valid infile dataset name in workload configuration.");
-    size_t num_files = std::accumulate(matching_ds.begin(), matching_ds.end(), 0, [](int sum, Dataset const *ds) { return sum + ds->files.size(); });
+    size_t num_files = std::accumulate(matching_ds.begin(), matching_ds.end(), 0, [](const int sum, Dataset const *ds) { return sum + ds->files.size(); });
     std::vector<std::shared_ptr<wrench::DataFile>> all_files{};
     all_files.reserve(num_files);
     for (auto const &ds: matching_ds) {

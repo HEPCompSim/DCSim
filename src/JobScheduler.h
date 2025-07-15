@@ -23,7 +23,7 @@ private:
     std::vector<WorkloadExecutionController *> execution_controllers;
     unsigned long total_num_idle_cores;
 
-    std::shared_ptr<wrench::ComputeService> pickComputeService(unsigned long num_cores, sg_size_t total_ram);
+    std::shared_ptr<wrench::ComputeService> pickComputeService(unsigned long num_cores, sg_size_t total_ram) const;
 
 };
 

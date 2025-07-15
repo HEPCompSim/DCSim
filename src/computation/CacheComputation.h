@@ -11,20 +11,20 @@ class CacheComputation {
 
 public:
     CacheComputation(
-            std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
-            std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
-            std::vector<std::shared_ptr<wrench::DataFile>> &files,
+            const std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+            const std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+            const std::vector<std::shared_ptr<wrench::DataFile>> &files,
             double total_flops);
 
     virtual ~CacheComputation() = default;
 
-    void determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor, bool cache_files);
+    void determineFileSourcesAndCache(const std::shared_ptr<wrench::ActionExecutor>& action_executor, bool cache_files);
 
-    void operator()(std::shared_ptr<wrench::ActionExecutor> action_executor);
+    void operator()(const std::shared_ptr<wrench::ActionExecutor> &action_executor);
 
-    double determineFlops(sg_size_t data_size, sg_size_t total_data_size) const;
+    [[nodiscard]] double determineFlops(sg_size_t data_size, sg_size_t total_data_size) const;
 
-    virtual void performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) = 0;
+    virtual void performComputation(const std::shared_ptr<wrench::ActionExecutor> &action_executor);
 
 protected:
     std::set<std::shared_ptr<wrench::StorageService>> cache_storage_services;
@@ -33,8 +33,9 @@ protected:
     double total_flops;
 
     std::vector<std::pair<std::shared_ptr<wrench::DataFile>, std::shared_ptr<wrench::FileLocation>>> file_sources;
+    double total_flops_;
 
-    sg_size_t determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files);
+    sg_size_t determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) const;
     sg_size_t total_data_size;
 };
 

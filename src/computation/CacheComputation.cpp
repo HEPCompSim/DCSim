@@ -17,10 +17,10 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputati
  * @param files Input files of the job to process
  * @param total_flops Total #FLOPS of the whole compute action of the job
  */
-CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
-                                   std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
-                                   std::vector<std::shared_ptr<wrench::DataFile>> &files,
-                                   double total_flops) {
+CacheComputation::CacheComputation(const std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+                                   const std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+                                   const std::vector<std::shared_ptr<wrench::DataFile>> &files,
+                                   const double total_flops) : total_flops_(total_flops) {
     this->cache_storage_services = cache_storage_services;
     this->grid_storage_services = grid_storage_services;
     this->files = files;
@@ -36,9 +36,10 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  * TODO: Find some optimal sources serving and destinations providing files to jobs.
  * TODO: Find solutions for possible race conditions, when several jobs require same files.
  * 
- * @param hostname Name of the host, where the job runs
+ * @param action_executor: action executor used for this computation
+ * @param cache_files: whether to cache files locally or not
  */
-void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor, bool cache_files = true) {
+void CacheComputation::determineFileSourcesAndCache(const std::shared_ptr<wrench::ActionExecutor>& action_executor, bool cache_files = true) {
 
     std::string hostname = action_executor->getHostname();// host where action is executed
     auto host = simgrid::s4u::Host::by_name(hostname);
@@ -91,7 +92,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         if (source_ss) {
             SimpleSimulator::global_file_map[source_ss].touchFile(f.get());
             // this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
-            file_sources.emplace_back(std::make_pair(f, wrench::FileLocation::LOCATION(source_ss, f)));
+            file_sources.emplace_back(f, wrench::FileLocation::LOCATION(source_ss, f));
             continue;
         }
         // If not, then we have to copy the file from some GRID source to some reachable cache storage service
@@ -149,7 +150,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
 
         // this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
-        file_sources.emplace_back(std::make_pair(f, wrench::FileLocation::LOCATION(source_ss, f)));
+        file_sources.emplace_back(f, wrench::FileLocation::LOCATION(source_ss, f));
     }
 
     // Fill monitoring information
@@ -167,9 +168,9 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
  * @brief Determine the incremental size of all input-files of a job
  * 
  * @param files Input files of the job to consider
- * @return double
+ * @return a data size
  */
-sg_size_t CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
+sg_size_t CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) const {
     sg_size_t incr_file_size = 0;
     for (auto const &f: this->files) {
         incr_file_size += f->getSize();
@@ -182,7 +183,7 @@ sg_size_t CacheComputation::determineTotalDataSize(const std::vector<std::shared
  * 
  * @param action_executor 
  */
-void CacheComputation::operator()(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+void CacheComputation::operator()(const std::shared_ptr<wrench::ActionExecutor> &action_executor) {
     std::string hostname = action_executor->getHostname();
 
     // Identify all file sources (and deal with caching, evictions, etc.
@@ -199,9 +200,9 @@ void CacheComputation::operator()(std::shared_ptr<wrench::ActionExecutor> action
  * 
  * @param data_size Size of the input-data block considered
  * @param total_data_size Total incremental size of all input-files
- * @return double 
+ * @return a number of flops
  */
-double CacheComputation::determineFlops(sg_size_t data_size, sg_size_t total_data_size) const {
+double CacheComputation::determineFlops(const sg_size_t data_size, const sg_size_t total_data_size) const {
     double flops = this->total_flops * static_cast<double>(data_size) / static_cast<double>(total_data_size);
     return flops;
 }
@@ -211,7 +212,7 @@ double CacheComputation::determineFlops(sg_size_t data_size, sg_size_t total_dat
  * 
  * @param action_executor Handle to access the action this computation belongs to
  */
-void CacheComputation::performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+void CacheComputation::performComputation(const std::shared_ptr<wrench::ActionExecutor> &action_executor) {
     throw std::runtime_error(
             "Base class CacheComputation has no performComputation implemented! \
         It is meant only as a purely virtual placeholder. \

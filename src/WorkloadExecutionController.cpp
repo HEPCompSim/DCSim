@@ -160,7 +160,7 @@ void WorkloadExecutionController::setJobSubmitted(const std::string &job_name) {
  * @brief Method to determine whether all jobs have been submitted
  * @return True is all jobs have been submitted, false otherwise
  */
-bool WorkloadExecutionController::isWorkloadEmpty() {
+bool WorkloadExecutionController::isWorkloadEmpty() const {
     return this->workload_spec.empty();
 }
 

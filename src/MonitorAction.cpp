@@ -5,8 +5,8 @@
  */
 MonitorAction::MonitorAction(
         const std::string &name,
-        sg_size_t ram,
-        unsigned long num_cores,
+        const sg_size_t ram,
+        const unsigned long num_cores,
         const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_execute,
         const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate) : CustomAction(name, ram, num_cores,
                                                                                                                              lambda_execute,

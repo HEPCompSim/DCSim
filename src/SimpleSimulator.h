@@ -10,7 +10,7 @@
 class SimpleSimulator {
 
 public:
-    static void identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation);
+    static void identifyHostTypes(const std::shared_ptr<wrench::Simulation> &simulation);
 
     static std::set<std::string> cache_hosts;     // hosts configured to provide a cache
     static std::set<std::string> storage_hosts;   // hosts configured to provide GRID storage

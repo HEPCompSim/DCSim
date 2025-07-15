@@ -48,7 +48,7 @@ public:
                                                             const std::shared_ptr<wrench::ComputeService> &cs);
     void setJobSubmitted(const std::string &job_name);
 
-    bool isWorkloadEmpty();
+    bool isWorkloadEmpty() const;
 
 protected:
     void processEventCompoundJobFailure(const std::shared_ptr<wrench::CompoundJobFailedEvent>& event) override;
