@@ -8,7 +8,8 @@
 		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
 		"dockerfile": "../Dockerfile",
 		"args": {
-			"IMAGE_REGISTRY": "mhorzela"
+			"IMAGE_REGISTRY": "mhorzela",
+			"IMAGE_TAG": "simcal-calibrator"
 		}
 	}
 
