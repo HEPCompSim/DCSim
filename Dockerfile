@@ -1,6 +1,7 @@
-ARG IMAGE_REGISTRY
-ARG IMAGE_TAG
-FROM --platform=linux/amd64 ${IMAGE_REGISTRY}/dcsim:${IMAGE_TAG} AS base
+ARG IMAGE_REGISTRY=mhorzela
+ARG IMAGE_TAG=latest
+
+FROM ${IMAGE_REGISTRY}/dcsim:${IMAGE_TAG} AS base
 
 # set user's environment variable
 ENV CXX="g++" CC="gcc"
