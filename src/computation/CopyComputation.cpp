@@ -58,7 +58,7 @@ void CopyComputation::performComputation(const std::shared_ptr<wrench::ActionExe
                     "Reading file " + fs.first->getID() + " finished before it started!");
         }
     }
-    if (data_size > total_data_size) {
+    if (data_size != total_data_size) {
         throw std::runtime_error("Something went wrong in the data size computation!");
     }
 
