@@ -71,24 +71,27 @@ find_library(WRENCH_LIBRARY NAMES wrench)
 find_library(SimGrid_LIBRARY NAMES simgrid)
 
 # generating the executable
+add_library(DCSim SHARED ${SOURCE_FILES})
 add_executable(dc-sim ${SOURCE_FILES})
 
 if (ENABLE_BATSCHED)
 target_link_libraries(dc-sim
-                       ${WRENCH_LIBRARY}
-		       ${FSMOD_LIBRARY}
-                       ${SimGrid_LIBRARY}
-                       ${Boost_LIBRARIES}
+                      DCSim
+                      ${WRENCH_LIBRARY}
+		      ${FSMOD_LIBRARY}
+                      ${SimGrid_LIBRARY}
+                      ${Boost_LIBRARIES}
                       -lzmq )
 else()
 target_link_libraries(dc-sim
-                       ${WRENCH_LIBRARY}
-		       ${FSMOD_LIBRARY}
-                       ${SimGrid_LIBRARY}
-                       ${Boost_LIBRARIES}
-                      )
+                      DCSim
+                      ${WRENCH_LIBRARY}
+		      ${FSMOD_LIBRARY}
+                      ${SimGrid_LIBRARY}
+                      ${Boost_LIBRARIES})
 endif()
 
 # set_property(TARGET dc-sim PROPERTY CXX_STANDARD 17)
 
+install(TARGETS DCSim DESTINATION lib)
 install(TARGETS dc-sim DESTINATION bin)
