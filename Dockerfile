@@ -1,7 +1,7 @@
 ARG IMAGE_REGISTRY=mhorzela
 ARG IMAGE_TAG=latest
 
-FROM ${IMAGE_REGISTRY}/dcsim:${IMAGE_TAG} AS base
+FROM ${IMAGE_REGISTRY}/dcsim:${IMAGE_TAG} AS builder
 
 # set user's environment variable
 ENV CXX="g++" CC="gcc"
@@ -15,16 +15,19 @@ COPY --chown=dcsim:dcsim . .
 
 # Compile and install DCSim
 RUN mkdir -p build && pushd build && \
-    cmake .. && make -j${NCORES} && make install && popd && \
-    sudo ldconfig
+    cmake .. && make -j${NCORES} && popd
+
+USER root
+RUN pushd build && make install && popd && ldconfig
+USER dcsim
 
 # Final image
-FROM base
+FROM ${IMAGE_REGISTRY}/dcsim:${IMAGE_TAG}
 
 # Copy built artifacts
-COPY --from=0 /usr/local/bin/dc-sim /usr/local/bin/dc-sim
-COPY --from=0 /usr/local/lib/libDCSim.so /usr/local/lib/libDCSim.so
-COPY --from=0 /home/dcsim/.local /home/dcsim/.local
+COPY --from=builder /usr/local/bin/dc-sim /usr/local/bin/dc-sim
+COPY --from=builder /usr/local/lib/libDCSim.so /usr/local/lib/libDCSim.so
+COPY --from=builder /home/dcsim/.local /home/dcsim/.local
 COPY --chown=dcsim:dcsim data/ /home/DCSim/data/
 COPY --chown=dcsim:dcsim tools/ /home/DCSim/tools/
 
