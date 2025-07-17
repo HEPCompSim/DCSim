@@ -15,8 +15,7 @@ import simcal as sc
 import math
 
 
-import time    
-from skywalker import processify #pip install skywalker
+import time
 
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives

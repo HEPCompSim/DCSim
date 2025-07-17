@@ -23,8 +23,7 @@ import ot #pip install POT
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from simcal_calibrator import *
 
-import time    
-from skywalker import processify #pip install skywalker
+import time
 
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives

@@ -23,8 +23,7 @@ import ot #pip install POT
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from simcal_calibrator import *
 
-import time    
-from skywalker import processify #pip install skywalker
+import time
 
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives
@@ -33,7 +32,14 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
-	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
+	parser.add_argument(
+		"-l", "--loss",
+		type=str,
+		choices=["mre", "ddks", "ratio", "chamfer", "hausdorff", "wasserstein", "sorted", "double"],
+		required=True,
+		help="Loss metric used as a goodness-of-fit between ground truth data and simulation",
+		default = "ddks"
+	)
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-a", "--args", type=str, help="args to shell about")
