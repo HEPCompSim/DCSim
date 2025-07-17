@@ -21,6 +21,7 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get -y autoclean && apt-get -y autoremove && \
     rm -rf /var/lib/apt-get/lists/*
 RUN apt-get install -y \
+        openssh-client \
         python3-numpy python3-matplotlib python3-scipy python3-pandas
 # RUN python3 -m pip install --upgrade --no-input --break-system-packages \
 #         numpy matplotlib scipy pandas
