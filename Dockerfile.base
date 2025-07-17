@@ -76,6 +76,8 @@ RUN git clone https://github.com/HEPCompSim/DCSim.git && \
     mkdir -p /home/DCSim/tools && cp -r DCSim/tools/* /home/DCSim/tools && \
     rm -rf DCSim
 
+RUN ldconfig
+
 ###########################################################
 # Set user
 ###########################################################
