@@ -160,7 +160,7 @@ void WorkloadExecutionController::setJobSubmitted(const std::string &job_name) {
  * @brief Method to determine whether all jobs have been submitted
  * @return True is all jobs have been submitted, false otherwise
  */
-bool WorkloadExecutionController::isWorkloadEmpty() {
+bool WorkloadExecutionController::isWorkloadEmpty() const {
     return this->workload_spec.empty();
 }
 
@@ -283,9 +283,9 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(
     /* Remove all actions from memory and compute incremental output values in one loop */
     double incr_compute_time = DefaultValues::UndefinedDouble;
     double incr_infile_transfertime = 0.;
-    double incr_infile_size = 0.;
+    sg_size_t incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
-    double incr_outfile_size = 0.;
+    sg_size_t incr_outfile_size = 0.;
     double global_start_date = DBL_MAX;
     double global_end_date = DBL_MIN;
     double hitrate = DefaultValues::UndefinedDouble;

@@ -9,18 +9,20 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(streamed_computation, "Log category for StreamedCom
 /**
  * @brief Construct a new StreamedComputation::StreamedComputation object
  * to be used as a lambda within a compute action, which shall take caching of input-files into account.
- * File read is performed asynchronously in blocks and the according coompute step is executed 
+ * File read is performed asynchronously in blocks and the corresponding compute step is executed
  * once the corresponding block is available.
  * 
- * @param storage_services Storage services reachable to retrieve input files (caches plus remote)
+ * @param cache_storage_services Storage services reachable to retrieve input files (caches)
+ * @param grid_storage_services Storage services reachable to retrieve input files (remote)
  * @param files Input files of the job to process
  * @param total_flops Total #FLOPS of the whole compute action of the job
+ * @param prefetch_on Whether pre-fetching is on or not
  */
 StreamedComputation::StreamedComputation(
         std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
-        std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
-        std::vector<std::shared_ptr<wrench::DataFile>> &files,
-        double total_flops, bool prefetch_on) : CacheComputation::CacheComputation(cache_storage_services,
+        const std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+        const std::vector<std::shared_ptr<wrench::DataFile>> &files,
+        const double total_flops, const bool prefetch_on) : CacheComputation::CacheComputation(cache_storage_services,
                                                                                    grid_storage_services,
                                                                                    files,
                                                                                    total_flops) { prefetching_on = prefetch_on; }
@@ -32,7 +34,7 @@ StreamedComputation::StreamedComputation(
  * 
  * @param action_executor Handle to access the action this computation belongs to
  */
-void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+void StreamedComputation::performComputation(const std::shared_ptr<wrench::ActionExecutor> &action_executor) {
 
     auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction());// executed action
 
@@ -46,14 +48,14 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
     auto total_data_size = this->total_data_size;
     for (auto const &fs: this->file_sources) {
         WRENCH_INFO("Streaming computation for input file %s in location %s", fs.first->getID().c_str(), fs.second->getStorageService()->getHostname().c_str());
-        double data_to_process = fs.first->getSize();
+        sg_size_t data_to_process = fs.first->getSize();
 
         // Compute the number of blocks
-        int num_blocks = int(std::ceil(data_to_process / (double) SimpleSimulator::xrd_block_size));
+        auto num_blocks = static_cast<int>(std::ceil(static_cast<double>(data_to_process) / static_cast<double>(SimpleSimulator::xrd_block_size)));
 
         // Read the first block
         double read_start_time = wrench::Simulation::getCurrentSimulatedDate();
-        fs.second->getStorageService()->readFile(fs.second, std::min<double>(SimpleSimulator::xrd_block_size, data_to_process));
+        fs.second->getStorageService()->readFile(fs.second, std::min<sg_size_t>(SimpleSimulator::xrd_block_size, data_to_process));
         double read_end_time = wrench::Simulation::getCurrentSimulatedDate();
         if (read_end_time > read_start_time) {
             infile_transfer_time += read_end_time - read_start_time;
@@ -66,9 +68,9 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
 
         // Process next blocks: compute block i while reading block i+i
         for (int i = 0; i < num_blocks - 1; i++) {
-            double num_bytes = std::min<double>(SimpleSimulator::xrd_block_size, data_to_process);
+            auto num_bytes = std::min<sg_size_t>(SimpleSimulator::xrd_block_size, data_to_process);
             double num_flops = determineFlops(num_bytes, total_data_size);
-            WRENCH_INFO("Chunk: %.2lf bytes / %.2lf flops", num_bytes, num_flops);
+            WRENCH_INFO("Chunk: %llu bytes / %.2lf flops", num_bytes, num_flops);
             // Add XRootD FLOPs overhead that increments with execution time
             double xrd_overhead_flops = SimpleSimulator::xrd_add_flops_per_time * (wrench::Simulation::getCurrentSimulatedDate() - job_start_time);
             num_flops += xrd_overhead_flops;
@@ -116,7 +118,7 @@ void StreamedComputation::performComputation(std::shared_ptr<wrench::ActionExecu
         }
 
         // Process last block
-        double num_flops = determineFlops(std::min<double>(SimpleSimulator::xrd_block_size, data_to_process), total_data_size);
+        double num_flops = determineFlops(std::min<sg_size_t>(SimpleSimulator::xrd_block_size, data_to_process), total_data_size);
         simgrid::s4u::ExecPtr exec = simgrid::s4u::this_actor::exec_init(num_flops);
         exec->start();
         double exec_start_time = exec->get_start_time();
