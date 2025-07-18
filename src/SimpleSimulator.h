@@ -10,7 +10,7 @@
 class SimpleSimulator {
 
 public:
-    static void identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation);
+    static void identifyHostTypes(const std::shared_ptr<wrench::Simulation> &simulation);
 
     static std::set<std::string> cache_hosts;     // hosts configured to provide a cache
     static std::set<std::string> storage_hosts;   // hosts configured to provide GRID storage
@@ -32,7 +32,7 @@ public:
 
     static bool shuffle_jobs;
 
-    static double xrd_block_size;
+    static sg_size_t xrd_block_size;
     static double xrd_add_flops_per_time;
     static double xrd_add_flops_local_per_time;
     

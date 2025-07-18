@@ -17,10 +17,10 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(cache_computation, "Log category for CacheComputati
  * @param files Input files of the job to process
  * @param total_flops Total #FLOPS of the whole compute action of the job
  */
-CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
-                                   std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
-                                   std::vector<std::shared_ptr<wrench::DataFile>> &files,
-                                   double total_flops) {
+CacheComputation::CacheComputation(const std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
+                                   const std::set<std::shared_ptr<wrench::StorageService>> &grid_storage_services,
+                                   const std::vector<std::shared_ptr<wrench::DataFile>> &files,
+                                   const double total_flops) : total_flops_(total_flops) {
     this->cache_storage_services = cache_storage_services;
     this->grid_storage_services = grid_storage_services;
     this->files = files;
@@ -36,17 +36,18 @@ CacheComputation::CacheComputation(std::set<std::shared_ptr<wrench::StorageServi
  * TODO: Find some optimal sources serving and destinations providing files to jobs.
  * TODO: Find solutions for possible race conditions, when several jobs require same files.
  * 
- * @param hostname Name of the host, where the job runs
+ * @param action_executor: action executor used for this computation
+ * @param cache_files: whether to cache files locally or not
  */
-void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::ActionExecutor> action_executor, bool cache_files = true) {
+void CacheComputation::determineFileSourcesAndCache(const std::shared_ptr<wrench::ActionExecutor>& action_executor, bool cache_files = true) {
 
     std::string hostname = action_executor->getHostname();// host where action is executed
     auto host = simgrid::s4u::Host::by_name(hostname);
     std::string netzone = host->get_englobing_zone()->get_name();                            // network zone executing host belongs to
     auto the_action = std::dynamic_pointer_cast<MonitorAction>(action_executor->getAction());// executed action
 
-    double cached_data_size = 0.;
-    double remote_data_size = 0.;
+    sg_size_t cached_data_size = 0;
+    sg_size_t remote_data_size = 0;
 
     // Identify all cache storage services that can be reached from
     // this host, which runs the streaming action
@@ -82,7 +83,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
 #endif
             if (has_file) {
                 source_ss = ss;
-                WRENCH_DEBUG("Found file %s with size %.2f in cache %s", f->getID().c_str(), f->getSize(), source_ss->getHostname().c_str());
+                WRENCH_DEBUG("Found file %s with size %llu in cache %s", f->getID().c_str(), f->getSize(), source_ss->getHostname().c_str());
                 cached_data_size += f->getSize();
                 break;
             }
@@ -91,7 +92,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         if (source_ss) {
             SimpleSimulator::global_file_map[source_ss].touchFile(f.get());
             // this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
-            file_sources.emplace_back(std::make_pair(f, wrench::FileLocation::LOCATION(source_ss, f)));
+            file_sources.emplace_back(f, wrench::FileLocation::LOCATION(source_ss, f));
             continue;
         }
         // If not, then we have to copy the file from some GRID source to some reachable cache storage service
@@ -121,7 +122,7 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
             auto destination_ss = matched_storage_services.at(rand() % matched_storage_services.size());
 
             // Evict files while to create space, using an LRU scheme!
-            double free_space = destination_ss->getTotalFreeSpace();
+            auto free_space = destination_ss->getTotalFreeSpace();
             while (free_space < f->getSize()) {
                 auto to_evict = SimpleSimulator::global_file_map[destination_ss].removeLRUFile();
                 WRENCH_INFO("Evicting file %s from storage service on host %s",
@@ -149,15 +150,17 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
         }
 
         // this->file_sources[f] = wrench::FileLocation::LOCATION(source_ss, f);
-        file_sources.emplace_back(std::make_pair(f, wrench::FileLocation::LOCATION(source_ss, f)));
+        file_sources.emplace_back(f, wrench::FileLocation::LOCATION(source_ss, f));
     }
 
     // Fill monitoring information
-    if (std::abs(cached_data_size + remote_data_size - this->total_data_size) > 1.) {
+    if (cached_data_size + remote_data_size > this->total_data_size) {
         throw std::runtime_error("There is more or less data read from cache plus remote than the job's input-data size!");
     }
-    WRENCH_DEBUG("Hitrate: %.2f (Cached data: %.2f, total data: %.2f)", cached_data_size / this->total_data_size, cached_data_size, this->total_data_size);
-    the_action->set_hitrate(cached_data_size / this->total_data_size);
+    WRENCH_DEBUG("Hitrate: %.2f (Cached data: %llu, total data: %llu)",
+        static_cast<double>(cached_data_size) / static_cast<double>(this->total_data_size),
+        cached_data_size, this->total_data_size);
+    the_action->set_hitrate(static_cast<double>(cached_data_size) / static_cast<double>(this->total_data_size));
 }
 
 //? Question for Henri: put this into determineFileSources function to prevent two times the same loop?
@@ -165,10 +168,10 @@ void CacheComputation::determineFileSourcesAndCache(std::shared_ptr<wrench::Acti
  * @brief Determine the incremental size of all input-files of a job
  * 
  * @param files Input files of the job to consider
- * @return double
+ * @return a data size
  */
-double CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) {
-    double incr_file_size = 0.0;
+sg_size_t CacheComputation::determineTotalDataSize(const std::vector<std::shared_ptr<wrench::DataFile>> &files) const {
+    sg_size_t incr_file_size = 0;
     for (auto const &f: this->files) {
         incr_file_size += f->getSize();
     }
@@ -180,7 +183,7 @@ double CacheComputation::determineTotalDataSize(const std::vector<std::shared_pt
  * 
  * @param action_executor 
  */
-void CacheComputation::operator()(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+void CacheComputation::operator()(const std::shared_ptr<wrench::ActionExecutor> &action_executor) {
     std::string hostname = action_executor->getHostname();
 
     // Identify all file sources (and deal with caching, evictions, etc.
@@ -197,10 +200,10 @@ void CacheComputation::operator()(std::shared_ptr<wrench::ActionExecutor> action
  * 
  * @param data_size Size of the input-data block considered
  * @param total_data_size Total incremental size of all input-files
- * @return double 
+ * @return a number of flops
  */
-double CacheComputation::determineFlops(double data_size, double total_data_size) {
-    double flops = this->total_flops * data_size / total_data_size;
+double CacheComputation::determineFlops(const sg_size_t data_size, const sg_size_t total_data_size) const {
+    double flops = this->total_flops * static_cast<double>(data_size) / static_cast<double>(total_data_size);
     return flops;
 }
 
@@ -209,7 +212,7 @@ double CacheComputation::determineFlops(double data_size, double total_data_size
  * 
  * @param action_executor Handle to access the action this computation belongs to
  */
-void CacheComputation::performComputation(std::shared_ptr<wrench::ActionExecutor> action_executor) {
+void CacheComputation::performComputation(const std::shared_ptr<wrench::ActionExecutor> &action_executor) {
     throw std::runtime_error(
             "Base class CacheComputation has no performComputation implemented! \
         It is meant only as a purely virtual placeholder. \

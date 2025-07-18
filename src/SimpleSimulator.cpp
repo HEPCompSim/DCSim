@@ -24,6 +24,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
+#include <utility>
 
 
 namespace po = boost::program_options;
@@ -46,13 +47,13 @@ const std::vector<std::string> elective_workload_keys = {
         "infile_dataset",
 };
 std::map<std::shared_ptr<wrench::StorageService>, LRU_FileList> SimpleSimulator::global_file_map;
-std::mt19937 SimpleSimulator::gen(42);                           // random number generator
+std::mt19937 SimpleSimulator::gen(42);                        // random number generator
 std::ofstream filedump;                                          // output file stream to write monitoring dump to
 bool SimpleSimulator::infile_caching_on = true;                  // flag to turn off/on the caching of job input-files
 bool SimpleSimulator::prefetching_on = true;                     // flag to enable prefetching during streaming
 bool SimpleSimulator::shuffle_jobs = false;                      // flag to enable job shuffling during submission
-double SimpleSimulator::xrd_block_size = 1. * 1000 * 1000 * 1000;// maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
-double SimpleSimulator::xrd_add_flops_per_time = 20000000000;// flops overhead introduced by XRootD streaming per second
+sg_size_t SimpleSimulator::xrd_block_size = 1000 * 1000 * 1000;  // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
+double SimpleSimulator::xrd_add_flops_per_time = 20000000000;    // flops overhead introduced by XRootD streaming per second
 double SimpleSimulator::xrd_add_flops_local_per_time = 0;
 // TODO: The initialized below is likely bogus (at compile time?)
 std::set<std::string> SimpleSimulator::cache_hosts;
@@ -71,7 +72,7 @@ bool SimpleSimulator::local_cache_scope = false;// flag to consider only local c
  * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
  */
 struct cacheScope {
-    cacheScope(std::string const &val) : value(val) {}
+    explicit cacheScope(std::string val) : value(std::move(val)) {}
     std::string value;
 };
 /**
@@ -112,7 +113,7 @@ void validate(boost::any &v, std::vector<std::string> const &values, cacheScope 
  * used as Custom Validator: https://www.boost.org/doc/libs/1_48_0/doc/html/program_options/howto.html#id2445062
  */
 struct WorkloadTypeStruct {
-    WorkloadTypeStruct(std::string const &val) : value(boost::to_lower_copy(val)) {}
+    explicit WorkloadTypeStruct(std::string const &val) : value(boost::to_lower_copy(val)) {}
     std::string value;
     // getter function
     WorkloadType get() const {
@@ -227,15 +228,16 @@ po::variables_map process_program_options(int argc, char **argv) {
     // default values
     double hitrate = 0.0;
 
-    double average_flops = 2164.428 * 1000 * 1000 * 1000;
-    double sigma_flops = 0.1 * average_flops;
-    double average_memory = 2. * 1000 * 1000 * 1000;
-    double sigma_memory = 0.1 * average_memory;
-    size_t infiles_per_job = 10;
-    double average_infile_size = 3600000000.;
-    double sigma_infile_size = 0.1 * average_infile_size;
-    double average_outfile_size = 0.5 * infiles_per_job * average_infile_size;
-    double sigma_outfile_size = 0.1 * average_outfile_size;
+    // HENRI: Commented the 9 lines below as they were not used (and include data-type weirdness)
+    // double average_flops = 2164.428 * 1000 * 1000 * 1000;
+    // double sigma_flops = 0.1 * average_flops;
+    // double average_memory = 2. * 1000 * 1000 * 1000;
+    // double sigma_memory = 0.1 * average_memory;
+    // size_t infiles_per_job = 10;
+    // double average_infile_size = 3600000000.;
+    // double sigma_infile_size = 0.1 * average_infile_size;
+    // double average_outfile_size = 0.5 * infiles_per_job * average_infile_size;
+    // double sigma_outfile_size = 0.1 * average_outfile_size;
 
 
     size_t duplications = 1;
@@ -244,7 +246,7 @@ po::variables_map process_program_options(int argc, char **argv) {
     bool prefetch_off = false;
     bool shuffle_jobs = false;
 
-    double xrd_block_size = 1000. * 1000 * 1000;
+    sg_size_t xrd_block_size = 1000 * 1000 * 1000;
     double xrd_add_flops_per_time = 20000000000;
     double xrd_add_flops_local_per_time = 0;
     std::string storage_service_buffer_size = "1048576";// 1MiB
@@ -259,8 +261,8 @@ po::variables_map process_program_options(int argc, char **argv) {
     op("duplications,d", po::value<size_t>()->default_value(duplications), "number of duplications of the workload to feed into the simulation");
     op("no-caching", po::bool_switch()->default_value(no_caching), "switch to turn on/off the caching of jobs' input-files")("prefetch-off", po::bool_switch()->default_value(prefetch_off), "switch to turn on/off prefetching for streaming of input-files")("shuffle-jobs", po::bool_switch()->default_value(shuffle_jobs), "switch to turn on/off shuffling jobs during submission");
     op("output-file,o", po::value<std::string>()->value_name("<out file>")->required(), "path for the CSV file containing output information about the jobs in the simulation");
-    op("xrd-blocksize,x", po::value<double>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data");
-    op("xrd-flops-per-time", po::value<double>()->default_value(xrd_add_flops_per_time), "flops overhead introduced by XRootD data streaming over network per second");
+    op("xrd-blocksize,x", po::value<sg_size_t>()->default_value(xrd_block_size), "size of the blocks XRootD uses for data streaming")("storage-buffer-size,b", po::value<StorageServiceBufferValue>()->default_value(StorageServiceBufferValue(storage_service_buffer_size)), "buffer size used by the storage services when communicating data");
+    op("xrd-flops-per-time", po::value<double>()->default_value(xrd_add_flops_per_time), "flops overhead introduced by XRootD data streaming per second");
     op("xrd-flops-per-time-local", po::value<double>()->default_value(xrd_add_flops_local_per_time), "flops overhead introduced by XRootD data streaming from local storage per second");
     op("cache-scope", po::value<cacheScope>()->default_value(cacheScope("local")), "Set the network scope in which caches can be found:\n local: only caches on same machine\n network: caches in same network zone\n siblingnetwork: also include caches in sibling networks");
     op("seed,s", po::value<unsigned int>()->default_value(seed), "Set the seed for the random generator");
@@ -336,15 +338,15 @@ std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobS
  * 
  * @throw std::runtime_error, std::invalid_argument
  */
-void SimpleSimulator::identifyHostTypes(std::shared_ptr<wrench::Simulation> simulation) {
-    std::vector<std::string> hostname_list = simulation->getHostnameList();
-    if (hostname_list.size() == 0) {
+void SimpleSimulator::identifyHostTypes(const std::shared_ptr<wrench::Simulation> &simulation) {
+    std::vector<std::string> hostname_list = wrench::Simulation::getHostnameList();
+    if (hostname_list.empty()) {
         throw std::runtime_error("Empty hostname list! Have you instantiated the platform already?");
     }
     for (const auto &hostname: hostname_list) {
         auto hostProperties = wrench::S4U_Simulation::getHostProperty(hostname, "type");
         bool validType = false;
-        if (hostProperties == "") {
+        if (hostProperties.empty()) {
             throw std::runtime_error("Configuration property \"type\" missing for host " + hostname);
         }
         if (hostProperties.find("executor") != std::string::npos) {
@@ -455,7 +457,7 @@ int main(int argc, char **argv) {
     SimpleSimulator::shuffle_jobs = vm["shuffle-jobs"].as<bool>();
 
     // Set XRootD block size
-    SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<double>();
+    SimpleSimulator::xrd_block_size = vm["xrd-blocksize"].as<sg_size_t>();
     SimpleSimulator::xrd_add_flops_per_time = vm["xrd-flops-per-time"].as<double>();
     SimpleSimulator::xrd_add_flops_local_per_time = vm["xrd-flops-per-time-local"].as<double>();
 
@@ -484,7 +486,7 @@ int main(int argc, char **argv) {
 
     std::vector<Dataset> dataset_specs = {};
 
-    if (dataset_configurations.size() == 0) {
+    if (dataset_configurations.empty()) {
         //Default dataset config
     } else {
         for (auto &ds_confpath: dataset_configurations) {
@@ -737,15 +739,15 @@ int main(int argc, char **argv) {
                 for (auto const &storage_service: grid_storage_services) {
                     if (std::find(dss.hostnames.begin(), dss.hostnames.end(), storage_service->getHostname()) == dss.hostnames.end())
                         continue;
-                    simulation->stageFile(wrench::FileLocation::LOCATION(storage_service, f));
+                    wrench::StorageService::createFileAtLocation(wrench::FileLocation::LOCATION(storage_service, f));
                     SimpleSimulator::global_file_map[storage_service].touchFile(f.get());
                 }
             }
         }
         for (auto const &wms: workload_execution_controllers) {
             for (auto &job_spec: wms->get_workload_spec()) {
-                double incr_infile_size = 0.;
-                double cached_files_size = 0.;
+                sg_size_t incr_infile_size = 0.;
+                sg_size_t cached_files_size = 0.;
                 for (auto const &f: job_spec.second.infiles) {
                     incr_infile_size += f->getSize();
                 }
@@ -754,16 +756,16 @@ int main(int argc, char **argv) {
 
                     // Distribute the files on all caches until desired hitrate is reached
                     // TODO: Rework the initialization of input files on caches
-                    if (cached_files_size < hitrate * incr_infile_size) {
+                    if (cached_files_size < static_cast<sg_size_t>(hitrate * static_cast<double>(incr_infile_size))) {
                         for (const auto &cache: cache_storage_services) {
                             // simulation->stageFile(f, cache);
-                            simulation->stageFile(wrench::FileLocation::LOCATION(cache, f));
+                            wrench::StorageService::createFileAtLocation(wrench::FileLocation::LOCATION(cache, f));
                             SimpleSimulator::global_file_map[cache].touchFile(f.get());
                         }
                         cached_files_size += f->getSize();
                     }
                 }
-                if (cached_files_size / incr_infile_size < hitrate) {
+                if (static_cast<double>(cached_files_size) / static_cast<double>(incr_infile_size) < hitrate) {
                     throw std::runtime_error("Desired hitrate was not reached!");
                 }
             }

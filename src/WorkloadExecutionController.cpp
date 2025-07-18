@@ -160,7 +160,7 @@ void WorkloadExecutionController::setJobSubmitted(const std::string &job_name) {
  * @brief Method to determine whether all jobs have been submitted
  * @return True is all jobs have been submitted, false otherwise
  */
-bool WorkloadExecutionController::isWorkloadEmpty() {
+bool WorkloadExecutionController::isWorkloadEmpty() const {
     return this->workload_spec.empty();
 }
 
@@ -248,7 +248,7 @@ int WorkloadExecutionController::main() {
  * @param event: an execution event
  */
 void
-WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wrench::CompoundJobFailedEvent> event) {
+WorkloadExecutionController::processEventCompoundJobFailure(const std::shared_ptr<wrench::CompoundJobFailedEvent> &event) {
     WRENCH_INFO("Notified that compound job %s has failed!", event->job->getName().c_str());
     WRENCH_INFO("Failure cause: %s", event->failure_cause->toString().c_str());
     WRENCH_INFO("As a WorkloadExecutionController, I abort as soon as there is a failure");
@@ -264,7 +264,7 @@ WorkloadExecutionController::processEventCompoundJobFailure(std::shared_ptr<wren
 * @param event: an execution event
 */
 void WorkloadExecutionController::processEventCompoundJobCompletion(
-        std::shared_ptr<wrench::CompoundJobCompletedEvent> event) {
+        const std::shared_ptr<wrench::CompoundJobCompletedEvent> &event) {
 
     this->job_scheduler->jobDone(event->job);
     this->num_completed_jobs++;
@@ -283,9 +283,9 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(
     /* Remove all actions from memory and compute incremental output values in one loop */
     double incr_compute_time = DefaultValues::UndefinedDouble;
     double incr_infile_transfertime = 0.;
-    double incr_infile_size = 0.;
+    sg_size_t incr_infile_size = 0.;
     double incr_outfile_transfertime = 0.;
-    double incr_outfile_size = 0.;
+    sg_size_t incr_outfile_size = 0.;
     double global_start_date = DBL_MAX;
     double global_end_date = DBL_MIN;
     double hitrate = DefaultValues::UndefinedDouble;

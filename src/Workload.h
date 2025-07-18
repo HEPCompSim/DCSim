@@ -28,7 +28,7 @@ std::string workload_type_to_string(WorkloadType);
 
 // enum class WorkloadType {Calculation, Streaming, Copy};
 
-inline WorkloadType get_workload_type(std::string wfname) {
+inline WorkloadType get_workload_type(const std::string &wfname) {
     if (wfname == "calculation") {
         return WorkloadType::Calculation;
     } else if (wfname == "streaming") {
@@ -52,14 +52,14 @@ class Workload {
 public:
     // Constructor
     Workload(
-            const size_t num_jobs,
+            size_t num_jobs,
             nlohmann::json cores,
             nlohmann::json flops,
             nlohmann::json memory,
             nlohmann::json outfile_size,
-            const WorkloadType workload_type, const std::string name_suffix,
-            const double arrival_time, const std::mt19937 &generator,
-            const std::vector<std::string> infile_datasets = {});
+            WorkloadType workload_type, const std::string &name_suffix,
+            double arrival_time, const std::mt19937 &generator,
+            const std::vector<std::string> &infile_datasets = {});
 
     // job list with specifications
     std::vector<JobSpecification> job_batch;
@@ -79,10 +79,10 @@ private:
     std::function<double(std::mt19937 &)> mem_dist;
     std::function<double(std::mt19937 &)> outsize_dist;
 
-    std::function<int(std::mt19937 &)> initializeIntRNG(nlohmann::json json);
-    std::function<double(std::mt19937 &)> initializeDoubleRNG(nlohmann::json json);
+    static std::function<int(std::mt19937 &)> createIntRNG(nlohmann::json json);
+    static std::function<double(std::mt19937 &)> createDoubleRNG(nlohmann::json json);
 
-    JobSpecification sampleJob(const size_t job_id, std::string name_suffix, std::string potential_separator);
+    JobSpecification sampleJob(size_t job_id, const std::string &name_suffix, const std::string &potential_separator);
 };
 
 

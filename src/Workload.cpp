@@ -1,4 +1,6 @@
 #include "Workload.h"
+
+#include <utility>
 #include "Dataset.h"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(workload, "Log category for WorkloadExecutionController");
@@ -8,9 +10,9 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(workload, "Log category for WorkloadExecutionContro
 const char *workload_type_names[] = {WORKLOAD_TYPES(F) nullptr};
 #undef F
 
-std::string workload_type_to_string(WorkloadType workload) {
-    return ((int) workload < (int) NumWorkloadTypes)
-                   ? workload_type_names[(int) workload]
+std::string workload_type_to_string(const WorkloadType workload) {
+    return (static_cast<int>(workload) < static_cast<int>(NumWorkloadTypes))
+                   ? workload_type_names[static_cast<int>(workload)]
                    : "";
 }
 
@@ -23,20 +25,20 @@ std::string workload_type_to_string(WorkloadType workload) {
 
 /**
  * @brief Fill a Workload consisting of jobs with job specifications, 
- * which include the inputfile and outputfile dependencies.
- * It can be chosen between jobs streaming input data and perform computations simultaneously 
- * or jobs copying the full input-data and compute afterwards.
+ * which include the input file and outputfile dependencies.
+ * One can chose between jobs streaming input data and perform computations simultaneously
+ * or jobs copying the full input-data and performing the computation afterward.
  *    
  * @param num_jobs: number of tasks
- * @param infiles_per_task: number of input-files each job processes
+ * @param cores: json object containing type and parameters for the cores distribution
  * @param flops: json object containing type and parameters for the flops distribution
  * @param memory: json object containing type and parameters for the memory distribution
- * @param infile_size: json object containing type and parameters for the input-file size distribution
  * @param outfile_size: json object containing type and parameters for the output-file size distribution
- * @param workload_type: flag to specifiy, whether the job should run with streaming or not
+ * @param workload_type: The workload type
  * @param name_suffix: part of job name to distinguish between different workloads
  * @param arrival_time: submission time offset relative to simulation start
  * @param generator: random number generator objects to draw from
+ * @param infile_datasets the input file dataset
  * 
  * @throw std::runtime_error
  */
@@ -46,23 +48,22 @@ Workload::Workload(
         nlohmann::json flops,
         nlohmann::json memory,
         nlohmann::json outfile_size,
-        const enum WorkloadType workload_type, const std::string name_suffix,
+        const enum WorkloadType workload_type,
+        const std::string &name_suffix,
         const double arrival_time,
         const std::mt19937 &generator,
-        const std::vector<std::string> infile_datasets) {
+        const std::vector<std::string> &infile_datasets) {
     this->generator = generator;
     // Map to store the workload specification
     std::vector<JobSpecification> batch;
-    std::string potential_separator = "_";
-    if (name_suffix == "") {
-        potential_separator = "";
-    }
+    std::string potential_separator = (name_suffix.empty() ? "" : "_");
 
     // Initialize random number generators
-    this->core_dist = Workload::initializeIntRNG(cores);
-    this->flops_dist = Workload::initializeDoubleRNG(flops);
-    this->mem_dist = Workload::initializeDoubleRNG(memory);
-    this->outsize_dist = Workload::initializeDoubleRNG(outfile_size);
+    this->core_dist = Workload::createIntRNG(std::move(cores));
+    this->flops_dist = Workload::createDoubleRNG(std::move(flops));
+    this->mem_dist = Workload::createDoubleRNG(std::move(memory));
+    this->outsize_dist = Workload::createDoubleRNG(std::move(outfile_size));
+    batch.reserve(num_jobs);
     for (size_t j = 0; j < num_jobs; j++) {
         batch.push_back(sampleJob(j, name_suffix, potential_separator));
     }
@@ -74,7 +75,7 @@ Workload::Workload(
         this->infile_datasets = infile_datasets;
 }
 
-std::function<double(std::mt19937 &)> Workload::initializeDoubleRNG(nlohmann::json json) {
+std::function<double(std::mt19937 &)> Workload::createDoubleRNG(nlohmann::json json) {
     // std::cerr << json["type"] << ": ";
     std::function<double(std::mt19937 &)> dist;
     if (json["type"].get<std::string>() == "gaussian") {
@@ -97,7 +98,7 @@ std::function<double(std::mt19937 &)> Workload::initializeDoubleRNG(nlohmann::js
     return dist;
 }
 
-std::function<int(std::mt19937 &)> Workload::initializeIntRNG(nlohmann::json json) {
+std::function<int(std::mt19937 &)> Workload::createIntRNG(nlohmann::json json) {
     // std::cerr << json["type"] << ": ";
     std::function<int(std::mt19937 &)> dist;
     if (json["type"].get<std::string>() == "poisson") {
@@ -123,7 +124,7 @@ std::function<int(std::mt19937 &)> Workload::initializeIntRNG(nlohmann::json jso
 }
 
 
-JobSpecification Workload::sampleJob(size_t job_id, std::string name_suffix, std::string potential_separator) {
+JobSpecification Workload::sampleJob(const size_t job_id, const std::string &name_suffix, const std::string &potential_separator) {
     // Create a job specification
     JobSpecification job_specification;
 
@@ -142,12 +143,14 @@ JobSpecification Workload::sampleJob(size_t job_id, std::string name_suffix, std
     // Sample strictly positive task memory requirements
     double dmem = this->mem_dist(this->generator);
     while (dmem < 0.) dmem = this->mem_dist(this->generator);
-    job_specification.total_mem = dmem;
+    auto dmem_in_bytes = static_cast<sg_size_t>(dmem);
+    job_specification.total_mem = dmem_in_bytes;
 
     // Sample outfile sizes
     double doutsize = this->outsize_dist(this->generator);
     while (doutsize < 0.) doutsize = this->outsize_dist(this->generator);
-    job_specification.outfile = wrench::Simulation::addFile("outfile_" + name_suffix + potential_separator + std::to_string(j), doutsize);
+    auto doutsize_in_bytes = static_cast<sg_size_t>(doutsize);
+    job_specification.outfile = wrench::Simulation::addFile("outfile_" + name_suffix + potential_separator + std::to_string(j), doutsize_in_bytes);
 
     job_specification.jobid = "job_" + name_suffix + potential_separator + std::to_string(j);
 
@@ -159,7 +162,6 @@ void transform_if(InputIt first, InputIt last, OutputIt dest, Pred pred, Fct tra
     while (first != last) {
         if (pred(*first))
             *dest++ = transform(*first);
-
         ++first;
     }
 }
@@ -171,17 +173,17 @@ void Workload::assignFiles(std::vector<Dataset> const &dataset_specs) {
             [&](Dataset const &ds) { return &ds; });
     if (matching_ds.empty())
         throw std::runtime_error("ERROR: no valid infile dataset name in workload configuration.");
-    int num_files = std::accumulate(matching_ds.begin(), matching_ds.end(), 0, [](int sum, Dataset const *ds) { return sum + ds->files.size(); });
+    size_t num_files = std::accumulate(matching_ds.begin(), matching_ds.end(), 0, [](const int sum, Dataset const *ds) { return sum + ds->files.size(); });
     std::vector<std::shared_ptr<wrench::DataFile>> all_files{};
     all_files.reserve(num_files);
     for (auto const &ds: matching_ds) {
         std::copy(ds->files.begin(), ds->files.end(), std::back_inserter(all_files));
     }
-    int num_jobs = job_batch.size();
+    size_t num_jobs = job_batch.size();
     if (num_jobs == 0)
         return;
     // int num_files = all_files.size();
-    int k = num_files / num_jobs;
+    size_t k = num_files / num_jobs;
     std::cerr << "Assigning " << num_files << " files to " << num_jobs << " jobs\n";
     for (auto j = 0; j < num_jobs; ++j) {
         auto beg_it = all_files.begin() + j * k;

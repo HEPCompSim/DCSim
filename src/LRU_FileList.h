@@ -46,7 +46,7 @@ public:
      * @param file : a data file
      * @return true if the file is there, false otherwise
      */
-    bool hasFile(std::shared_ptr<wrench::DataFile> file) {
+    bool hasFile(const std::shared_ptr<wrench::DataFile> &file) {
         return (this->indexed_files.find(file.get()) != this->indexed_files.end());
     }
 
