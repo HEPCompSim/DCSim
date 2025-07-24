@@ -182,8 +182,8 @@ class Simulator(sc.Simulator):
 		platform.close()
 		return restructure(inter),out
 
-	def run(self, env, iargs):
-		args=dict(iargs)
+	def run(self, env, args):
+		args=dict(args)
 		if self.nocpu:
 			args["cpuSpeed"]="1960000000"
 		if self.ratio:
@@ -294,7 +294,7 @@ def plot(reference,simulated):
 			#print(ref_means)
 			#print(expiriment)
 			#print(sim_means)
-			plt.errorbar(ref_hitrates, ref_means, yerr=ref_std, fmt='o', label='Reference')
+			plt.errorbar(ref_hitrates, ref_means, yerr=ref_stds, fmt='o', label='Reference')
 			plt.errorbar(sim_hitrates, sim_means, yerr=sim_stds, fmt='o', label='Simulated')
 			
 			plt.xlabel('Hitrate')
@@ -305,6 +305,7 @@ def plot(reference,simulated):
 			# Save plot to file
 			plt.savefig(f'platform_{index}_{expiriment}.png')
 			plt.close()
+
 def plotCPU(reference,simulated):
 	index=0
 	for platform in zip(reference,simulated):
@@ -363,7 +364,7 @@ def plotCPU(reference,simulated):
 			#print(ref_means)
 			#print(expiriment)
 			#print(sim_means)
-			plt.errorbar(ref_hitrates, ref_means, yerr=ref_std, fmt='o', label='Reference')
+			plt.errorbar(ref_hitrates, ref_means, yerr=ref_stds, fmt='o', label='Reference')
 			plt.errorbar(sim_hitrates, sim_means, yerr=sim_stds, fmt='o', label='Simulated')
 			
 			plt.xlabel('Hitrate')
@@ -494,7 +495,7 @@ def ddksLoss(reference, simulated):
 						#print(sim[machine][hitrate])
 						#print(ref[machine][hitrate])
 						#print(refTensor,simTensor)
-						total+=  float(calculation(refTensor,simTensor))
+						total+=  float(calculation(refTensor, simTensor))
 						#print(distance)
 						count+=1
 						#There are a different number of results for each machine in each dataset
