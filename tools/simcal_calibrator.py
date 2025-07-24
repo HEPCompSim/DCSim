@@ -573,6 +573,9 @@ def wassersteinLoss(reference, simulated):
 						refTensor=buildTensor(ref[machine][hitrate])
 						simTensor=buildTensor(sim[machine][hitrate])
 						res = calculation(refTensor,simTensor)
+						# The 'calculation' function may return either a scalar or a tuple.
+						# If it returns a tuple, the first element (res[0]) is used as the result.
+						# This behavior should be consistent with the specific implementation of 'calculation'.
 						total += res[0] if isinstance(res, tuple) else res
 						count+=1
 	if(count==0):
