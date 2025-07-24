@@ -819,7 +819,7 @@ if __name__=="__main__":
 				t1 = time.time()
 				print(cal)
 				print(t1-t0)
-				if cal[1] and bestLoss:
+				if cal[1] is not None and bestLoss is not None:
 					if best is None or cal[1]<bestLoss:
 						bestLoss=cal[1]
 						best=(0.01,10**j)
