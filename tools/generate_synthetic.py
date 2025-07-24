@@ -158,8 +158,8 @@ class Simulator(sc.Simulator):
 
 		platform.close()
 
-	def run(self, env, iargs):
-		args=dict(iargs)
+	def run(self, env, args):
+		args=dict(args)
 		
 		#with env:
 		env.tmp_dir(tempfile.gettempdir(),keep=False)
@@ -210,6 +210,7 @@ class Simulator(sc.Simulator):
 			 })
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
+		return 0.0  # Return a dummy value, as the actual return value is not used in this context
 		
 
 
