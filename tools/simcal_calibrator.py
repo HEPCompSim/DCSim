@@ -495,7 +495,7 @@ def ddksLoss(reference, simulated):
 						#print(sim[machine][hitrate])
 						#print(ref[machine][hitrate])
 						#print(refTensor,simTensor)
-						total+=  float(calculation(refTensor, simTensor))
+						total+=  float(calculation(refTensor, simTensor).item())
 						#print(distance)
 						count+=1
 						#There are a different number of results for each machine in each dataset
@@ -572,7 +572,8 @@ def wassersteinLoss(reference, simulated):
 					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
 						refTensor=buildTensor(ref[machine][hitrate])
 						simTensor=buildTensor(sim[machine][hitrate])
-						total+=  float(calculation(refTensor,simTensor))
+						res = calculation(refTensor,simTensor)
+						total += res[0] if isinstance(res, tuple) else res
 						count+=1
 	if(count==0):
 		count=1
@@ -769,7 +770,18 @@ if __name__=="__main__":
 		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
-	maxs=simulator(	{"cpuSpeed":"1970Mf",	"disk":"17MBps", "ramDisk":"1GBps",	"internalNetwork":"10Gbps","externalNetwork":"1.15Gbps","externalSlowNetwork":"1.15Gbps", "externalFastNetwork":"11.5Gbps","xrootd_flops":20000000000})
+	maxs=simulator(
+		{
+			"cpuSpeed":"1970Mf",
+			"disk":"17MBps",
+			"ramDisk":"1GBps",
+			"internalNetwork":"10Gbps",
+			"externalNetwork":"1.15Gbps",
+			"externalSlowNetwork":"1.15Gbps",
+			"externalFastNetwork":"11.5Gbps",
+			"xrootd_flops":20000000000
+		}
+	)
 	print("Max's",maxs)
 	if args.evaluate:
 		print(args.evaluate)
@@ -796,16 +808,21 @@ if __name__=="__main__":
 							int(math.log10(args.hyper_test_high))+1):
 				stoptime=time.time()+3600
 				print(0.01,10**j)
-				calibrator.epsilon=10**j
+				if isinstance(calibrator, sc.calibrators.GradientDescent):
+					calibrator.epsilon=10**j
+				else:
+					print("Hyper parameter testing is only supported for GradientDescent")
+					break
 				t0 = time.time()
 				#cal=calibrator.calibrate(samplePoint, 3600, coordinator=coordinator)
-				cal=calibrator.descend(simulator,eval(args.evaluate),stoptime)
+				cal = calibrator.descend(simulator, eval(args.evaluate), stoptime)
 				t1 = time.time()
 				print(cal)
 				print(t1-t0)
-				if best is None or cal[1]<bestLoss:
-					bestLoss=cal[1]
-					best=(0.01,10**j)
+				if cal[1] and bestLoss:
+					if best is None or cal[1]<bestLoss:
+						bestLoss=cal[1]
+						best=(0.01,10**j)
 			print(best,bestLoss)
 
 	else:
