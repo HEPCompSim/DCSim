@@ -809,7 +809,7 @@ if __name__=="__main__":
 				stoptime=time.time()+3600
 				print(0.01,10**j)
 				if isinstance(calibrator, sc.calibrators.GradientDescent):
-					calibrator.epsilon=10**j
+					calibrator.epsilon = 10**j
 				else:
 					print("Hyper parameter testing is only supported for GradientDescent")
 					break
