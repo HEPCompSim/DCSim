@@ -127,11 +127,18 @@ def process_list(file_path, from_line, to_line, dcsim_args_generator):
                 dcsim_args = dcsim_args_generator(line=item, iline=line, hitrate=hitrate)
                 print(f"Processing line {line} with hitrate {hitrate} and calibration {item}")
                 print(f"Running process: dc-sim {' '.join(dcsim_args)}")
-                completed_process = subprocess.run(['dc-sim'] + dcsim_args, check=True, capture_output=True)
-                print(f"Simulation output:\n{completed_process.stdout.decode()}")
-                print(f"Simulation error (if any):\n{completed_process.stderr.decode()}")
+                try:
+                    completed_process = subprocess.run(['dc-sim'] + dcsim_args, check=True, capture_output=True)
+                    print(f"Simulation output:\n{completed_process.stdout.decode()}")
+                    print(f"Simulation error:\n{completed_process.stderr.decode()}")
+                except subprocess.CalledProcessError as e:
+                    raise RuntimeError(
+                        f"Error occurred while running simulation for line {line} \
+                            with hitrate {hitrate} and calibration {item}"
+                    ) from e
         else:
             raise ValueError(f"Expected item to be a tuple, but got {type(item)} instead. Item content: {item}")
+    print("All simulations completed successfully.")
 
 
 if __name__ == "__main__":
@@ -178,5 +185,6 @@ if __name__ == "__main__":
                 os.remove(file)
         print(f"Successfully created tar archive: {tar_filename}")
     else:
-        print("No output files found to tar.")
+        raise FileNotFoundError(f"No output files found matching the pattern \
+                                 {args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP*_hitrate*.csv")
 
