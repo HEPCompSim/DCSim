@@ -1,11 +1,11 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./run_simulations.sh
-arguments = $(SHELL) $(FROM) $(TO)
+arguments = $(SHELL) $(FROM_LINE) $(TO_LINE)
 
 should_transfer_files = YES
 transfer_input_files = $(SHELL), $(PYTHON_SIMULATION_SCRIPT)
-transfer_output_files = $(PLATFORM_TEMPLATE)_$(SHELL)_$(FROM)_$(TO).csv.tar.gz
+transfer_output_files = $(PLATFORM_TEMPLATE)_$(SHELL)_$(FROM_LINE)_$(TO_LINE).csv.tar.gz
 when_to_transfer_output = ON_EXIT
 
 log = logs/log.$(ClusterId).$(ProcId)
@@ -23,7 +23,7 @@ RequestDisk = 1G
 
 x509userproxy = $ENV(X509_USER_PROXY)
 
-# PLATFORM_TEMPLATE = sgbatch_validation_template
+PLATFORM_TEMPLATE = sgbatch_validation_template
 # WORKLOAD = crown_ttbar_slowjob.json
 # DATASET = crown_ttbar_slowjob.json
 # XROOTD_BLOCKSIZE = 10000000000
@@ -34,5 +34,5 @@ SHELL = cloud-8.list
 PYTHON_SIMULATION_SCRIPT = run_shell_simulations.py
 
 STEP = 10
-TO = $eval($(FROM)+$(STEP))
-queue FROM from seq(0, 20, $(STEP)) 
+TO_LINE = $eval($(FROM_LINE)+$(STEP))
+Queue FROM_LINE from seq(0, 20, $(STEP))
