@@ -33,6 +33,7 @@ PLATFORM_TEMPLATE = sgbatch_validation_template
 SHELL = cloud-8.list
 PYTHON_SIMULATION_SCRIPT = run_shell_simulations.py
 
-STEP = 10
-TO_LINE = $eval($(FROM_LINE)+$(STEP))
-Queue FROM_LINE from seq(0, 20, $(STEP))
+FROM_LINE = <FROM_LINE>
+TO_LINE = <TO_LINE>
+
+queue 
