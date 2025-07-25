@@ -1,47 +1,38 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./run_simulations.sh
-arguments = $(PLATFORM) $(WORKLOAD) $(DATASET) \
-            $(XROOTD_BLOCKSIZE) $(STORAGE_BUFFER_SIZE) $(SEED) \
-            $(SHELL) $(FROM) $(TO)
+arguments = $(SHELL) $(FROM) $(TO)
 
 should_transfer_files = YES
-transfer_input_files = ../../../data/platform-files/$(PLATFORM), \
-                       ../../../data/workload-configs/$(WORKLOAD), \
-                       ../../../data/dataset-configs/$(DATASET), \
-                       $(SHELL), $(PYTHON_SIMULATION_SCRIPT)
-transfer_output_files = $(PLATFORM)_$(SHELL)_$(FROM)_$(TO).csv.tar.gz
+transfer_input_files = $(SHELL), $(PYTHON_SIMULATION_SCRIPT)
+transfer_output_files = $(PLATFORM_TEMPLATE)_$(SHELL)_$(FROM)_$(TO).csv.tar.gz
 when_to_transfer_output = ON_EXIT
 
 log = logs/log.$(ClusterId).$(ProcId)
 output = logs/out.$(ClusterId).$(ProcId)
 error = logs/err.$(ClusterId).$(ProcId)
 
-
-accounting_group=cms.production
-Requirements = TARGET.ProvidesIO && (CloudSite =!= topas) && (TARGET.Machine =!= "sg01.etp.kit.edu") && (TARGET.Machine =!= "sg03.etp.kit.edu") && (TARGET.Machine =!= "sg04.etp.kit.edu")
-#Requirements = TARGET.ProvidesIO && (TARGET.Machine is "ms01.etp.kit.edu")
-+RemoteJob = True
-
 universe = docker
-docker_image = mhorzela/dcsim:test
+docker_image = registry.cern.ch/docker.io/mhorzela/dcsim:test
 
-+RequestWalltime = (7200 + (2*3600*NumJobStarts))
+# +MaxWalltime = 1800
++JobFlavour = "espresso"
 request_cpus = 1
-RequestMemory = 8GB
-#periodic_release = (HoldReasonCode == 34)
-RequestDisk = 4GB
+RequestMemory = 1500M
+RequestDisk = 1G
 
 x509userproxy = $ENV(X509_USER_PROXY)
 
-PLATFORM = sgbatch_validation_template.xml
-WORKLOAD = crown_ttbar_slowjob.json
-DATASET = crown_ttbar_slowjob.json
-XROOTD_BLOCKSIZE = 10000000000
-STORAGE_BUFFER_SIZE = 0
-SEED = 42
+# PLATFORM_TEMPLATE = sgbatch_validation_template
+# WORKLOAD = crown_ttbar_slowjob.json
+# DATASET = crown_ttbar_slowjob.json
+# XROOTD_BLOCKSIZE = 10000000000
+# STORAGE_BUFFER_SIZE = 0
+# SEED = 42
 
 SHELL = cloud-8.list
 PYTHON_SIMULATION_SCRIPT = run_shell_simulations.py
 
-Queue FROM, TO 
+STEP = 10
+TO = $eval($(FROM)+$(STEP))
+queue FROM from seq(0, 20, $(STEP)) 
