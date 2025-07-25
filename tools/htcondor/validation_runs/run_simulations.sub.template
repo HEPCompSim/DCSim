@@ -13,7 +13,7 @@ output = logs/out.$(ClusterId).$(ProcId)
 error = logs/err.$(ClusterId).$(ProcId)
 
 universe = docker
-docker_image = registry.cern.ch/docker.io/mhorzela/dcsim:test
+docker_image = registry.cern.ch/docker.io/mhorzela/dcsim:latest
 
 # +MaxWalltime = 1800
 +JobFlavour = "espresso"
