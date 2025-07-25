@@ -48,7 +48,7 @@ def generate_dcsim_args(
     ]
 
 
-def generate_platform(platform_file: str|os.PathLike, calibration_params: dict) -> str|os.PathLike:
+def generate_platform(platform_file: str|os.PathLike, calibration_params: dict, scenario = "fcfn") -> str|os.PathLike:
     """
     Fills in the missing values in the templated platform file based on the provided calibration parameters.
     Args:
@@ -57,14 +57,31 @@ def generate_platform(platform_file: str|os.PathLike, calibration_params: dict) 
     Returns:
         str|os.PathLike: The path to the modified platform file.
     """
+    # adjust the choice of calibration parameter keys depending on the scenario of simulation
+    if "sc" in scenario :
+        read_key = "disk"
+    elif "fc" in scenario:
+        read_key = "ramDisk"
+    else:
+        raise ValueError(f"Unknown cache scenario {scenario}. Expected 'fc' or 'sc'.")
+    if "sn" in scenario:
+        net_key = "externalSlowNetwork"
+    elif "fn" in scenario:
+        net_key = "externalFastNetwork"
+    else:
+        raise ValueError(f"Unknown network scenario {scenario}. Expected 'sn' or 'fn'.")
+
+    if not os.path.exists(platform_file):
+        raise FileNotFoundError(f"Platform file {platform_file} does not exist.")
+    # Read the platform file and replace the placeholders with actual values
     with open(platform_file, 'r') as file:
         platform = file.read()
         # Replace the placeholders in the XML file with the specified values
         platform = re.sub(r'{cpu-speed}', str(calibration_params["cpuSpeed"]), platform)
-        platform = re.sub(r'{read-speed}', str(calibration_params["cacheSpeed"]), platform)
-        platform = re.sub(r'{link-speed}', str(calibration_params["internalNetworkSpeed"]), platform)
-        platform = re.sub(r'{net-speed}', str(calibration_params["externalNetworkSpeed"]), platform)
-    
+        platform = re.sub(r'{read-speed}', str(calibration_params[read_key]), platform)
+        platform = re.sub(r'{link-speed}', str(calibration_params["internalNetwork"]), platform)
+        platform = re.sub(r'{net-speed}', str(calibration_params[net_key]), platform)
+
     with open(platform_file, 'w') as file:
         file.write(platform)
         
