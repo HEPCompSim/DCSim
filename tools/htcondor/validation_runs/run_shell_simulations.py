@@ -137,7 +137,9 @@ if __name__ == "__main__":
     parser.add_argument("--platform", type=str, required=True, help="Platform name")
     parser.add_argument("--workload", type=str, required=True, help="Workload configuration")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset configuration")
-    parser.add_argument("--hitrates", type=str, nargs='+', required=True, help="Hitrate values")
+    parser.add_argument("--hitrates", type=str, nargs='+', 
+                        default=["0.0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"], 
+                        help="Hitrate values")
     parser.add_argument("--xrd-blocksize", type=int, default=10000000000, help="XRootD block size")
     parser.add_argument("--storage-buffer-size", type=int, default=0, help="Storage buffer size")
     parser.add_argument("--duplications", type=int, default=48, help="Number of duplications")
