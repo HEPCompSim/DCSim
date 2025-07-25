@@ -84,10 +84,12 @@ def generate_platform(platform_file: str|os.PathLike, calibration_params: dict, 
         platform = re.sub(r'{link-speed}', str(calibration_params["internalNetwork"]), platform)
         platform = re.sub(r'{net-speed}', str(calibration_params[net_key]), platform)
 
-    with open(platform_file, 'w') as file:
+    # Write the modified platform to a temporary file
+    platform_file_tmp = f"{platform_file}.tmp"
+    with open(platform_file_tmp, 'w') as file:
         file.write(platform)
-        
-    return platform_file
+
+    return platform_file_tmp
 
 
 def process_list(file_path, from_line, to_line, dcsim_args_generator):
