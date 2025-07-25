@@ -1,8 +1,10 @@
 import argparse
 import ast
+import glob
 import os
 import re
 import subprocess
+import tarfile
 from typing import Callable
 
 def generate_dcsim_args(
@@ -154,3 +156,17 @@ if __name__ == "__main__":
     dcsim_args_generator = lambda line, iline, hitrate: generate_dcsim_args(args, line, iline, hitrate, platform_generator)
 
     process_list(args.shell, args.from_line, args.to_line, dcsim_args_generator)
+
+    output_files = glob.glob(f"{args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP*_hitrate*.csv")
+    print(f"Generated output files: {output_files}")
+    # Tar the list of generated output files
+    if output_files:
+        tar_filename = f"{args.platform.split('.')[0]}_{args.shell.split('.')[0]}_{args.from_line}_{args.to_line}.csv.tar.gz"
+        with tarfile.open(tar_filename, "w:gz") as tar:
+            for file in output_files:
+                tar.add(file, arcname=os.path.basename(file))
+                os.remove(file)
+        print(f"Successfully created tar archive: {tar_filename}")
+    else:
+        print("No output files found to tar.")
+
