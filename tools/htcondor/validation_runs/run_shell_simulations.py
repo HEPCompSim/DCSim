@@ -36,7 +36,7 @@ def generate_dcsim_args(
 
     return [
         "--platform", platform_generator(args.platform, calibration),
-        "--output-file", f"{args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP{iline}.csv",
+        "--output-file", f"{args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP{iline}_hitrate{hitrate}.csv",
         "--workload-configurations", args.workload,
         "--dataset-configurations", args.dataset,
         "--hitrate", str(hitrate),
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("--platform", type=str, required=True, help="Platform name")
     parser.add_argument("--workload", type=str, required=True, help="Workload configuration")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset configuration")
-    parser.add_argument("--hitrates", type=str, required=True, help="Hitrate values")
+    parser.add_argument("--hitrates", type=str, nargs='+', required=True, help="Hitrate values")
     parser.add_argument("--xrd-blocksize", type=int, default=10000000000, help="XRootD block size")
     parser.add_argument("--storage-buffer-size", type=int, default=0, help="Storage buffer size")
     parser.add_argument("--duplications", type=int, default=48, help="Number of duplications")
