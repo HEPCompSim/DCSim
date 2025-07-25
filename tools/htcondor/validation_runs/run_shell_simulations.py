@@ -2,11 +2,13 @@ import argparse
 import ast
 import os
 import re
+import subprocess
 from typing import Callable
 
 def generate_dcsim_args(
         args: argparse.Namespace,
         line: tuple[dict[str, float], float],
+        iline: int,
         hitrate: float,
         platform_generator: Callable
 ) -> list[str]:
@@ -34,7 +36,7 @@ def generate_dcsim_args(
 
     return [
         "--platform", platform_generator(args.platform, calibration),
-        "--output-file", f"{args.platform}_{args.shell}_{line}.csv",
+        "--output-file", f"{args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP{iline}.csv",
         "--workload-configurations", args.workload,
         "--dataset-configurations", args.dataset,
         "--hitrate", str(hitrate),
@@ -113,9 +115,12 @@ def process_list(file_path, from_line, to_line, dcsim_args_generator):
             if isinstance(item, tuple):
                 # Assuming item is a tuple with calibration parameters and loss value
                 for hitrate in args.hitrates:
-                    dcsim_args = dcsim_args_generator(line=item, hitrate=hitrate)
-                    print(f"Processing line {line} with hitrate {hitrate} and calibration {item}: {' '.join(dcsim_args)}")
-                    raise NotImplementedError("Simulation execution logic is not implemented yet.")
+                    dcsim_args = dcsim_args_generator(line=item, iline=line, hitrate=hitrate)
+                    print(f"Processing line {line} with hitrate {hitrate} and calibration {item}")
+                    print(f"Running process: dc-sim {' '.join(dcsim_args)}")
+                    completed_process = subprocess.run(['dc-sim'] + dcsim_args, check=True, capture_output=True)
+                    print(f"Simulation output:\n{completed_process.stdout.decode()}")
+                    print(f"Simulation error (if any):\n{completed_process.stderr.decode()}")
             else:
                 raise ValueError(f"Expected item to be a tuple, but got {type(item)} instead. Item content: {item}")
 
@@ -142,6 +147,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     platform_generator = lambda platform_file, calibration: generate_platform(platform_file, calibration)
-    dcsim_args_generator = lambda line, hitrate: generate_dcsim_args(args, line, hitrate, platform_generator)
+    dcsim_args_generator = lambda line, iline, hitrate: generate_dcsim_args(args, line, iline, hitrate, platform_generator)
 
     process_list(args.shell, args.from_line, args.to_line, dcsim_args_generator)
