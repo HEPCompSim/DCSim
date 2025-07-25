@@ -112,43 +112,53 @@ def process_list(file_path, from_line, to_line, dcsim_args_generator):
         if not isinstance(data, list):
             raise TypeError(f"Error: The file {file_path} does not contain a list.")
 
-        # Process the specified slice of the list
-        for i, item in enumerate(data[from_line:to_line]):
-            line = from_line + i
-            # Run the simulations for each hitrate value
-            if isinstance(item, tuple):
-                # Assuming item is a tuple with calibration parameters and loss value
-                for hitrate in args.hitrates:
-                    dcsim_args = dcsim_args_generator(line=item, iline=line, hitrate=hitrate)
-                    print(f"Processing line {line} with hitrate {hitrate} and calibration {item}")
-                    print(f"Running process: dc-sim {' '.join(dcsim_args)}")
-                    completed_process = subprocess.run(['dc-sim'] + dcsim_args, check=True, capture_output=True)
-                    print(f"Simulation output:\n{completed_process.stdout.decode()}")
-                    print(f"Simulation error (if any):\n{completed_process.stderr.decode()}")
-            else:
-                raise ValueError(f"Expected item to be a tuple, but got {type(item)} instead. Item content: {item}")
-
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"Error: File not found at {file_path}") from e
+        raise FileNotFoundError(f"Shell file not found at {file_path}") from e
     except (ValueError, SyntaxError) as e:
-        raise Exception(f"Error parsing file {file_path}") from e
+        raise Exception(f"Error parsing shell file {file_path}") from e
+
+    # Process the specified slice of the list
+    for i, item in enumerate(data[from_line:to_line]):
+        line = from_line + i
+        # Run the simulations for each hitrate value
+        if isinstance(item, tuple):
+            # Assuming item is a tuple with calibration parameters and loss value
+            for hitrate in args.hitrates:
+                dcsim_args = dcsim_args_generator(line=item, iline=line, hitrate=hitrate)
+                print(f"Processing line {line} with hitrate {hitrate} and calibration {item}")
+                print(f"Running process: dc-sim {' '.join(dcsim_args)}")
+                completed_process = subprocess.run(['dc-sim'] + dcsim_args, check=True, capture_output=True)
+                print(f"Simulation output:\n{completed_process.stdout.decode()}")
+                print(f"Simulation error (if any):\n{completed_process.stderr.decode()}")
+        else:
+            raise ValueError(f"Expected item to be a tuple, but got {type(item)} instead. Item content: {item}")
 
 
 if __name__ == "__main__":
+    data_path = os.path.join("/", "home", "DCSim", "data")
     parser = argparse.ArgumentParser(description="Run simulations with specified parameters.")
-    parser.add_argument("--platform", type=str, required=True, help="Platform name")
-    parser.add_argument("--workload", type=str, required=True, help="Workload configuration")
-    parser.add_argument("--dataset", type=str, required=True, help="Dataset configuration")
-    parser.add_argument("--hitrates", type=str, nargs='+', 
-                        default=["0.0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"], 
+    parser.add_argument("--platform", type=str,
+                        default=os.path.join(data_path, "platform-files", "sgbatch_validation_template.xml"),
+                        help="Platform name")
+    parser.add_argument("--workload", type=str,
+                        default=os.path.join(data_path, "workload-configs", "crown_ttbar_slowjob.json"),
+                        help="Workload configuration")
+    parser.add_argument("--dataset", type=str,
+                        default=os.path.join(data_path, "dataset-configs", "crown_ttbar_slowjob.json"),
+                        help="Dataset configuration")
+    parser.add_argument("--hitrates", type=str, nargs='+',
+                        default=["0.0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"],
                         help="Hitrate values")
     parser.add_argument("--xrd-blocksize", type=int, default=10000000000, help="XRootD block size")
     parser.add_argument("--storage-buffer-size", type=int, default=0, help="Storage buffer size")
     parser.add_argument("--duplications", type=int, default=48, help="Number of duplications")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--shell", type=str, required=True, help="Path to the file containing the calibration shell")
-    parser.add_argument("--from-line", type=int, required=True, help="Starting line in the shell file list")
-    parser.add_argument("--to-line", type=int, required=True, help="Ending line in the shell file list")
+    parser.add_argument("--shell", type=str, required=True,
+                        help="Path to the file containing the calibration shell")
+    parser.add_argument("--from-line", type=int, required=True,
+                        help="Starting line in the shell file list")
+    parser.add_argument("--to-line", type=int, required=True,
+                        help="Ending line in the shell file list")
 
     args = parser.parse_args()
 
