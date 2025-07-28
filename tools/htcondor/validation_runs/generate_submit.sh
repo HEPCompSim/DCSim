@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Parameters
-START_INDEX=0
-END_INDEX=20
+START_INDEX=${2:-0}
+END_INDEX=${1:-20}
 STEP=10
 
 TEMPLATE=run_simulations.sub.template
