@@ -23,7 +23,7 @@ RequestDisk = 1G
 
 x509userproxy = $ENV(X509_USER_PROXY)
 
-PLATFORM_TEMPLATE = sgbatch_validation_template
+PLATFORM_TEMPLATE = sgbatch_validation_template.xml
 # WORKLOAD = crown_ttbar_slowjob.json
 # DATASET = crown_ttbar_slowjob.json
 # XROOTD_BLOCKSIZE = 10000000000
