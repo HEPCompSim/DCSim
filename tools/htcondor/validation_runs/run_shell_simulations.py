@@ -174,7 +174,8 @@ if __name__ == "__main__":
 
     process_list(args.shell, args.from_line, args.to_line, dcsim_args_generator)
 
-    output_files = glob.glob(f"{args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP*_hitrate*.csv")
+    outfile_name = f"{args.platform.split('.')}_{args.shell.split('.')}_CP*_hitrate*.csv"
+    output_files = glob.glob(outfile_name)
     print(f"Generated output files: {output_files}")
     # Tar the list of generated output files
     if output_files:
@@ -186,5 +187,5 @@ if __name__ == "__main__":
         print(f"Successfully created tar archive: {tar_filename}")
     else:
         raise FileNotFoundError(f"No output files found matching the pattern \
-                                 {args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP*_hitrate*.csv")
+                                 {outfile_name}. Please check the simulation runs.")
 
