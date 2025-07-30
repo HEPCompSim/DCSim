@@ -87,7 +87,7 @@ def generate_platform(platform_file: str|os.PathLike, calibration_params: dict, 
         platform = re.sub(r'{net-speed}', str(calibration_params[net_key]), platform)
 
     # Write the modified platform to a temporary file
-    platform_file_tmp = f"{platform_file}.tmp"
+    platform_file_tmp = f"{os.path.basename(platform_file)}.tmp"
     with open(platform_file_tmp, 'w') as file:
         file.write(platform)
 
