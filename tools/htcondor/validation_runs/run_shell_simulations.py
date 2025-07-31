@@ -174,12 +174,12 @@ if __name__ == "__main__":
 
     process_list(args.shell, args.from_line, args.to_line, dcsim_args_generator)
 
-    outfiles_pattern = f"{os.path.basename(args.platform)}*_{args.shell}*_CP*_hitrate*.csv"
+    outfiles_pattern = f"{os.path.basename(args.platform)}*_{os.path.basename(args.shell)}*_CP*_hitrate*.csv"
     output_files = glob.glob(outfiles_pattern)
     print(f"Generated output files: {output_files}")
     # Tar the list of generated output files
     if output_files:
-        tar_filename = f"{os.path.basename(args.platform)}_{args.shell}_{args.from_line}_{args.to_line}.csv.tar.gz"
+        tar_filename = f"{os.path.basename(args.platform)}_{os.path.basename(args.shell)}_{args.from_line}_{args.to_line}.csv.tar.gz"
         with tarfile.open(tar_filename, "w:gz") as tar:
             for file in output_files:
                 tar.add(file, arcname=os.path.basename(file))
