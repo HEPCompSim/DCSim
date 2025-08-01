@@ -36,9 +36,13 @@ def generate_dcsim_args(
             f" Line content: {line}"
         )
 
+    #TODO: make sure that in right working directory, for now basename is used
+    platform = os.path.basename(args.platform)
+    shell = os.path.basename(args.shell)
+
     return [
-        "--platform", platform_generator(args.platform, calibration),
-        "--output-file", f"{args.platform.split('.')[0]}_{args.shell.split('.')[0]}_CP{iline}_hitrate{hitrate}.csv",
+        "--platform", platform_generator(platform, calibration),
+        "--output-file", f"{platform.split('.')[0]}_{shell.split('.')[0]}_CP{iline}_hitrate{hitrate}.csv",
         "--workload-configurations", args.workload,
         "--dataset-configurations", args.dataset,
         "--hitrate", str(hitrate),
@@ -169,23 +173,26 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    #TODO: make sure that in right working directory, for now basename is used
+    platform = os.path.basename(args.platform)
+    shell = os.path.basename(args.shell)
+
     platform_generator = lambda platform_file, calibration: generate_platform(platform_file, calibration)
     dcsim_args_generator = lambda line, iline, hitrate: generate_dcsim_args(args, line, iline, hitrate, platform_generator)
 
-    process_list(args.shell, args.from_line, args.to_line, dcsim_args_generator)
+    process_list(shell, args.from_line, args.to_line, dcsim_args_generator)
 
-    outfiles_pattern = f"{os.path.basename(args.platform)}*_{os.path.basename(args.shell)}*_CP*_hitrate*.csv"
+    outfiles_pattern = f"{platform.split('.')[0]}*_{shell.split('.')[0]}*_CP*_hitrate*.csv"
     output_files = glob.glob(outfiles_pattern)
     print(f"Generated output files: {output_files}")
     # Tar the list of generated output files
     if output_files:
-        tar_filename = f"{os.path.basename(args.platform)}_{os.path.basename(args.shell)}_{args.from_line}_{args.to_line}.csv.tar.gz"
+        tar_filename = f"{platform.split('.')[0]}_{shell.split('.')[0]}_{args.from_line}_{args.to_line}.csv.tar.gz"
         with tarfile.open(tar_filename, "w:gz") as tar:
             for file in output_files:
                 tar.add(file, arcname=os.path.basename(file))
                 os.remove(file)
         print(f"Successfully created tar archive: {tar_filename}")
     else:
-        raise FileNotFoundError(f"No output files found matching the pattern \
-                                 {outfiles_pattern}")
+        raise FileNotFoundError(f"No output files found matching the pattern {outfiles_pattern}")
 
