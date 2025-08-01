@@ -41,7 +41,7 @@ def generate_dcsim_args(
     shell = os.path.basename(args.shell)
 
     return [
-        "--platform", platform_generator(platform, calibration),
+        "--platform", platform_generator(args.platform, calibration),
         "--output-file", f"{platform.split('.')[0]}_{shell.split('.')[0]}_CP{iline}_hitrate{hitrate}.csv",
         "--workload-configurations", args.workload,
         "--dataset-configurations", args.dataset,
@@ -173,15 +173,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    #TODO: make sure that in right working directory, for now basename is used
-    platform = os.path.basename(args.platform)
-    shell = os.path.basename(args.shell)
-
     platform_generator = lambda platform_file, calibration: generate_platform(platform_file, calibration)
     dcsim_args_generator = lambda line, iline, hitrate: generate_dcsim_args(args, line, iline, hitrate, platform_generator)
 
-    process_list(shell, args.from_line, args.to_line, dcsim_args_generator)
+    process_list(args.shell, args.from_line, args.to_line, dcsim_args_generator)
 
+    #TODO: make sure that in right working directory, for now basename is used
+    platform = os.path.basename(args.platform)
+    shell = os.path.basename(args.shell)
     outfiles_pattern = f"{platform.split('.')[0]}*_{shell.split('.')[0]}*_CP*_hitrate*.csv"
     output_files = glob.glob(outfiles_pattern)
     print(f"Generated output files: {output_files}")
