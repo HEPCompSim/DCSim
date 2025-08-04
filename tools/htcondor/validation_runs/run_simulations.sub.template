@@ -1,11 +1,11 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./run_simulations.sh
-arguments = $(SHELL) $(FROM_LINE) $(TO_LINE)
+arguments = $(SHELL) $(START) $(END)
 
 should_transfer_files = YES
 transfer_input_files = $(SHELL), $(PYTHON_SIMULATION_SCRIPT)
-transfer_output_files = $(PLATFORM_TEMPLATE)_$(SHELL)_$(FROM_LINE)_$(TO_LINE).csv.tar.gz
+transfer_output_files = $(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz
 when_to_transfer_output = ON_EXIT
 
 log = logs/log.$(ClusterId).$(ProcId)
@@ -33,7 +33,6 @@ PLATFORM_TEMPLATE = sgbatch_validation_template.xml
 SHELL = cloud-8.list
 PYTHON_SIMULATION_SCRIPT = run_shell_simulations.py
 
-FROM_LINE = <FROM_LINE>
-TO_LINE = <TO_LINE>
-
-queue 
+queue START, END from (
+<JOBS>
+)

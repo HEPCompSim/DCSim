@@ -7,19 +7,19 @@ STEP=10
 
 TEMPLATE=run_simulations.sub.template
 SUBMIT_FILE=jobs.sub
+JOBS_FILE=$(mktemp)
 
-# Start fresh
-rm -f "$SUBMIT_FILE"
-
-# Generate job entries for each chunk
+# Generate job lines
 for (( i=$START_INDEX; i<$END_INDEX; i+=$STEP )); do
     START=$i
     END=$((i + STEP))
     if [ "$END" -gt "$END_INDEX" ]; then END=$END_INDEX; fi
-
-    # Replace placeholders and append to final submit file
-    cat "$TEMPLATE" | sed "s/<FROM_LINE>/$START/g; s/<TO_LINE>/$END/g" >> "$SUBMIT_FILE"
-    echo "" >> "$SUBMIT_FILE"  # Add newline between jobs
+    echo "    $START, $END" >> "$JOBS_FILE"
 done
+
+# Replace placeholder in template with contents of jobs file
+sed -e "/<JOBS>/r $JOBS_FILE" -e "/<JOBS>/d" "$TEMPLATE" > "$SUBMIT_FILE"
+
+rm "$JOBS_FILE"
 
 echo "Submit file generated: $SUBMIT_FILE"
