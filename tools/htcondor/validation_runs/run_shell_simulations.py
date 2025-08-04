@@ -186,7 +186,7 @@ if __name__ == "__main__":
     print(f"Generated output files: {output_files}")
     # Tar the list of generated output files
     if output_files:
-        tar_filename = f"{platform.split('.')[0]}_{shell.split('.')[0]}_{args.from_line}_{args.to_line}.csv.tar.gz"
+        tar_filename = f"{platform}_{shell}_{args.from_line}_{args.to_line}.csv.tar.gz"
         with tarfile.open(tar_filename, "w:gz") as tar:
             for file in output_files:
                 tar.add(file, arcname=os.path.basename(file))
