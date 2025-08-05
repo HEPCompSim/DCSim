@@ -1,9 +1,7 @@
 #! /usr/bin/python3
 
 import pandas as pd
-import numpy as np
-import matplotlib as mpl
-from matplotlib import pyplot as plt
+from matplotlib import lines, pyplot as plt
 import seaborn as sns
 import os.path
 import argparse
@@ -60,11 +58,11 @@ def valid_file(param: str) -> str:
     return param
 
 
-def valid_int(param: int) -> int:
-    param = int(param)
-    if not param > 0:
+def valid_int(param: str) -> int:
+    value = int(param)
+    if not value > 0:
         raise argparse.ArgumentTypeError("Argument must be greater than zero!")
-    return param
+    return value
 
 
 parser = argparse.ArgumentParser(
@@ -106,7 +104,7 @@ parser.add_argument(
 
 
 def mapHostToSite(test: str, mapping: 'dict[str,str]',):
-    match = next((x for x in mapping.keys() if x in test), False)
+    match = next((x for x in mapping.keys() if x in test), "")
     if match:
         return mapping[match]
     else:
@@ -130,7 +128,7 @@ def processFile(file: os.PathLike):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
             # read one data file
-            data = pd.read_csv(f,sep=",\s",engine='python')
+            data = pd.read_csv(f,sep=r",\s",engine='python')
             mask = ~data["job.tag"].str.contains("__")
             data = data[mask]
             # compute derived quantities
@@ -142,28 +140,37 @@ def processFile(file: os.PathLike):
             # aggregate per execution site
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
-            df_tmp["prefetchrate"] = float(re.search(r'([h,H])([0-9]*[.])?[0-9]*', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]).group().strip("hH"))
+            match = re.search(
+                r'[hH]([0-9]*\.)?[0-9]+', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]
+            )
+            if match:
+                df_tmp["prefetchrate"] = float(match.group().strip("hH"))
+            else:
+                raise ValueError(f"Could not extract prefetch rate from file name {f.name}")
             df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
             logger.debug("\tintermediate dataframe: ", type(df_tmp), df_tmp.shape, "\n", df_tmp)
         return df_tmp
 
 
-def createDataframeFromCSVs(csvFiles: Iterable, nprocs=os.cpu_count()/2) -> pd.DataFrame:
+def createDataframeFromCSVs(csvFiles: list[os.PathLike], nprocs=None) -> pd.DataFrame:
     """Merge all data from individual CSV files into a single data-frame
 
     Args:
-        csvFiles (List(PathLike)): CSV files containing job data
-        nprocs (int): number of concurrent processes
+        csvFiles (list[PathLike]): CSV files containing job data
+        nprocs (int|None): number of concurrent processes to use for processing. If None, it will use half of the available CPU cores.
 
     Returns:
         DataFrame: merged data-frame containing all job data
     """
+    if nprocs is None:
+        cpu_count = os.cpu_count()
+        nprocs = cpu_count / 2 if cpu_count else 1
 
     # create a dataframe containing statistical moments of each run
     from multiprocessing import Pool
     pool = Pool(processes=int(nprocs))
     process_dict = {}
-    logger.info(f"Analysing {len(csvFiles)} files with {nprocs} concurrent processes")
+    logger.info(f"Analysing {len(csvFiles)} files with {int(nprocs)} concurrent processes")
     for file in csvFiles:
         process_dict[file] = pool.apply_async(processFile, (file,))
     dfs = []
@@ -201,12 +208,12 @@ def plotVariationbands(
         figsize (tuple, optional): Figure aspect ratio. Defaults to (6,4).
     """
 
-    def scale_xticks(ax: plt.Axes, ticks: Iterable):
+    def scale_xticks(ax: plt.Axes, ticks: list[float]):
         """Helper function which sets the xticks to the according scaled positions
 
         Args: 
             ax (matplotlib.Axes): subplot to scale xticks
-            ticks (Iterable): list of expected ticks (at least two values, lowest and highest tick)
+            ticks (list[float]): list of expected ticks (at least two values, lowest and highest tick)
         """
         scale = (ax.get_xlim()[-1]-ax.get_xlim()[0]-1)/(ticks[-1]-ticks[0])
         print(f"Scale {(ticks[0],ticks[-1])} with {scale} to end up with correct seaborn axis {ax.get_xlim()}")
@@ -249,13 +256,13 @@ def plotVariationbands(
     # manipulate legend
     handles, labels = ax1.get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
-    by_label["25% quantile"] = mpl.lines.Line2D([0],[0],color="black", linestyle="dashed")
+    by_label["25% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashed")
     by_label["25% quantile"].set_linewidth(1.)
     by_label.move_to_end("25% quantile", last=False)
-    by_label["median"] = mpl.lines.Line2D([0],[0],color="black", linestyle="solid")
+    by_label["median"] = lines.Line2D([0],[0],color="black", linestyle="solid")
     by_label["median"].set_linewidth(1.)
     by_label.move_to_end("median", last=False)
-    by_label["75% quantile"] = mpl.lines.Line2D([0],[0],color="black", linestyle="dashdot")
+    by_label["75% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashdot")
     by_label["75% quantile"].set_linewidth(1.)
     by_label.move_to_end("75% quantile", last=False)
     ax1.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best',frameon=False)
