@@ -6,6 +6,7 @@ import seaborn as sns
 import os.path
 import argparse
 import re
+import glob
 
 from collections.abc import Iterable
 from collections import OrderedDict
@@ -114,11 +115,11 @@ def processFile(file: os.PathLike):
         return df_tmp
 
 
-def createDataframeFromCSVs(csvFiles: list[os.PathLike], nprocs=None) -> pd.DataFrame:
+def createDataframeFromCSVs(csvFiles: list[str], nprocs=None) -> pd.DataFrame:
     """Merge all data from individual CSV files into a single data-frame
 
     Args:
-        csvFiles (list[PathLike]): CSV files containing job data
+        csvFiles (list[str]): CSV file paths containing job data
         nprocs (int|None): number of concurrent processes to use for processing. If None, it will use half of the available CPU cores.
 
     Returns:
@@ -134,6 +135,9 @@ def createDataframeFromCSVs(csvFiles: list[os.PathLike], nprocs=None) -> pd.Data
     process_dict = {}
     logger.info(f"Analysing {len(csvFiles)} files with {int(nprocs)} concurrent processes")
     for file in csvFiles:
+        if not os.path.exists(file):
+            logger.warning(f"File {file} does not exist, skipping.")
+            continue
         process_dict[file] = pool.apply_async(processFile, (file,))
     dfs = []
     for file, process in process_dict.items():
@@ -248,8 +252,33 @@ def run(args: argparse.Namespace):
     if args.njobs:
         nprocs = args.njobs
 
+    # Get list of files to process
+    files_to_process = []
+    if args.input_dir:
+        if args.monitorfiles:
+            logger.error("Cannot specify both --input-dir and monitorfiles positionally.")
+            exit(1)
+        if not os.path.isdir(args.input_dir):
+            logger.error(f"Input directory not found: {args.input_dir}")
+            exit(1)
+        logger.info(f"Searching for *.csv files in {args.input_dir}")
+        files_to_process = glob.glob(os.path.join(args.input_dir, "*.csv"))
+    elif args.monitorfiles:
+        files_to_process = args.monitorfiles
+    else:
+        parser.print_help()
+        logger.error("\nNo input files specified. Provide monitorfiles or use --input-dir.")
+        exit(1)
+
+    if not files_to_process:
+        logger.warning("No files to process.")
+        return
+
     # actual data processing
-    df = createDataframeFromCSVs(args.monitorfiles, nprocs)
+    df = createDataframeFromCSVs(files_to_process, nprocs)
+    if df.empty:
+        logger.warning("No data processed. Exiting.")
+        return
     sites = sorted(df["Site"].unique())
 
     # create output
@@ -277,11 +306,17 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "monitorfiles",
-        nargs='+',
+        nargs='*',
         type=valid_file,
         help="CSV files containing the data to analyze. \
             Information about the simulated jobs \
             produced by the simulator."
+    )
+    parser.add_argument(
+        "--input-dir",
+        type=str,
+        help="Directory containing the monitor CSV files to analyze. \
+            Cannot be used with monitorfiles argument."
     )
     parser.add_argument(
         "--out","-o",
