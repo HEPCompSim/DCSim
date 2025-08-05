@@ -19,6 +19,9 @@ RUN mkdir -p build && pushd build && \
 
 USER root
 RUN pushd build && make install && popd && ldconfig
+# Install tool dependencies
+RUN python3 -m pip install --break-system-packages seaborn
+
 USER dcsim
 
 # Final image
