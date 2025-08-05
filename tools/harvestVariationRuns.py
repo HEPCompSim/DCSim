@@ -104,10 +104,11 @@ def processFile(file: os.PathLike):
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             match = re.search(
-                r'(?:[hH]itrate|[Hh])([0-9]*\.)?[0-9]+', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]
+                r'(?:[hH]itrate|[Hh])([0-9]*\.)?[0-9]+', os.path.splitext(os.path.basename(f.name))[0]
             )
             if match:
-                df_tmp["prefetchrate"] = float(match.group().strip("hH"))
+                logger.debug(f"\tExtracted prefetch rate {match.group(0)} from file name {f.name}")
+                df_tmp["prefetchrate"] = float(match.group(1))
             else:
                 raise ValueError(f"Could not extract prefetch rate from file name {f.name}")
             df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
