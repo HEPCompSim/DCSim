@@ -104,7 +104,7 @@ def processFile(file: os.PathLike):
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             match = re.search(
-                r'[hH]([0-9]*\.)?[0-9]+', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]
+                r'(?:[hH]itrate|[Hh])([0-9]*\.)?[0-9]+', os.path.splitext(os.path.basename(f.name))[0].split("_")[-2]
             )
             if match:
                 df_tmp["prefetchrate"] = float(match.group().strip("hH"))
