@@ -65,44 +65,6 @@ def valid_int(param: str) -> int:
     return value
 
 
-parser = argparse.ArgumentParser(
-    description="Produce a table (CSV file format) including the hitrate dependency of the simulated system for varied runs. \
-        It uses several files as input, one for each prefetch value used to initialize the simulation per variation run. \
-        These files containing the simulation dumps are CSV files produced by the output method of the simulator.",
-    add_help=True
-)
-parser.add_argument(
-    "--suffix",
-    type=str,
-    default="",
-    help="Optonal string to add to the output-file name."
-)
-parser.add_argument(
-    "monitorfiles",
-    nargs='+',
-    type=valid_file,
-    help="CSV files containing the data to analyze. \
-        Information about the simulated jobs \
-        produced by the simulator."
-)
-parser.add_argument(
-    "--out","-o",
-    default=os.path.join(os.path.dirname(__file__),".."),
-    help="path to the directory where outputs should be dumped"
-)
-parser.add_argument(
-    "--log",
-    choices=("info", "debug", "warning", "error", "critical"),
-    default="info",
-    help="set the logging level",
-)
-parser.add_argument(
-    "--njobs", "-j",
-    type=valid_int,
-    help="number of concurrent jobs processing monitoring files"
-)
-
-
 def mapHostToSite(test: str, mapping: 'dict[str,str]',):
     match = next((x for x in mapping.keys() if x in test), "")
     if match:
@@ -272,7 +234,7 @@ def plotVariationbands(
     plt.close()
 
 
-def run(args=parser.parse_args()):
+def run(args: argparse.Namespace):
     # configure logging
     # pd.set_option('display.max_columns',None)
     logger.setLevel(getattr(logging, str(args.log).upper()))
@@ -301,5 +263,42 @@ def run(args=parser.parse_args()):
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser(
+        description="Produce a table (CSV file format) including the hitrate dependency of the simulated system for varied runs. \
+            It uses several files as input, one for each prefetch value used to initialize the simulation per variation run. \
+            These files containing the simulation dumps are CSV files produced by the output method of the simulator.",
+        add_help=True
+    )
+    parser.add_argument(
+        "--suffix",
+        type=str,
+        default="",
+        help="Optonal string to add to the output-file name."
+    )
+    parser.add_argument(
+        "monitorfiles",
+        nargs='+',
+        type=valid_file,
+        help="CSV files containing the data to analyze. \
+            Information about the simulated jobs \
+            produced by the simulator."
+    )
+    parser.add_argument(
+        "--out","-o",
+        default=os.path.join(os.path.dirname(__file__),".."),
+        help="path to the directory where outputs should be dumped"
+    )
+    parser.add_argument(
+        "--log",
+        choices=("info", "debug", "warning", "error", "critical"),
+        default="info",
+        help="set the logging level",
+    )
+    parser.add_argument(
+        "--njobs", "-j",
+        type=valid_int,
+        help="number of concurrent jobs processing monitoring files"
+    )
+    args=parser.parse_args()
+    run(args)
 
