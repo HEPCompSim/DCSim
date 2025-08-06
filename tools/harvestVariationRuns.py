@@ -154,25 +154,20 @@ def createDataframeFromCSVs(csvFiles: list[str], nprocs=None) -> pd.DataFrame:
 
 
 def plotVariationbands(
+    ax: plt.Axes,
     df: pd.DataFrame,
     quantity: str,
     sites: 'list[str]',
     title: str,
-    plot_dir: os.PathLike,
-    prefix="", suffix="",
-    figsize=(6,4)
 ):
     """Plot the median and 25- and 75-quantiles with uncertainty bands 
 
     Args:
+        ax (plt.Axes): Axes to plot on
         df (pd.DataFrame): Data containing median and quantiles for indexed simulation run
         quantity (str): Quantity identifier to plot
         sites (list[str]): Sites to group by
         title (str): Plot title
-        plot_dir (os.PathLike): Save path for the plot
-        prefix (str, optional): Prefix for plot name. Defaults to "".
-        suffix (str, optional): Suffix for plot name. Defaults to "".
-        figsize (tuple, optional): Figure aspect ratio. Defaults to (6,4).
     """
 
     def scale_xticks(ax: plt.Axes, ticks: list[float]):
@@ -187,41 +182,31 @@ def plotVariationbands(
         ax.set_xticks([scale*x for x in ticks])
         ax.set_xticklabels(["{:.1f}".format(x) for x in ticks])
 
-    # create plot output path
-    plot_dir = os.path.abspath(plot_dir)
-    if not os.path.exists(plot_dir):
-        os.makedirs(plot_dir)
-    if prefix:
-        prefix = prefix+"_"
-    if suffix:
-        suffix = "_"+suffix
     # plot
     logger.info(f"\tPlotting quantity {quantity}")
-    fig = plt.figure(f"{prefix}{quantity}{suffix}", figsize=figsize)
-    ax1 = fig.add_subplot(1,1,1)
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
                  hue="Site", hue_order=sites,
                  estimator="mean", errorbar=("ci",95), n_boot=1000, seed=42,
                  linestyle="solid", err_style="band", palette=palette,
-                 ax=ax1)
+                 ax=ax)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q25"))),
                  hue="Site", hue_order=sites,
                  estimator="mean", errorbar=("ci",95), n_boot=1000, seed=42,
                  linestyle="dashed", err_style="band", palette=palette,
-                 ax=ax1)
+                 ax=ax)
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"q75"))),
                  hue="Site", hue_order=sites,
                  estimator="mean", errorbar=("ci",95), n_boot=1000, seed=42,
                  linestyle="dashdot", err_style="band", palette=palette,
-                 ax=ax1)
-    ax1.set_title(title)
-    ax1.set_xlabel("fraction of prefetched files in cache",color="black")
-    ax1.set_ylabel(QUANTITIES[quantity]["label"], color="black")
+                 ax=ax)
+    ax.set_title(title)
+    ax.set_xlabel("fraction of prefetched files in cache",color="black")
+    ax.set_ylabel(QUANTITIES[quantity]["label"], color="black")
     if QUANTITIES[quantity]["ylim"]:
-        ax1.set_ylim(QUANTITIES[quantity]["ylim"])
+        ax.set_ylim(QUANTITIES[quantity]["ylim"])
     # manipulate legend
-    handles, labels = ax1.get_legend_handles_labels()
+    handles, labels = ax.get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
     by_label["25% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashed")
     by_label["25% quantile"].set_linewidth(1.)
@@ -232,11 +217,7 @@ def plotVariationbands(
     by_label["75% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashdot")
     by_label["75% quantile"].set_linewidth(1.)
     by_label.move_to_end("75% quantile", last=False)
-    ax1.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best',frameon=False)
-    # save plot
-    fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.pdf"))
-    fig.savefig(os.path.join(plot_dir, f"{fig.get_label()}.png"))
-    plt.close()
+    ax.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best',frameon=False)
 
 
 def run(args: argparse.Namespace):
@@ -254,33 +235,65 @@ def run(args: argparse.Namespace):
         nprocs = args.njobs
 
     # Get list of files to process
-    files_to_process = []
-    if args.input_dir:
-        if args.monitorfiles:
-            logger.error("Cannot specify both --input-dir and monitorfiles positionally.")
+    sim_files_to_process = []
+    if args.sim_input_dir:
+        if args.simfiles:
+            logger.error("Cannot specify both --sim-input-dir and --simfiles.")
             exit(1)
-        if not os.path.isdir(args.input_dir):
-            logger.error(f"Input directory not found: {args.input_dir}")
+        if not os.path.isdir(args.sim_input_dir):
+            logger.error(f"Input directory not found: {args.sim_input_dir}")
             exit(1)
-        logger.info(f"Searching for *.csv files in {args.input_dir}")
-        files_to_process = glob.glob(os.path.join(args.input_dir, "*.csv"))
-    elif args.monitorfiles:
-        files_to_process = args.monitorfiles
+        logger.info(f"Searching for *.csv files in {args.sim_input_dir}")
+        sim_files_to_process = glob.glob(os.path.join(args.sim_input_dir, "*.csv"))
+    elif args.simfiles:
+        sim_files_to_process = args.simfiles
     else:
         parser.print_help()
-        logger.error("\nNo input files specified. Provide monitorfiles or use --input-dir.")
+        logger.warning("\nNo simulation input files specified. Provide --simfiles or use --sim-input-dir.")
+
+    data_files_to_process = []
+    if args.data_input_dir:
+        if args.datafiles:
+            logger.error("Cannot specify both --data-input-dir and --datafiles.")
+            exit(1)
+        if not os.path.isdir(args.data_input_dir):
+            logger.error(f"Input directory not found: {args.data_input_dir}")
+            exit(1)
+        logger.info(f"Searching for *.csv files in {args.data_input_dir}")
+        data_files_to_process = glob.glob(os.path.join(args.data_input_dir, "*.csv"))
+    if args.datafiles:
+        data_files_to_process = args.datafiles
+
+    if not sim_files_to_process and not data_files_to_process:
+        logger.error("No files to process. Exiting.")
         exit(1)
 
-    if not files_to_process:
-        logger.warning("No files to process.")
-        return
+    sim_df = pd.DataFrame()
+    data_df = pd.DataFrame()
+    sites = []
+    if not sim_files_to_process:
+        logger.warning("No simulation files to process.")
+    else:
+        logger.info(f"Found {len(sim_files_to_process)} simulation files to process.")
+        # actual data processing
+        sim_df = createDataframeFromCSVs(sim_files_to_process, nprocs)
+        if sim_df.empty:
+            logger.warning("No simulation data processed.")
+        sites = sorted(sim_df["Site"].unique())
 
-    # actual data processing
-    df = createDataframeFromCSVs(files_to_process, nprocs)
-    if df.empty:
-        logger.warning("No data processed. Exiting.")
-        return
-    sites = sorted(df["Site"].unique())
+    if not data_files_to_process:
+        logger.warning("No real-world data files to process.")
+    else:
+        logger.info(f"Found {len(data_files_to_process)} real-world data files to process.")
+        # actual data processing
+        data_df = createDataframeFromCSVs(data_files_to_process, nprocs)
+        if data_df.empty:
+            logger.warning("No real-world data processed.")
+        # merge simulation and real-world data sites
+        if sites:
+            sites = sorted(set(sites) | set(data_df["Site"].unique()))
+        else:
+            sites = sorted(data_df["Site"].unique())
 
     # create output
     out_dir = os.path.abspath(args.out)
@@ -289,7 +302,20 @@ def run(args: argparse.Namespace):
     # and plot
     for quantity in QUANTITIES.values():
         logger.info("Plotting {}".format(quantity["ident"]))
-        plotVariationbands(df, quantity["ident"], sites, "", out_dir, "", "")
+        prefix = ""
+        suffix = ""
+        if prefix:
+            prefix = prefix+"_"
+        if suffix:
+            suffix = "_"+suffix
+        figsize = (6, 4)
+        fig = plt.figure(f"{prefix}{quantity}{suffix}", figsize=figsize)
+        ax1 = fig.add_subplot(1,1,1)
+        plotVariationbands(ax1, sim_df, quantity["ident"], sites, "")
+        # save plot
+        fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.pdf"))
+        fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.png"))
+        plt.close()
 
 
 if __name__ == "__main__":
@@ -306,18 +332,32 @@ if __name__ == "__main__":
         help="Optonal string to add to the output-file name."
     )
     parser.add_argument(
-        "monitorfiles",
+        "--simfiles",
         nargs='*',
         type=valid_file,
-        help="CSV files containing the data to analyze. \
+        help="CSV monitor files from simulation to analyze. \
             Information about the simulated jobs \
             produced by the simulator."
     )
     parser.add_argument(
-        "--input-dir",
+        "--sim-input-dir",
         type=str,
-        help="Directory containing the monitor CSV files to analyze. \
-            Cannot be used with monitorfiles argument."
+        help="Directory containing the monitor CSV files from simulation to analyze. \
+            Cannot be used with --simfiles argument."
+    )
+    parser.add_argument(
+        "--datafiles",
+        nargs='*',
+        type=valid_file,
+        help="CSV monitor files from real-world data to analyze. \
+            Information about run jobs \
+            in a real-world experiment platform."
+    )
+    parser.add_argument(
+        "--data-input-dir",
+        type=str,
+        help="Directory containing the monitor CSV files from real-world experimentation to analyze. \
+            Cannot be used with --datafiles argument."
     )
     parser.add_argument(
         "--out","-o",
