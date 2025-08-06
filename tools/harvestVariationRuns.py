@@ -8,28 +8,28 @@ import argparse
 import re
 import glob
 
-from collections.abc import Iterable
+from typing import Any
 from collections import OrderedDict
 
 import logging
 logger = logging.getLogger('harvestVariationRuns')
 
 
-QUANTITIES = {
+QUANTITIES : dict[str, dict[str, Any]] = {
     "Walltime": {
         "ident": "Walltime",
         "label": "jobtime / min",
-        "ylim": [0.,7000.],
+        # "ylim": [0.,7000.],
     },
     "IOtime": {
         "ident": "IOtime",
         "label": "transfer time / min",
-        "ylim": [0.,3500.],
+        # "ylim": [0.,3500.],
     },
     "CPUtime": {
         "ident": "CPUtime",
         "label": "CPU time / min",
-        "ylim": [0.,5500.]
+        # "ylim": [0.,5500.]
     },
     "Efficiency": {
         "ident": "Efficiency",
@@ -39,7 +39,7 @@ QUANTITIES = {
     "hitrate": {
         "ident": "hitrate",
         "label": "hitrate",
-        "ylim": [0.,1.05],
+        # "ylim": [0.,1.05],
     }
 }
 
