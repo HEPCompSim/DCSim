@@ -7,6 +7,8 @@ import os.path
 import argparse
 import re
 import glob
+import tarfile
+import tempfile
 
 from typing import Any
 from collections import OrderedDict
@@ -52,8 +54,8 @@ HostSiteMapping = {
 
 def valid_file(param: str) -> str:
     base, ext = os.path.splitext(param)
-    if ext.lower() not in (".csv"):
-        raise argparse.ArgumentTypeError("File must have a csv extension")
+    if ext.lower() not in (".csv", ".tar.gz"):
+        raise argparse.ArgumentTypeError("File must have a .csv or .tar.gz extension")
     if not os.path.exists(param):
         raise FileNotFoundError('{}: No such file'.format(param))
     return param
@@ -116,29 +118,51 @@ def processFile(file: os.PathLike):
         return df_tmp
 
 
-def createDataframeFromCSVs(csvFiles: list[str], nprocs=None) -> pd.DataFrame:
+def createDataframeFromCSVs(files: list[str], nprocs=None) -> pd.DataFrame:
     """Merge all data from individual CSV files into a single data-frame
 
     Args:
-        csvFiles (list[str]): CSV file paths containing job data
+        csvFiles (list[str]): CSV file paths or tar.gz archives with .csv files containing job data
         nprocs (int|None): number of concurrent processes to use for processing. If None, it will use half of the available CPU cores.
 
     Returns:
         DataFrame: merged data-frame containing all job data
     """
+    csv_files = []
+    temp_dirs = []
+
+    for file_path in files:
+        if file_path.lower().endswith(".tar.gz"):
+            tmpdir = tempfile.mkdtemp()
+            temp_dirs.append(tmpdir)
+            logger.info(f"Extracting {file_path} to {tmpdir}")
+            with tarfile.open(file_path, "r:gz") as tar:
+                tar.extractall(path=tmpdir)
+            extracted_csvs = glob.glob(os.path.join(tmpdir, "**/*.csv"), recursive=True)
+            csv_files.extend(extracted_csvs)
+        elif file_path.lower().endswith(".csv"):
+            csv_files.append(file_path)
+
+    if not csv_files:
+        for dr in temp_dirs:
+            import shutil
+            shutil.rmtree(dr)
+        logger.error(f"No valid CSV files found in the provided file paths {files}.")
+        return pd.DataFrame()
+    
     if nprocs is None:
         cpu_count = os.cpu_count()
-        nprocs = cpu_count / 2 if cpu_count else 1
-    if nprocs > len(csvFiles):
-        logger.warning(f"Number of processes {nprocs} is greater than number of files {len(csvFiles)}. Reducing to {len(csvFiles)}.")
-        nprocs = len(csvFiles)
+        nprocs = cpu_count // 2 if cpu_count else 1
+    if nprocs > len(csv_files):
+        logger.warning(f"Number of processes {nprocs} is greater than number of files {len(csv_files)}. Reducing to {len(csv_files)}.")
+        nprocs = len(csv_files)
 
     # create a dataframe containing statistical moments of each run
     from multiprocessing import Pool
     pool = Pool(processes=int(nprocs))
     process_dict = {}
-    logger.info(f"Analysing {len(csvFiles)} files with {int(nprocs)} concurrent processes")
-    for file in csvFiles:
+    logger.info(f"Analysing {len(csv_files)} files with {int(nprocs)} concurrent processes")
+    for file in csv_files:
         if not os.path.exists(file):
             logger.warning(f"File {file} does not exist, skipping.")
             continue
@@ -149,7 +173,16 @@ def createDataframeFromCSVs(csvFiles: list[str], nprocs=None) -> pd.DataFrame:
     pool.close()
     pool.join()
     logger.info("\tFinished analysing")
+
+    # Clean up temporary directories
+    for dr in temp_dirs:
+        import shutil
+        shutil.rmtree(dr)
+
     # concatenate all dataframes
+    if not dfs:
+        logger.error(f"No valid dataframes created from the provided files {files}.")
+        return pd.DataFrame()
     df = pd.concat([df for df in dfs], ignore_index=True)
     logger.debug(f"Raw data: \n{df.head()}")
     return df
@@ -282,8 +315,9 @@ def run(args: argparse.Namespace):
         if not os.path.isdir(args.sim_input_dir):
             logger.error(f"Input directory not found: {args.sim_input_dir}")
             exit(1)
-        logger.info(f"Searching for *.csv files in {args.sim_input_dir}")
-        sim_files_to_process = glob.glob(os.path.join(args.sim_input_dir, "*.csv"))
+        logger.info(f"Searching for *.csv and *tar.gz files in {args.sim_input_dir}")
+        sim_files_to_process.extend(glob.glob(os.path.join(args.sim_input_dir, "*.csv")))
+        sim_files_to_process.extend(glob.glob(os.path.join(args.sim_input_dir, "*.tar.gz")))
     elif args.simfiles:
         sim_files_to_process = args.simfiles
     else:
@@ -298,8 +332,9 @@ def run(args: argparse.Namespace):
         if not os.path.isdir(args.data_input_dir):
             logger.error(f"Input directory not found: {args.data_input_dir}")
             exit(1)
-        logger.info(f"Searching for *.csv files in {args.data_input_dir}")
-        data_files_to_process = glob.glob(os.path.join(args.data_input_dir, "*.csv"))
+        logger.info(f"Searching for *.csv and *.tar.gz files in {args.data_input_dir}")
+        data_files_to_process.extend(glob.glob(os.path.join(args.data_input_dir, "*.csv")))
+        data_files_to_process.extend(glob.glob(os.path.join(args.data_input_dir, "*.tar.gz")))
     if args.datafiles:
         data_files_to_process = args.datafiles
 
@@ -375,28 +410,32 @@ if __name__ == "__main__":
         "--simfiles",
         nargs='*',
         type=valid_file,
-        help="CSV monitor files from simulation to analyze. \
+        help="CSV monitor files or zipped tar archives from simulation to analyze. \
             Information about the simulated jobs \
             produced by the simulator."
     )
     parser.add_argument(
         "--sim-input-dir",
         type=str,
-        help="Directory containing the monitor CSV files from simulation to analyze. \
+        help="Directory containing the monitor CSV files or tar archives from simulation to analyze. \" \
+            Having both the CSV files as well as the archives containing the same files in this directory \
+            will lead to double counting! \
             Cannot be used with --simfiles argument."
     )
     parser.add_argument(
         "--datafiles",
         nargs='*',
         type=valid_file,
-        help="CSV monitor files from real-world data to analyze. \
+        help="CSV monitor files or zipped tar archives from real-world data to analyze. \
             Information about run jobs \
             in a real-world experiment platform."
     )
     parser.add_argument(
         "--data-input-dir",
         type=str,
-        help="Directory containing the monitor CSV files from real-world experimentation to analyze. \
+        help="Directory containing the monitor CSV files from real-world experimentation to analyze. \" \
+            Having both the CSV files as well as the archives containing the same files in this directory \
+            will lead to double counting! \
             Cannot be used with --datafiles argument."
     )
     parser.add_argument(
