@@ -446,8 +446,8 @@ def run(args: argparse.Namespace):
         if not data_df.empty:
             plotBoxes(ax1, data_df, quantity["ident"], sites)
         # save plot
-        fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.pdf"))
-        fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.png"))
+        fig.savefig(os.path.join(out_dir, f"{quantity['ident']}.pdf"))
+        fig.savefig(os.path.join(out_dir, f"{quantity['ident']}.png"))
         plt.close()
 
 
