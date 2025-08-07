@@ -417,8 +417,10 @@ def run(args: argparse.Namespace):
         figsize = (6, 4)
         fig = plt.figure(f"{prefix}{quantity}{suffix}", figsize=figsize)
         ax1 = fig.add_subplot(1,1,1)
-        plotVariationbands(ax1, sim_df, quantity["ident"], sites)
-        plotBoxes(ax1, data_df, quantity["ident"], sites)
+        if not sim_df.empty:
+            plotVariationbands(ax1, sim_df, quantity["ident"], sites)
+        if not data_df.empty:
+            plotBoxes(ax1, data_df, quantity["ident"], sites)
         # save plot
         fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.pdf"))
         fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.png"))
