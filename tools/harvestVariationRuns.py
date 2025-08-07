@@ -108,7 +108,7 @@ def processSimFile(file: os.PathLike):
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             match = re.search(
-                r'(?:[Hh]itrate|[Hh])([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
+                r'(?:[Hh]itrate|[Hh])_?([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
             )
             if match:
                 logger.debug(f"\tExtracted prefetch rate {match.group(1)} from file name {f.name}")
@@ -136,7 +136,7 @@ def processDataFile(file: os.PathLike):
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             match = re.search(
-                r'(?:[Hh]itrate|[Hh])([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
+                r'(?:[Hh]itrate|[Hh])_?([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
             )
             if match:
                 logger.debug(f"\tExtracted prefetch rate {match.group(1)} from file name {f.name}")
