@@ -293,8 +293,7 @@ def plotBoxes(
     sites: 'list[str]',
     title: str = ""
 ):
-    """Plot a boxplot with median and 25- and 75-quantiles and whiskers 
-    corresponding to 1.5 times the interquartile range
+    """Plot data points with error bars based on pre-computed quantiles.
 
     Args:
         ax (plt.Axes): Axes to plot on
@@ -306,21 +305,46 @@ def plotBoxes(
     # plot
     logger.info(f"\tPlotting real-world data quantity {quantity}")
     palette = sns.color_palette("colorblind", n_colors=len(sites))
-    sns.boxplot(data=df, x="prefetchrate", y=quantity,
-                hue="Site", hue_order=sites, label=None,
-                orient="v", flierprops=dict(marker="x"), palette=palette,
-                ax=ax)
+
+    unique_prefetchrates = sorted(df['prefetchrate'].unique())
+    x_positions = {rate: i for i, rate in enumerate(unique_prefetchrates)}
+    
+    n_sites = len(sites)
+    if n_sites == 0:
+        return
+    
+    # Calculate width for each group of bars
+    group_width = 0.8
+    bar_width = group_width / n_sites
+
+    for i, site in enumerate(sites):
+        site_df = df[df['Site'] == site].sort_values('prefetchrate')
+        if site_df.empty:
+            continue
+
+        # Calculate x positions for each point for the current site
+        positions = [x_positions[pr] - group_width / 2 + bar_width / 2 + i * bar_width for pr in site_df['prefetchrate']]
+        
+        y_values = site_df[f'{quantity}.median']
+        lower_errors = y_values - site_df[f'{quantity}.q25']
+        upper_errors = site_df[f'{quantity}.q75'] - y_values
+        y_err = [lower_errors.to_numpy(), upper_errors.to_numpy()]
+
+        ax.errorbar(x=positions, y=y_values, yerr=y_err, fmt='o', capsize=5, color=palette[i], label=site)
+
     ax.set_title(title)
     ax.set_xlabel("fraction of prefetched files in cache",color="black")
     ax.set_ylabel(QUANTITIES[quantity]["label"], color="black")
     if "ylim" in QUANTITIES[quantity]:
         if QUANTITIES[quantity]["ylim"]:
             ax.set_ylim(QUANTITIES[quantity]["ylim"])
+
+    ax.set_xticks(list(x_positions.values()))
+    ax.set_xticklabels([f"{pr:.2f}" for pr in x_positions.keys()])
+
     # manipulate legend
     handles, labels = ax.get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
-    by_label["data"] = mpatches.Patch(color="black")
-    by_label.move_to_end("data", last=False)
     ax.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best', frameon=False)
 
 
