@@ -268,8 +268,9 @@ def plotVariationbands(
     ax.set_title(title)
     ax.set_xlabel("fraction of prefetched files in cache",color="black")
     ax.set_ylabel(QUANTITIES[quantity]["label"], color="black")
-    if QUANTITIES[quantity]["ylim"]:
-        ax.set_ylim(QUANTITIES[quantity]["ylim"])
+    if "ylim" in QUANTITIES[quantity]:
+        if QUANTITIES[quantity]["ylim"]:
+            ax.set_ylim(QUANTITIES[quantity]["ylim"])
     # manipulate legend
     handles, labels = ax.get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
@@ -312,8 +313,9 @@ def plotBoxes(
     ax.set_title(title)
     ax.set_xlabel("fraction of prefetched files in cache",color="black")
     ax.set_ylabel(QUANTITIES[quantity]["label"], color="black")
-    if QUANTITIES[quantity]["ylim"]:
-        ax.set_ylim(QUANTITIES[quantity]["ylim"])
+    if "ylim" in QUANTITIES[quantity]:
+        if QUANTITIES[quantity]["ylim"]:
+            ax.set_ylim(QUANTITIES[quantity]["ylim"])
     # manipulate legend
     handles, labels = ax.get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
