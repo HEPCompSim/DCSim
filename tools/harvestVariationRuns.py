@@ -129,6 +129,9 @@ def createDataframeFromCSVs(csvFiles: list[str], nprocs=None) -> pd.DataFrame:
     if nprocs is None:
         cpu_count = os.cpu_count()
         nprocs = cpu_count / 2 if cpu_count else 1
+    if nprocs > len(csvFiles):
+        logger.warning(f"Number of processes {nprocs} is greater than number of files {len(csvFiles)}. Reducing to {len(csvFiles)}.")
+        nprocs = len(csvFiles)
 
     # create a dataframe containing statistical moments of each run
     from multiprocessing import Pool
