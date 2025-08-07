@@ -127,10 +127,10 @@ def processDataFile(file: os.PathLike):
             # read one data file
             data = pd.read_csv(f,sep=r"\s*,\s*",engine='python')
             # compute derived quantities
-            data["Walltime"] = (data["job.end"]-data["job.start"])/60
+            data["Walltime"] = (data["job.runtime"])/60
             data["CPUtime"] = data["job.computetime"]/60
             data["IOtime"] = -9999.9  # Placeholder for IO time, as it is not computed here
-            data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
+            data["Efficiency"] = data["job.computetime"]/(data["job.runtime"])
             data["Site"] = data["machine.name"].astype(str).apply(lambda x: mapHostToSite(x, HostSiteMapping))
             
             # Keep only the site and the columns to be aggregated
