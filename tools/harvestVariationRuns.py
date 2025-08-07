@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 import pandas as pd
-from matplotlib import lines, pyplot as plt
+from matplotlib import lines, pyplot as plt, patches as mpatches
 import seaborn as sns
 import os.path
 import argparse
@@ -152,25 +152,7 @@ def createDataframeFromCSVs(csvFiles: list[str], nprocs=None) -> pd.DataFrame:
     return df
 
 
-
-def plotVariationbands(
-    ax: plt.Axes,
-    df: pd.DataFrame,
-    quantity: str,
-    sites: 'list[str]',
-    title: str,
-):
-    """Plot the median and 25- and 75-quantiles with uncertainty bands 
-
-    Args:
-        ax (plt.Axes): Axes to plot on
-        df (pd.DataFrame): Data containing median and quantiles for indexed simulation run
-        quantity (str): Quantity identifier to plot
-        sites (list[str]): Sites to group by
-        title (str): Plot title
-    """
-
-    def scale_xticks(ax: plt.Axes, ticks: list[float]):
+def scale_xticks(ax: plt.Axes, ticks: list[float]):
         """Helper function which sets the xticks to the according scaled positions
 
         Args: 
@@ -182,6 +164,23 @@ def plotVariationbands(
         ax.set_xticks([scale*x for x in ticks])
         ax.set_xticklabels(["{:.1f}".format(x) for x in ticks])
 
+
+def plotVariationbands(
+    ax: plt.Axes,
+    df: pd.DataFrame,
+    quantity: str,
+    sites: 'list[str]',
+    title: str = "",
+):
+    """Plot the median and 25- and 75-quantiles with uncertainty bands 
+
+    Args:
+        ax (plt.Axes): Axes to plot on
+        df (pd.DataFrame): Data containing median and quantiles for indexed simulation run
+        quantity (str): Quantity identifier to plot
+        sites (list[str]): Sites to group by
+        title (str): Plot title
+    """
     # plot
     logger.info(f"\tPlotting quantity {quantity}")
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
@@ -218,6 +217,43 @@ def plotVariationbands(
     by_label["75% quantile"].set_linewidth(1.)
     by_label.move_to_end("75% quantile", last=False)
     ax.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best',frameon=False)
+
+
+def plotBoxes(
+    ax: plt.Axes,
+    df: pd.DataFrame,
+    quantity: str,
+    sites: 'list[str]',
+    title: str = ""
+):
+    """Plot a boxplot with median and 25- and 75-quantiles and whiskers 
+    corresponding to 1.5 times the interquartile range
+
+    Args:
+        ax (plt.Axes): Axes to plot on
+        df (pd.DataFrame): Data containing median and quantiles for indexed simulation run
+        quantity (str): Quantity identifier to plot
+        sites (list[str]): Sites to group by
+        title (str): Plot title
+    """
+    # plot
+    logger.info(f"\tPlotting real-world data quantity {quantity}")
+    palette = sns.color_palette("colorblind", n_colors=len(sites))
+    sns.boxplot(data=df, x="prefetchrate", y=quantity,
+                hue="Site", hue_order=sites, label=None,
+                orient="v", flierprops=dict(marker="x"), palette=palette,
+                ax=ax)
+    ax.set_title(title)
+    ax.set_xlabel("fraction of prefetched files in cache",color="black")
+    ax.set_ylabel(QUANTITIES[quantity]["label"], color="black")
+    if QUANTITIES[quantity]["ylim"]:
+        ax.set_ylim(QUANTITIES[quantity]["ylim"])
+    # manipulate legend
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    by_label["data"] = mpatches.Patch(color="black")
+    by_label.move_to_end("data", last=False)
+    ax.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best', frameon=False)
 
 
 def run(args: argparse.Namespace):
@@ -311,7 +347,8 @@ def run(args: argparse.Namespace):
         figsize = (6, 4)
         fig = plt.figure(f"{prefix}{quantity}{suffix}", figsize=figsize)
         ax1 = fig.add_subplot(1,1,1)
-        plotVariationbands(ax1, sim_df, quantity["ident"], sites, "")
+        plotVariationbands(ax1, sim_df, quantity["ident"], sites)
+        plotBoxes(ax1, data_df, quantity["ident"], sites)
         # save plot
         fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.pdf"))
         fig.savefig(os.path.join(out_dir, f"{fig.get_label()}.png"))
