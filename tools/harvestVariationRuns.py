@@ -322,7 +322,7 @@ def run(args: argparse.Namespace):
         sim_files_to_process = args.simfiles
     else:
         parser.print_help()
-        logger.warning("\nNo simulation input files specified. Provide --simfiles or use --sim-input-dir.")
+        logger.warning("No simulation input files specified. Provide --simfiles or use --sim-input-dir.")
 
     data_files_to_process = []
     if args.data_input_dir:
