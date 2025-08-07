@@ -53,8 +53,7 @@ HostSiteMapping = {
 
 
 def valid_file(param: str) -> str:
-    base, ext = os.path.splitext(param)
-    if ext.lower() not in (".csv", ".tar.gz"):
+    if not param.endswith((".csv", ".tar.gz")):
         raise argparse.ArgumentTypeError("File must have a .csv or .tar.gz extension")
     if not os.path.exists(param):
         raise FileNotFoundError('{}: No such file'.format(param))
@@ -104,7 +103,7 @@ def processSimFile(file: os.PathLike):
             data["CPUtime"] = data["job.computetime"]/60
             data["IOtime"] = (data["infiles.transfertime"]+data["outfiles.transfertime"])/60
             data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
-            data["Site"] = data["machine.name"].apply(lambda x: mapHostToSite(x,HostSiteMapping))
+            data["Site"] = data["machine.name"].astype(str).apply(lambda x: mapHostToSite(x,HostSiteMapping))
             # aggregate per execution site
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
@@ -132,7 +131,7 @@ def processDataFile(file: os.PathLike):
             data["CPUtime"] = data["job.computetime"]/60
             data["IOtime"] = (data["infiles.transfertime"]+data["outfiles.transfertime"])/60
             data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
-            data["Site"] = data["machine.name"].apply(lambda x: mapHostToSite(x,HostSiteMapping))
+            data["Site"] = data["machine.name"].astype(str).apply(lambda x: mapHostToSite(x,HostSiteMapping))
             # aggregate per execution site
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
