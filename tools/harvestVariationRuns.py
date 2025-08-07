@@ -134,7 +134,7 @@ def processDataFile(file: os.PathLike):
             data["Site"] = data["machine.name"].astype(str).apply(lambda x: mapHostToSite(x, HostSiteMapping))
             
             # Keep only the site and the columns to be aggregated
-            cols_to_agg = ["Walltime", "CPUtime", "IOtime", "Efficiency", "Site"]
+            cols_to_agg = ["Walltime", "CPUtime", "IOtime", "Efficiency", "Site", "hitrate"]
             df_for_agg = data[cols_to_agg]
 
             # aggregate per execution site
