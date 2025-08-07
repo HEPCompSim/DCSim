@@ -10,7 +10,7 @@ import glob
 import tarfile
 import tempfile
 
-from typing import Any
+from typing import Any, Callable
 from collections import OrderedDict
 
 import logging
@@ -87,13 +87,16 @@ def q90(x: pd.Series):
     return x.quantile(0.9)
 
 
-def processFile(file: os.PathLike):
+def processSimFile(file: os.PathLike):
         logger.debug(f"\tProcessing file {file}")
         if not os.path.exists(file):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
             # read one data file
             data = pd.read_csv(f,sep=r",\s",engine='python')
+            # mask dummy simulation jobs that are tagged with "__"
+            # these are not real jobs, but only used to simulate the prefetching
+            # and are not relevant for the analysis
             mask = ~data["job.tag"].str.contains("__")
             data = data[mask]
             # compute derived quantities
@@ -117,8 +120,36 @@ def processFile(file: os.PathLike):
             logger.debug("\tintermediate dataframe: ", type(df_tmp), df_tmp.shape, "\n", df_tmp)
         return df_tmp
 
+def processDataFile(file: os.PathLike):
+        logger.debug(f"\tProcessing file {file}")
+        if not os.path.exists(file):
+            raise FileNotFoundError(f"Input {file} not found!")
+        with open(file) as f:
+            # read one data file
+            data = pd.read_csv(f,sep=r",\s",engine='python')
+            # compute derived quantities
+            data["Walltime"] = (data["job.end"]-data["job.start"])/60
+            data["CPUtime"] = data["job.computetime"]/60
+            data["IOtime"] = (data["infiles.transfertime"]+data["outfiles.transfertime"])/60
+            data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
+            data["Site"] = data["machine.name"].apply(lambda x: mapHostToSite(x,HostSiteMapping))
+            # aggregate per execution site
+            df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
+            df_tmp = df_tmp.reset_index()
+            match = re.search(
+                r'(?:[Hh]itrate|[Hh])([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
+            )
+            if match:
+                logger.debug(f"\tExtracted prefetch rate {match.group(1)} from file name {f.name}")
+                df_tmp["prefetchrate"] = float(match.group(1))
+            else:
+                raise ValueError(f"Could not extract prefetch rate from file name {f.name}")
+            df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
+            logger.debug("\tintermediate dataframe: ", type(df_tmp), df_tmp.shape, "\n", df_tmp)
+        return df_tmp
 
-def createDataframeFromCSVs(files: list[str], nprocs=None) -> pd.DataFrame:
+
+def createDataframeFromCSVs(files: list[str], processor: Callable[[os.PathLike], pd.DataFrame], nprocs: int|None = None) -> pd.DataFrame:
     """Merge all data from individual CSV files into a single data-frame
 
     Args:
@@ -166,7 +197,7 @@ def createDataframeFromCSVs(files: list[str], nprocs=None) -> pd.DataFrame:
         if not os.path.exists(file):
             logger.warning(f"File {file} does not exist, skipping.")
             continue
-        process_dict[file] = pool.apply_async(processFile, (file,))
+        process_dict[file] = pool.apply_async(processor, (file,))
     dfs = []
     for file, process in process_dict.items():
         dfs.append(process.get())
@@ -350,7 +381,7 @@ def run(args: argparse.Namespace):
     else:
         logger.info(f"Found {len(sim_files_to_process)} simulation files to process.")
         # actual data processing
-        sim_df = createDataframeFromCSVs(sim_files_to_process, nprocs)
+        sim_df = createDataframeFromCSVs(sim_files_to_process, processSimFile, nprocs)
         if sim_df.empty:
             logger.warning("No simulation data processed.")
         sites = sorted(sim_df["Site"].unique())
@@ -360,7 +391,7 @@ def run(args: argparse.Namespace):
     else:
         logger.info(f"Found {len(data_files_to_process)} real-world data files to process.")
         # actual data processing
-        data_df = createDataframeFromCSVs(data_files_to_process, nprocs)
+        data_df = createDataframeFromCSVs(data_files_to_process, processDataFile, nprocs)
         if data_df.empty:
             logger.warning("No real-world data processed.")
         # merge simulation and real-world data sites
