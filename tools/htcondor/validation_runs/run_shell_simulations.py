@@ -151,6 +151,8 @@ if __name__ == "__main__":
     parser.add_argument("--platform", type=str,
                         default=os.path.join(data_path, "platform-files", "sgbatch_validation_template.xml"),
                         help="Platform name")
+    parser.add_argument("--platform-scenario", type=str, default="fcfn",
+                        help="Platform scenario, e.g. 'fcfn', 'fcsn', 'scfn', 'scsn'.")
     parser.add_argument("--workload", type=str,
                         default=os.path.join(data_path, "workload-configs", "crown_ttbar_slowjob.json"),
                         help="Workload configuration")
@@ -173,7 +175,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    platform_generator = lambda platform_file, calibration: generate_platform(platform_file, calibration)
+    platform_generator = lambda platform_file, calibration: generate_platform(platform_file, calibration, scenario=args.platform_scenario)
     dcsim_args_generator = lambda line, iline, hitrate: generate_dcsim_args(args, line, iline, hitrate, platform_generator)
 
     process_list(args.shell, args.from_line, args.to_line, dcsim_args_generator)

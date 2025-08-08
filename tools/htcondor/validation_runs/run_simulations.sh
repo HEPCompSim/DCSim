@@ -14,4 +14,5 @@ ls $(pwd)
 python3 run_shell_simulations.py \
     --shell "$1" \
     --from-line "$2" \
-    --to-line "$3"
+    --to-line "$3" \
+    --platform-scenario "$4"
