@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 import pandas as pd
-from matplotlib import lines, pyplot as plt, patches as mpatches
+from matplotlib import lines, markers, pyplot as plt, patches as mpatches
 import seaborn as sns
 import os.path
 import argparse
@@ -253,7 +253,7 @@ def plotVariationbands(
     """
     # plot
     logger.info(f"\tPlotting simulated quantity {quantity}")
-    print(df.head())
+    # print(df.head())
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
                  hue="Site", hue_order=sites,
@@ -276,19 +276,6 @@ def plotVariationbands(
     if "ylim" in QUANTITIES[quantity]:
         if QUANTITIES[quantity]["ylim"]:
             ax.set_ylim(QUANTITIES[quantity]["ylim"])
-    # manipulate legend
-    handles, labels = ax.get_legend_handles_labels()
-    by_label = OrderedDict(zip(labels, handles))
-    by_label["25% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashed")
-    by_label["25% quantile"].set_linewidth(1.)
-    by_label.move_to_end("25% quantile", last=False)
-    by_label["median"] = lines.Line2D([0],[0],color="black", linestyle="solid")
-    by_label["median"].set_linewidth(1.)
-    by_label.move_to_end("median", last=False)
-    by_label["75% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashdot")
-    by_label["75% quantile"].set_linewidth(1.)
-    by_label.move_to_end("75% quantile", last=False)
-    ax.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best',frameon=False)
 
 
 def plotBoxes(
@@ -309,12 +296,11 @@ def plotBoxes(
     """
     # plot
     logger.info(f"\tPlotting real-world data quantity {quantity}")
-    print(df.head())
+    # print(df.head())
     palette = sns.color_palette("colorblind", n_colors=len(sites))
     
     # Define a small jitter width to offset points for different sites
-    jitter_width = 0.01 
-    
+    jitter_width = 0.01   
     for i, site in enumerate(sites):
         site_df = df[df['Site'] == site].sort_values('prefetchrate')
         if site_df.empty:
@@ -338,30 +324,6 @@ def plotBoxes(
     if "ylim" in QUANTITIES[quantity]:
         if QUANTITIES[quantity]["ylim"]:
             ax.set_ylim(QUANTITIES[quantity]["ylim"])
-
-    # The legend is now handled by the errorbar labels, but we ensure it's drawn correctly.
-    handles, labels = ax.get_legend_handles_labels()
-    # Filter out the legend entries from plotVariationbands if they exist
-    by_label = OrderedDict(zip(labels, handles))
-    
-    # Create a new legend with unique entries
-    unique_labels = []
-    unique_handles = []
-    for label, handle in by_label.items():
-        if label not in unique_labels:
-            unique_labels.append(label)
-            unique_handles.append(handle)
-
-    # Add the quantile lines back to the legend if they were there
-    if "25% quantile" in by_label:
-        unique_labels.append("25% quantile")
-        unique_handles.append(lines.Line2D([0],[0],color="black", linestyle="dashed"))
-        unique_labels.append("median")
-        unique_handles.append(lines.Line2D([0],[0],color="black", linestyle="solid"))
-        unique_labels.append("75% quantile")
-        unique_handles.append(lines.Line2D([0],[0],color="black", linestyle="dashdot"))
-
-    ax.legend(unique_handles, unique_labels, ncol=2, handlelength=1, loc='best', frameon=False)
 
 
 def run(args: argparse.Namespace):
@@ -457,10 +419,31 @@ def run(args: argparse.Namespace):
         figsize = (6, 4)
         fig = plt.figure(f"{prefix}{quantity}{suffix}", figsize=figsize)
         ax1 = fig.add_subplot(1,1,1)
+        legend_dict = OrderedDict()
         if not sim_df.empty:
             plotVariationbands(ax1, sim_df, quantity["ident"], sites)
+            _handles, _labels = ax1.get_legend_handles_labels()
+            by_label = OrderedDict(zip(_labels, _handles))
+            by_label["25% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashed")
+            by_label["25% quantile"].set_linewidth(1.)
+            by_label.move_to_end("25% quantile", last=False)
+            by_label["median"] = lines.Line2D([0],[0],color="black", linestyle="solid")
+            by_label["median"].set_linewidth(1.)
+            by_label.move_to_end("median", last=False)
+            by_label["75% quantile"] = lines.Line2D([0],[0],color="black", linestyle="dashdot")
+            by_label["75% quantile"].set_linewidth(1.)
+            by_label.move_to_end("75% quantile", last=False)
+            legend_dict.update(by_label)
         if not data_df.empty:
             plotBoxes(ax1, data_df, quantity["ident"], sites)
+            _handles, _labels = ax1.get_legend_handles_labels()
+            by_label = OrderedDict(zip(_labels, _handles))
+            by_label["data"] = lines.Line2D([0], [0], marker='o', linestyle='None', color="black")
+            for key, value in by_label.items():
+                if key not in legend_dict:
+                    legend_dict[key] = value
+            legend_dict.move_to_end("data", last=False)
+        ax1.legend(legend_dict.values(), legend_dict.keys(), ncol=2, handlelength=1, loc='best', frameon=False)
         # save plot
         fig.savefig(os.path.join(out_dir, f"{quantity['ident']}.pdf"))
         fig.savefig(os.path.join(out_dir, f"{quantity['ident']}.png"))
