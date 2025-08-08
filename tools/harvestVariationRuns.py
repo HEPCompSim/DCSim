@@ -92,7 +92,7 @@ def processSimFile(file: os.PathLike):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
             # read one data file
-            data = pd.read_csv(f,sep=r"\s*,\s*",engine='python')
+            data = pd.read_csv(f,sep=r"\s*,\s*", engine='python', index_col=False)
             # mask dummy simulation jobs that are tagged with "__"
             # these are not real jobs, but only used to simulate the prefetching
             # and are not relevant for the analysis
@@ -125,20 +125,19 @@ def processDataFile(file: os.PathLike):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
             # read one data file
-            data = pd.read_csv(f,sep=r"\s*,\s*",engine='python')
+            data = pd.read_csv(f,sep=r"\s*,\s*", engine='python', index_col=False)
             # compute derived quantities
             data["Walltime"] = (data["job.runtime"])/60
             data["CPUtime"] = data["job.computetime"]/60
             data["IOtime"] = -9999.9  # Placeholder for IO time, as it is not computed here
             data["Efficiency"] = data["job.computetime"]/(data["job.runtime"])
             data["Site"] = data["machine.name"].astype(str).apply(lambda x: mapHostToSite(x, HostSiteMapping))
-            
             # Keep only the site and the columns to be aggregated
-            cols_to_agg = ["Walltime", "CPUtime", "IOtime", "Efficiency", "Site", "hitrate"]
-            df_for_agg = data[cols_to_agg]
-
+            cols_to_keep = ["Walltime", "CPUtime", "IOtime", "Efficiency", "Site", "hitrate"]
+            df_for_agg = data[cols_to_keep]
             # aggregate per execution site
-            df_tmp = df_for_agg.groupby("Site").agg(['mean','median', q10, q25, q75, q90])
+            cols_to_agg = ["Walltime", "CPUtime", "IOtime", "Efficiency", "hitrate"]
+            df_tmp = df_for_agg.groupby("Site")[cols_to_agg].agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             match = re.search(
                 r'(?:[Hh]itrate|[Hh])_?([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
@@ -253,7 +252,8 @@ def plotVariationbands(
         title (str): Plot title
     """
     # plot
-    logger.info(f"\tPlotting quantity {quantity}")
+    logger.info(f"\tPlotting simulated quantity {quantity}")
+    print(df.head())
     palette = sns.color_palette("colorblind", n_colors=len(sites))    
     sns.lineplot(data=df, x="prefetchrate", y=(".".join((quantity,"median"))),
                  hue="Site", hue_order=sites,
@@ -302,40 +302,35 @@ def plotBoxes(
 
     Args:
         ax (plt.Axes): Axes to plot on
-        df (pd.DataFrame): Data containing median and quantiles for indexed simulation run
+        df (pd.DataFrame): Data containing median and quantiles for indexed experiment run
         quantity (str): Quantity identifier to plot
         sites (list[str]): Sites to group by
         title (str): Plot title
     """
     # plot
     logger.info(f"\tPlotting real-world data quantity {quantity}")
+    print(df.head())
     palette = sns.color_palette("colorblind", n_colors=len(sites))
-
-    unique_prefetchrates = sorted(df['prefetchrate'].unique())
-    x_positions = {rate: i for i, rate in enumerate(unique_prefetchrates)}
     
-    n_sites = len(sites)
-    if n_sites == 0:
-        return
+    # Define a small jitter width to offset points for different sites
+    jitter_width = 0.01 
     
-    # Calculate width for each group of bars
-    group_width = 0.8
-    bar_width = group_width / n_sites
-
     for i, site in enumerate(sites):
         site_df = df[df['Site'] == site].sort_values('prefetchrate')
         if site_df.empty:
             continue
 
-        # Calculate x positions for each point for the current site
-        positions = [x_positions[pr] - group_width / 2 + bar_width / 2 + i * bar_width for pr in site_df['prefetchrate']]
-        
-        y_values = site_df[f'{quantity}.median']
-        lower_errors = y_values - site_df[f'{quantity}.q25']
-        upper_errors = site_df[f'{quantity}.q75'] - y_values
+        # Apply jitter to the x-axis values
+        grouped = site_df.groupby('prefetchrate')
+        x_values = grouped['prefetchrate'].first() + (i * jitter_width)
+
+        # Aggregate the y-values and variations
+        y_values = grouped[f'{quantity}.median'].mean()
+        lower_errors = y_values - grouped[f'{quantity}.q25'].mean()
+        upper_errors = grouped[f'{quantity}.q75'].mean() - y_values
         y_err = [lower_errors.to_numpy(), upper_errors.to_numpy()]
 
-        ax.errorbar(x=positions, y=y_values, yerr=y_err, fmt='o', capsize=5, color=palette[i], label=site)
+        ax.errorbar(x=x_values, y=y_values, yerr=y_err, fmt='o', capsize=5, color=palette[i], label=site)
 
     ax.set_title(title)
     ax.set_xlabel("fraction of prefetched files in cache",color="black")
@@ -344,13 +339,29 @@ def plotBoxes(
         if QUANTITIES[quantity]["ylim"]:
             ax.set_ylim(QUANTITIES[quantity]["ylim"])
 
-    ax.set_xticks(list(x_positions.values()))
-    ax.set_xticklabels([f"{pr:.2f}" for pr in x_positions.keys()])
-
-    # manipulate legend
+    # The legend is now handled by the errorbar labels, but we ensure it's drawn correctly.
     handles, labels = ax.get_legend_handles_labels()
+    # Filter out the legend entries from plotVariationbands if they exist
     by_label = OrderedDict(zip(labels, handles))
-    ax.legend(by_label.values(), by_label.keys(), ncol=2, handlelength=1, loc='best', frameon=False)
+    
+    # Create a new legend with unique entries
+    unique_labels = []
+    unique_handles = []
+    for label, handle in by_label.items():
+        if label not in unique_labels:
+            unique_labels.append(label)
+            unique_handles.append(handle)
+
+    # Add the quantile lines back to the legend if they were there
+    if "25% quantile" in by_label:
+        unique_labels.append("25% quantile")
+        unique_handles.append(lines.Line2D([0],[0],color="black", linestyle="dashed"))
+        unique_labels.append("median")
+        unique_handles.append(lines.Line2D([0],[0],color="black", linestyle="solid"))
+        unique_labels.append("75% quantile")
+        unique_handles.append(lines.Line2D([0],[0],color="black", linestyle="dashdot"))
+
+    ax.legend(unique_handles, unique_labels, ncol=2, handlelength=1, loc='best', frameon=False)
 
 
 def run(args: argparse.Namespace):
