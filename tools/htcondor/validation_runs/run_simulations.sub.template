@@ -6,7 +6,7 @@ arguments = $(SHELL) $(START) $(END) $(SCENARIO)
 should_transfer_files = YES
 transfer_input_files = $(SHELL), $(PYTHON_SIMULATION_SCRIPT)
 transfer_output_files = $(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz
-transfer_destination = $(SCENARIO)
+transfer_output_remaps = "$(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz = $(SCENARIO)/$(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz"
 when_to_transfer_output = ON_EXIT
 
 log = $(SCENARIO)/logs/log.$(ClusterId).$(ProcId)
