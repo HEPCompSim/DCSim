@@ -70,21 +70,21 @@ def valid_file(param: str) -> str:
     return param
 
 
-def scale_xticks(ax: plt.Axes, ticks: Iterable):
+def scale_xticks(ax: plt.Axes, ticks: list[float] | tuple[float]) -> None:
     """Helper function which sets the xticks to the according scaled positions
 
     Args: 
         ax (matplotlib.Axes): subplot to scale xticks
-        ticks (Iterable): list of expected ticks (at least two values, lowest and highest tick)
+        ticks (list[float] | tuple[float]): list of expected ticks (at least two values: lowest and highest tick)
     """
-    scale = (ax1.get_xlim()[-1]-ax1.get_xlim()[0]-1)/(ticks[-1]-ticks[0])
+    scale = (ax.get_xlim()[-1] - ax.get_xlim()[0]) / (ticks[-1] - ticks[0])
     print(f"Scale {(ticks[0],ticks[-1])} with {scale} to end up with correct seaborn axis {ax.get_xlim()}")
     ax.set_xticks([scale*x for x in ticks])
     ax.set_xticklabels(["{:.1f}".format(x) for x in ticks])
 
 
 def mapHostToSite(test: str, mapping: 'dict[str,str]',):
-    match = next((x for x in mapping.keys() if x in test), False)
+    match = next((x for x in mapping.keys() if x in test), None)
     if match:
         return mapping[match]
     else:
@@ -206,10 +206,10 @@ for quantity, qstyle in QUANTITIES.items():
         ax1.set_title(scenario_plotlabel_dict[scenario])
         ax1.set_xlabel("hitrate", loc="right")
         ax1.set_ylabel(qstyle["ylabel"], color="black")
-        ax1.set_xlim([-0.05,1.05])
+        ax1.set_xlim(-0.05,1.05)
         ax1.set_xticks(hitrateticks)
         if qstyle["ylim"]:
-            ax1.set_ylim(qstyle["ylim"])
+            ax1.set_ylim(*qstyle["ylim"])
         ax1.legend(loc='best')
         fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
         fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
@@ -235,7 +235,7 @@ for quantity, qstyle in QUANTITIES.items():
         scale_xticks(ax1, hitrateticks)
         ax1.set_ylabel(qstyle["ylabel"], color="black")
         if qstyle["ylim"]:
-            ax1.set_ylim(qstyle["ylim"])
+            ax1.set_ylim(*qstyle["ylim"])
         ax1.legend(loc='best')
         fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
         fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
@@ -257,7 +257,7 @@ for quantity, qstyle in QUANTITIES.items():
         scale_xticks(ax1, hitrateticks)
         ax1.set_ylabel(qstyle["ylabel"], color="black")
         if qstyle["ylim"]:
-            ax1.set_ylim(qstyle["ylim"])
+            ax1.set_ylim(*qstyle["ylim"])
         ax1.legend(loc='best')
         fig.savefig(f"hitrate{quantity}{scenario}{suffix}.pdf")
         fig.savefig(f"hitrate{quantity}{scenario}{suffix}.png")
@@ -313,7 +313,7 @@ for quantity, qstyle in QUANTITIES.items():
             x="hitrate", y=quantity,
             hue="Site", hue_order=sites,
             data=df,
-            xlim=[-0.1,1.1],
+            xlim=(-0.1,1.1),
             ylim=qstyle["ylim"] if qstyle["ylim"] else None,
             marginal_ticks=True,
             height=7,
