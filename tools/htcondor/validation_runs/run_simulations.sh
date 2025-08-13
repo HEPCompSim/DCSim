@@ -15,4 +15,6 @@ python3 run_shell_simulations.py \
     --shell "$1" \
     --from-line "$2" \
     --to-line "$3" \
-    --platform-scenario "$4"
+    --platform-scenario "$4" \
+    --workload "$5" \
+    --dataset "$6"

@@ -1,12 +1,12 @@
 # submit multiple simulations and harvest scaling and job information
 
 executable = ./run_simulations.sh
-arguments = $(SHELL) $(START) $(END) $(SCENARIO)
+arguments = $(SHELL) $(START) $(END) $(SCENARIO) $(WORKLOAD) $(DATASET)
 
 should_transfer_files = YES
 transfer_input_files = $(SHELL), $(PYTHON_SIMULATION_SCRIPT)
 transfer_output_files = $(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz
-transfer_output_remaps = "$(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz = $(SCENARIO)/$(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz"
+transfer_output_remaps = "$(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz = $(SCENARIO)/$(WORKLOAD)/$(PLATFORM_TEMPLATE)_$(SHELL)_$(START)_$(END).csv.tar.gz"
 when_to_transfer_output = ON_EXIT
 
 log = $(SCENARIO)/logs/log.$(ClusterId).$(ProcId)
@@ -26,8 +26,8 @@ x509userproxy = $ENV(X509_USER_PROXY)
 
 PLATFORM_TEMPLATE = sgbatch_validation_template.xml
 SCENARIO = fcfn
-# WORKLOAD = crown_ttbar_slowjob.json
-# DATASET = crown_ttbar_slowjob.json
+WORKLOAD = crown_ttbar_testjob.json
+DATASET = crown_ttbar_testjob.json
 # XROOTD_BLOCKSIZE = 10000000000
 # STORAGE_BUFFER_SIZE = 0
 # SEED = 42
