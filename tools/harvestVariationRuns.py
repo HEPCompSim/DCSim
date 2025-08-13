@@ -312,6 +312,7 @@ def plotBoxes(
 
         # Aggregate the y-values and variations
         y_values = grouped[f'{quantity}.median'].mean()
+        # print(f"{quantity}.median.means for site {site}: {y_values}, total mean: {y_values.mean()}")
         lower_errors = y_values - grouped[f'{quantity}.q25'].mean()
         upper_errors = grouped[f'{quantity}.q75'].mean() - y_values
         y_err = [lower_errors.to_numpy(), upper_errors.to_numpy()]
