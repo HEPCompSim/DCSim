@@ -16,34 +16,34 @@ public:
      */
     MonitorAction(
             const std::string &name,
-            double ram,
+            sg_size_t ram,
             unsigned long num_cores,
             const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_execute,
             const std::function<void(std::shared_ptr<wrench::ActionExecutor> action_executor)> &lambda_terminate);
 
-    double get_infile_transfer_time() {
+    double get_infile_transfer_time() const {
         return infile_transfer_time;
     }
-    double get_calculation_time() {
+    double get_calculation_time() const {
         return calculation_time;
     }
     // double get_outfile_transfer_time() {
     //     return outfile_transfer_time;
     // }
-    double get_hitrate() {
+    double get_hitrate() const {
         return hitrate;
     }
 
-    void set_infile_transfer_time(double value) {
+    void set_infile_transfer_time(const double value) {
         this->infile_transfer_time = value;
     }
-    void set_calculation_time(double value) {
+    void set_calculation_time(const double value) {
         this->calculation_time = value;
     }
     // void set_outfile_transfer_time(double value) {
     //     this->outfile_transfer_time = value;
     // }
-    void set_hitrate(double value) {
+    void set_hitrate(const double value) {
         this->hitrate = value;
     }
 
@@ -61,4 +61,4 @@ protected:
     double hitrate;
 };
 
-#endif//MY_SIMPLE_EXECUTION_CONTROLLER_H
+#endif//MY_CACHE_COMPUTE_ACTION_H

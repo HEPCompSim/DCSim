@@ -5,36 +5,35 @@
  *
  * @param hostnames: list of hostname on which the dataset is hosted
  * @param num_files: number of tasks
- * @param average_file_size: expectation value of the file size (truncated gaussian) distribution
- * @param sigma_file_size: std. deviation of the file size (truncated gaussian) distribution
+ * @param file_size: JSON description of the file size distribution
  * @param name_suffix: dataset name
  * @param generator: random number generator objects to draw from
  *
  * @throw std::runtime_error
  */
 Dataset::Dataset(
-        const std::vector<std::string> hostnames, const double num_files,
-        nlohmann::json file_size,
-        const std::string name_suffix,
+        const std::vector<std::string> &hostnames,
+        const size_t num_files,
+        const nlohmann::json &file_size,
+        const std::string& name_suffix,
         const std::mt19937 &generator) {
     this->generator = generator;
     std::string potential_separator = (name_suffix.empty() ? "" : "_");
-//    if (name_suffix == "") {
-//        potential_separator = "";
-//    }
 
-    this->size_dist = initializeRNG(file_size);
+    this->size_dist = createRNG(file_size);
     for (size_t f = 0; f < num_files; f++) {
-        // Sample inputfile sizes
+        // Sample input file sizes
         double dsize = size_dist(this->generator);
-        while (dsize < 0.) dsize = this->size_dist(this->generator);
-        this->files.push_back(wrench::Simulation::  addFile("infile_" + name_suffix + potential_separator + std::to_string(f), dsize));
+        while (dsize < 0.) dsize = size_dist(this->generator);
+        // Convert the input file size to an integral number of bytes
+        auto size_in_bytes = static_cast<sg_size_t>(dsize);
+        this->files.push_back(wrench::Simulation::  addFile("infile_" + name_suffix + potential_separator + std::to_string(f), size_in_bytes));
     }
     this->hostnames = hostnames;
     this->name = name_suffix;
 }
 
-std::function<double(std::mt19937 &)> Dataset::initializeRNG(nlohmann::json json) {
+std::function<double(std::mt19937 &)> Dataset::createRNG(nlohmann::json json) {
     std::cerr << json["type"] << ": ";
     std::function<double(std::mt19937 &)> dist;
     if (json["type"].get<std::string>() == "gaussian") {
