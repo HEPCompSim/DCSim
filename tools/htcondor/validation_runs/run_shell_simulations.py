@@ -43,8 +43,8 @@ def generate_dcsim_args(
     return [
         "--platform", platform_generator(args.platform, calibration),
         "--output-file", f"{platform.split('.')[0]}_{shell.split('.')[0]}_CP{iline}_hitrate{hitrate}.csv",
-        "--workload-configurations", args.workload,
-        "--dataset-configurations", args.dataset,
+        "--workload-configurations", os.path.join(data_path, "workload-configs", args.workload),
+        "--dataset-configurations", os.path.join(data_path, "dataset-configs", args.dataset),
         "--hitrate", str(hitrate),
         "--xrd-blocksize", str(args.xrd_blocksize),
         "--storage-buffer-size", str(args.storage_buffer_size),
@@ -196,4 +196,5 @@ if __name__ == "__main__":
         print(f"Successfully created tar archive: {tar_filename}")
     else:
         raise FileNotFoundError(f"No output files found matching the pattern {outfiles_pattern}")
+    #test
 
