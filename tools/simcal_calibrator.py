@@ -840,7 +840,7 @@ if __name__=="__main__":
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
 			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-			data,loss,args.nocpu,args.sg01,args.networkratio)	
+			data,loss,args.nocpu,args.networkratio,args.sg01)	
 	
 		t0 = time.time()
 		cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
