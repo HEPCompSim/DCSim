@@ -153,7 +153,7 @@ class Simulator(sc.Simulator):
 		try:
 			return (extract(output.name),o[1])
 		except:
-			print(o[2])
+			print(o)
 			raise
 	def fill_template(self, env, args):
 		# Get the command-line arguments
