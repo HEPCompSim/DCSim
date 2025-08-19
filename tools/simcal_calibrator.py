@@ -162,7 +162,7 @@ class Simulator(sc.Simulator):
 		xml_contents = re.sub(r'{read-speed}', str(args["cacheSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{link-speed}', str(args["internalNetworkSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{net-speed}', str(args["externalNetworkSpeed"]), xml_contents)
-xml_contents = re.sub(r'{scaled-cpu-speed}', str(args["cpuSpeed"]*self.sg01scale), xml_contents)
+		xml_contents = re.sub(r'{scaled-cpu-speed}', str(args["cpuSpeed"]*self.sg01scale), xml_contents)
 		platform = env.tmp_file(encoding='utf8',keep=False)
 		platform.write(xml_contents)
 		platform.flush()
