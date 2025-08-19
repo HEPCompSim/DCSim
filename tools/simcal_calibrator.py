@@ -150,9 +150,11 @@ class Simulator(sc.Simulator):
 		o=env.bash(self.path,
 				 args=cargs)
 		#print(o[1])
-		return (extract(output.name),o[1])
-	
-
+		try:
+			return (extract(output.name),o[1])
+		except:
+			print(o[3])
+			raise
 	def fill_template(self, env, args):
 		# Get the command-line arguments
 		xml_contents = self.template
