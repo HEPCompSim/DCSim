@@ -98,6 +98,7 @@ class Simulator(sc.Simulator):
 				loss,
 				nocpu,
 				ratio,
+				sg01scale=1,
 				plot=False):
 		super().__init__()
 		self.path = path
@@ -110,6 +111,7 @@ class Simulator(sc.Simulator):
 		self.nocpu=nocpu
 		self.ratio=ratio
 		self.plot=plot
+		self.sg01scale=sg01scale
 		with open(xml_template, 'r') as f:
 			self.template = f.read()
 
@@ -160,7 +162,7 @@ class Simulator(sc.Simulator):
 		xml_contents = re.sub(r'{read-speed}', str(args["cacheSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{link-speed}', str(args["internalNetworkSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{net-speed}', str(args["externalNetworkSpeed"]), xml_contents)
-
+xml_contents = re.sub(r'{scaled-cpu-speed}', str(args["cpuSpeed"]*self.sg01scale), xml_contents)
 		platform = env.tmp_file(encoding='utf8',keep=False)
 		platform.write(xml_contents)
 		platform.flush()
@@ -671,6 +673,7 @@ if __name__=="__main__":
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-a", "--alg", type=str, required=True, help="Algorithm to use [grad|skopt.gp|skopt.gbrt|skopt.et|skopt.rf|random]")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
+	parser.add_argument("-s", "--sg01", type=float, required=True, help="CPU speed scaling for sg01")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
@@ -770,7 +773,7 @@ if __name__=="__main__":
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-		data,loss,False,False)	
+		data,loss,False,False, 1.0254504305)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=simulator(
@@ -835,7 +838,7 @@ if __name__=="__main__":
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
 			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-			data,loss,args.nocpu,args.networkratio)	
+			data,loss,args.nocpu,args.sg01,args.networkratio)	
 	
 		t0 = time.time()
 		cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
