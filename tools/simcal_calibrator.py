@@ -778,7 +778,7 @@ if __name__=="__main__":
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=simulator(
 		{
-			"cpuSpeed":"1970Mf",
+			"cpuSpeed":1970000000,
 			"disk":"17MBps",
 			"ramDisk":"1GBps",
 			"internalNetwork":"10Gbps",
