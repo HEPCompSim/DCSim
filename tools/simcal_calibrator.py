@@ -675,7 +675,7 @@ if __name__=="__main__":
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-a", "--alg", type=str, required=True, help="Algorithm to use [grad|skopt.gp|skopt.gbrt|skopt.et|skopt.rf|random]")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
-	parser.add_argument("-s", "--sg01", type=float, required=True, help="CPU speed scaling for sg01")
+	parser.add_argument("-s", "--sg01", type=float, default=1, help="CPU speed scaling for sg01")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )

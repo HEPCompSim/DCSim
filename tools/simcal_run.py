@@ -43,6 +43,8 @@ if __name__=="__main__":
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-a", "--args", type=str, help="args to shell about")
+	
+	parser.add_argument("-s", "--sg01", type=float, default=1, help="CPU speed scaling for sg01")
 	args = parser.parse_args()
 	evaluator=sc.evaluation.LossCloud()
 	if args.loss=="mre":
@@ -105,7 +107,7 @@ if __name__=="__main__":
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-		data,loss,args.nocpu,args.networkratio)	
+		data,loss,args.nocpu,args.networkratio,args.sg01)	
 	
 
 	t0 = time.time()
