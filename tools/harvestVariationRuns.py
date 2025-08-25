@@ -92,7 +92,11 @@ def processSimFile(file: os.PathLike):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
             # read one data file
-            data = pd.read_csv(f,sep=r"\s*,\s*", engine='python', index_col=False)
+            try:
+                data = pd.read_csv(f,sep=r"\s*,\s*", engine='python', index_col=False)
+            except pd.errors.EmptyDataError as e:
+                logger.error(f"Something is wrong with the input file {file}: {e}")
+                return pd.DataFrame()
             # mask dummy simulation jobs that are tagged with "__"
             # these are not real jobs, but only used to simulate the prefetching
             # and are not relevant for the analysis
@@ -125,7 +129,11 @@ def processDataFile(file: os.PathLike):
             raise FileNotFoundError(f"Input {file} not found!")
         with open(file) as f:
             # read one data file
-            data = pd.read_csv(f,sep=r"\s*,\s*", engine='python', index_col=False)
+            try:
+                data = pd.read_csv(f,sep=r"\s*,\s*", engine='python', index_col=False)
+            except pd.errors.EmptyDataError as e:
+                logger.error(f"Something is wrong with the input file {file}: {e}")
+                return pd.DataFrame()
             # compute derived quantities
             data["Walltime"] = (data["job.runtime"])/60
             data["CPUtime"] = data["job.computetime"]/60
