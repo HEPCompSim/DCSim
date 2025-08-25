@@ -19,8 +19,6 @@ RUN mkdir -p build && pushd build && \
 
 USER root
 RUN pushd build && make install && popd && ldconfig
-# Install tool dependencies
-RUN python3 -m pip install --break-system-packages seaborn
 
 USER dcsim
 
@@ -33,5 +31,8 @@ COPY --from=builder /usr/local/lib/libDCSim.so /usr/local/lib/libDCSim.so
 COPY --from=builder /home/dcsim/.local /home/dcsim/.local
 COPY --chown=dcsim:dcsim data/ /home/DCSim/data/
 COPY --chown=dcsim:dcsim tools/ /home/DCSim/tools/
+
+# Install tool dependencies
+RUN python3 -m pip install --break-system-packages seaborn
 
 RUN dc-sim --help
