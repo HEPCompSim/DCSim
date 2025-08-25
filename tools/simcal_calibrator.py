@@ -24,7 +24,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
 import time    
-from processify import processify
+from skywalker import processify
 
 toolsDir = Path(os.path.dirname(os.path.realpath(__file__)))  
 # Get path to THIS folder where the simulator lives
