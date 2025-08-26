@@ -226,6 +226,7 @@ class Simulator(sc.Simulator):
 			 })
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
+		print(self.plot)
 		if self.plot:
 			plot(self.data,(scsn[0],scfn[0],fcsn[0],fcfn[0]))
 			plotCPU(self.data,(scsn[0],scfn[0],fcsn[0],fcfn[0]))
@@ -309,6 +310,7 @@ def plot(reference,simulated):
 			# Save plot to file
 			plt.savefig(f'platform_{index}_{expiriment}.png')
 			plt.close()
+			print(f'platform_{index}_{expiriment}.png')
 
 def plotCPU(reference,simulated):
 	index=0
