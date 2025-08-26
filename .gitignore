@@ -52,3 +52,5 @@ callgrind.out*
 
 # venv
 .venv/*
+
+.DS_Store
