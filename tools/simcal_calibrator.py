@@ -799,7 +799,7 @@ if __name__=="__main__":
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
 			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-			data,loss,args.nocpu,args.networkratio,args.plot)	
+			data,loss,args.nocpu,args.networkratio,args.sg01,args.plot)	
 		result=simulator(eval(args.evaluate))
 		print("Evaluation",result)
 		if args.hyper_test:
