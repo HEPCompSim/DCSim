@@ -53,8 +53,8 @@ bool SimpleSimulator::infile_caching_on = true;                  // flag to turn
 bool SimpleSimulator::prefetching_on = true;                     // flag to enable prefetching during streaming
 bool SimpleSimulator::shuffle_jobs = false;                      // flag to enable job shuffling during submission
 sg_size_t SimpleSimulator::xrd_block_size = 1000 * 1000 * 1000;  // maximum size of the streamed file blocks in bytes for the XRootD-ish streaming
-double SimpleSimulator::xrd_add_flops_per_time = 20000000000;    // flops overhead introduced by XRootD streaming per second
-double SimpleSimulator::xrd_add_flops_local_per_time = 0;
+double SimpleSimulator::xrd_add_flops_per_time = 1000000;    // flops overhead introduced by XRootD streaming per second
+double SimpleSimulator::xrd_add_flops_local_per_time = 1000000; // flops overhead introduced by streaming from local storage per second
 // TODO: The initialized below is likely bogus (at compile time?)
 std::set<std::string> SimpleSimulator::cache_hosts;
 std::set<std::string> SimpleSimulator::storage_hosts;
@@ -247,8 +247,8 @@ po::variables_map process_program_options(int argc, char **argv) {
     bool shuffle_jobs = false;
 
     sg_size_t xrd_block_size = 1000 * 1000 * 1000;
-    double xrd_add_flops_per_time = 20000000000;
-    double xrd_add_flops_local_per_time = 0;
+    double xrd_add_flops_per_time = 1000000;
+    double xrd_add_flops_local_per_time = 1000000;
     std::string storage_service_buffer_size = "1048576";// 1MiB
 
     unsigned int seed = 42;
