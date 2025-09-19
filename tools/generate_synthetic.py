@@ -117,7 +117,9 @@ class Simulator(sc.Simulator):
 				 "--cfg=network/loopback-bw:100000000000000",
 				 "--no-caching",
 				 "--seed", 0,
-				 "--xrd-flops-per-time",args["xrootd_flops"]
+				 "--xrd-flops-per-time",args["xrootd_flops"],
+				 "--xrd-flops-per-time-local",args["xrd_flops_per_time_local"],
+				 "--xrd-flops-per-time",args["xrd_flops_per_time"],
 			 ]
 		for i in range(len(cargs)):
 			cargs[i]=str(cargs[i])
@@ -134,6 +136,7 @@ class Simulator(sc.Simulator):
 
 		# Replace the placeholders in the XML file with the specified values
 		xml_contents = re.sub(r'{cpu-speed}', str(args["cpuSpeed"]), xml_contents)
+		xml_contents = re.sub(r'{scaled-cpu-speed}', str(args["cpuSpeed2"]), xml_contents)
 		xml_contents = re.sub(r'{read-speed}', str(args["cacheSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{link-speed}', str(args["internalNetworkSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{net-speed}', str(args["externalNetworkSpeed"]), xml_contents)
@@ -167,6 +170,7 @@ class Simulator(sc.Simulator):
 		#scsn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
@@ -178,6 +182,7 @@ class Simulator(sc.Simulator):
 		#fcsn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
@@ -189,6 +194,7 @@ class Simulator(sc.Simulator):
 		#fcfn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
@@ -200,6 +206,7 @@ class Simulator(sc.Simulator):
 		#scfn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],

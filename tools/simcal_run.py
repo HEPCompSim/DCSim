@@ -44,7 +44,7 @@ if __name__=="__main__":
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-a", "--args", type=str, help="args to shell about")
 	
-	parser.add_argument("-s", "--sg01", type=float, default=1, help="CPU speed scaling for sg01")
+
 	args = parser.parse_args()
 	evaluator=sc.evaluation.LossCloud()
 	if args.loss=="mre":
@@ -86,6 +86,7 @@ if __name__=="__main__":
 	#evaluator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
 	if not args.nocpu:
 		evaluator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
+		evaluator.add_param("cpuSpeed2", sc.parameter.Exponential(20, 40).format("%.2f"))
 	evaluator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	evaluator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
 	evaluator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))

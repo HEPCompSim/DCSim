@@ -98,7 +98,6 @@ class Simulator(sc.Simulator):
 				loss,
 				nocpu,
 				ratio,
-				sg01scale=1,
 				plot=False):
 		super().__init__()
 		self.path = path
@@ -111,7 +110,6 @@ class Simulator(sc.Simulator):
 		self.nocpu=nocpu
 		self.ratio=ratio
 		self.plot=plot
-		self.sg01scale=sg01scale
 		with open(xml_template, 'r') as f:
 			self.template = f.read()
 
@@ -124,6 +122,8 @@ class Simulator(sc.Simulator):
 		#	 "xrootd_blocksize",
 		#	 "network_blocksize",
 		#	 "workload",
+		#	 "xrd_flops_per_time_local",
+		#	 "xrd_flops_per_time",
 		#	 "output"
 		# }
 
@@ -142,7 +142,9 @@ class Simulator(sc.Simulator):
 				 "--cfg=network/loopback-bw:100000000000000",
 				 "--no-caching",
 				 "--seed", 0,
-				 "--xrd-flops-per-time",args["xrootd_flops"]
+				 "--xrd-flops-per-time",args["xrootd_flops"],
+				 "--xrd-flops-per-time-local",args["xrd_flops_per_time_local"],
+				 "--xrd-flops-per-time",args["xrd_flops_per_time"],
 			 ]
 		for i in range(len(cargs)):
 			cargs[i]=str(cargs[i])
@@ -164,14 +166,28 @@ class Simulator(sc.Simulator):
 		xml_contents = re.sub(r'{read-speed}', str(args["cacheSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{link-speed}', str(args["internalNetworkSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{net-speed}', str(args["externalNetworkSpeed"]), xml_contents)
-		xml_contents = re.sub(r'{scaled-cpu-speed}', str(args["cpuSpeed"]*self.sg01scale), xml_contents)
+		xml_contents = re.sub(r'{scaled-cpu-speed}', str(args["cpuSpeed2"]), xml_contents)
 		platform = env.tmp_file(encoding='utf8',keep=False)
 		platform.write(xml_contents)
 		platform.flush()
 		return platform
 
 
-
+		# {
+		#	 "platform",
+		#	 "hitrate",
+		#	 "xrootd_blocksize",
+		#	 "network_blocksize",
+		#	 "workload",
+		#	 "xrd_flops_per_time_local",
+		#	 "xrd_flops_per_time",
+		#	 "cpuSpeed",
+		#	 "cpuSpeed2",
+		#	 "externalNetwork",
+		#	 "internalNetwork",
+		#	 "xrootd_flops",
+		#	 "ramDisk"
+		# }
 	def call_platform(self, env, args):
 		inter = {}
 		out = {}
@@ -180,7 +196,7 @@ class Simulator(sc.Simulator):
 			inter[workload] = {}
 			out[workload] = {}
 			for hitrate in self.hitrates:
-				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"]})
+				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"],"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"]})
 				inter[workload][hitrate] = i
 				out[workload][hitrate] = o
 		platform.close()
@@ -190,6 +206,7 @@ class Simulator(sc.Simulator):
 		args=dict(args)
 		if self.nocpu:
 			args["cpuSpeed"]="1960000000"
+			args["cpuSpeed2"]="1960000000"
 		if self.ratio:
 			args["externalFastNetwork"]=args["externalNetwork"]*self.ratio
 			args["externalSlowNetwork"]=args["externalNetwork"]
@@ -198,6 +215,7 @@ class Simulator(sc.Simulator):
 		
 		scsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			{"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
@@ -205,6 +223,7 @@ class Simulator(sc.Simulator):
 			 })
 		fcsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			{"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
@@ -212,6 +231,7 @@ class Simulator(sc.Simulator):
 			 })
 		fcfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			{"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
@@ -219,6 +239,7 @@ class Simulator(sc.Simulator):
 			 })
 		scfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			{"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
@@ -675,7 +696,6 @@ if __name__=="__main__":
 	parser.add_argument("-g", "--groundtruth", type=str, required=True, help="Ground Truth data folder")
 	parser.add_argument("-a", "--alg", type=str, required=True, help="Algorithm to use [grad|skopt.gp|skopt.gbrt|skopt.et|skopt.rf|random]")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
-	parser.add_argument("-s", "--sg01", type=float, default=1, help="CPU speed scaling for sg01")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
@@ -757,11 +777,13 @@ if __name__=="__main__":
 	#calibrator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
 	if not args.nocpu:
 		calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
+		calibrator.add_param("cpuSpeed2", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
 	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 	calibrator.add_param("xrootd_flops", sc.parameter.Exponential(20, 47).format("%.2f"))
-	
+	calibrator.add_param("xrd_flops_per_time_local", sc.parameter.Exponential(0, 32).format("%.2f"))
+	calibrator.add_param("xrd_flops_per_time", sc.parameter.Exponential(0, 32).format("%.2f"))
 	if args.networkratio:
 		calibrator.add_param("externalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 	else:
@@ -781,13 +803,16 @@ if __name__=="__main__":
 	maxs=simulator(
 		{
 			"cpuSpeed":1970000000,
+			"cpuSpeed2":2000000000,
 			"disk":"17MBps",
 			"ramDisk":"1GBps",
 			"internalNetwork":"10Gbps",
 			"externalNetwork":"1.15Gbps",
 			"externalSlowNetwork":"1.15Gbps",
 			"externalFastNetwork":"11.5Gbps",
-			"xrootd_flops":20000000000
+			"xrootd_flops":20000000000,
+			"xrd_flops_per_time_local":1000000,
+			"xrd_flops_per_time":1000000 
 		}
 	)
 	print("Max's",maxs)
@@ -799,7 +824,7 @@ if __name__=="__main__":
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
 			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-			data,loss,args.nocpu,args.networkratio,args.sg01,args.plot)	
+			data,loss,args.nocpu,args.networkratio,args.plot)	
 		result=simulator(eval(args.evaluate))
 		print("Evaluation",result)
 		if args.hyper_test:
@@ -840,7 +865,7 @@ if __name__=="__main__":
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
 			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-			data,loss,args.nocpu,args.networkratio,args.sg01)	
+			data,loss,args.nocpu,args.networkratio)	
 	
 		t0 = time.time()
 		cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
