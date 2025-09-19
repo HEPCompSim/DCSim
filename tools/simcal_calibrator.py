@@ -215,7 +215,7 @@ class Simulator(sc.Simulator):
 		
 		scsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
-			{"cpuSpeed2": args["cpuSpeed2"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
@@ -223,7 +223,7 @@ class Simulator(sc.Simulator):
 			 })
 		fcsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
-			{"cpuSpeed2": args["cpuSpeed2"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
@@ -231,7 +231,7 @@ class Simulator(sc.Simulator):
 			 })
 		fcfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
-			{"cpuSpeed2": args["cpuSpeed2"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
@@ -239,7 +239,7 @@ class Simulator(sc.Simulator):
 			 })
 		scfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
-			{"cpuSpeed2": args["cpuSpeed2"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
