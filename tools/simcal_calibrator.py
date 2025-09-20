@@ -219,7 +219,9 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"]
+			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
 		fcsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
@@ -227,7 +229,9 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"]
+			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
 		fcfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
@@ -235,7 +239,9 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"]
+			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
 		scfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
@@ -243,7 +249,9 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"]
+			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
