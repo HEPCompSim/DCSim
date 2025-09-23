@@ -142,7 +142,6 @@ class Simulator(sc.Simulator):
 				 "--cfg=network/loopback-bw:100000000000000",
 				 "--no-caching",
 				 "--seed", 0,
-				 "--xrd-flops-per-time",args["xrootd_flops"],
 				 "--xrd-flops-per-time-local",args["xrd_flops_per_time_local"],
 				 "--xrd-flops-per-time",args["xrd_flops_per_time"],
 			 ]
@@ -196,7 +195,7 @@ class Simulator(sc.Simulator):
 			inter[workload] = {}
 			out[workload] = {}
 			for hitrate in self.hitrates:
-				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"],"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"]})
+				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"]})
 				inter[workload][hitrate] = i
 				out[workload][hitrate] = o
 		platform.close()
@@ -219,7 +218,6 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
@@ -229,7 +227,6 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
@@ -239,7 +236,6 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
@@ -249,7 +245,6 @@ class Simulator(sc.Simulator):
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 })
@@ -789,7 +784,6 @@ if __name__=="__main__":
 	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
 	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
-	calibrator.add_param("xrootd_flops", sc.parameter.Exponential(20, 47).format("%.2f"))
 	calibrator.add_param("xrd_flops_per_time_local", sc.parameter.Exponential(0, 32).format("%.2f"))
 	calibrator.add_param("xrd_flops_per_time", sc.parameter.Exponential(0, 32).format("%.2f"))
 	if args.networkratio:
@@ -818,7 +812,6 @@ if __name__=="__main__":
 			"externalNetwork":"1.15Gbps",
 			"externalSlowNetwork":"1.15Gbps",
 			"externalFastNetwork":"11.5Gbps",
-			"xrootd_flops":20000000000,
 			"xrd_flops_per_time_local":1000000,
 			"xrd_flops_per_time":1000000 
 		}
