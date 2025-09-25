@@ -266,4 +266,7 @@ if __name__=="__main__":
 	#print(cal)
 	#print(t1-t0)
 
-#./generate_synthetic.py -g "$(subRoot.sh)/hep-testjob-copy" -o "$(subRoot.sh)/synthetic" -c $(nproc) -a "{'cpuSpeed': 1950000000, 'ramDisk': 27000000000, 'disk': 23000000, 'internalNetwork': 1900000000, 'xrootd_flops': 1000000000000, 'externalFastNetwork': 4000000000, 'externalSlowNetwork': 218000000}"	
+#OUT OF DATE#./generate_synthetic.py -g "$(subRoot.sh)/hep-testjob-copy" -o "$(subRoot.sh)/synthetic" -c $(nproc) -a "{'cpuSpeed': 1950000000, 'ramDisk': 27000000000, 'disk': 23000000, 'internalNetwork': 1900000000, 'xrootd_flops': 1000000000000, 'externalFastNetwork': 4000000000, 'externalSlowNetwork': 218000000}"	
+#above left for record incase we ever need it again
+
+#./generate_synthetic.py -g "$(subRoot.sh)/hep-testjob-copy" -o "$(subRoot.sh)/synthetic" -c $(nproc) -a "{'cpuSpeed': 2197000000, 'cpuSpeed2': 1895000000, 'ramDisk': 2200000000, 'disk': 32000000, 'internalNetwork': 605000000, 'xrd_flops_per_time_local': 19000000, 'xrd_flops_per_time': 10000000, 'externalFastNetwork': 600000000, 'externalSlowNetwork': 73000000}"
