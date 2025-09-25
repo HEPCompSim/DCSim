@@ -117,7 +117,6 @@ class Simulator(sc.Simulator):
 				 "--cfg=network/loopback-bw:100000000000000",
 				 "--no-caching",
 				 "--seed", 0,
-				 "--xrd-flops-per-time",args["xrootd_flops"],
 				 "--xrd-flops-per-time-local",args["xrd_flops_per_time_local"],
 				 "--xrd-flops-per-time",args["xrd_flops_per_time"],
 			 ]

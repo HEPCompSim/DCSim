@@ -143,7 +143,7 @@ class Simulator(sc.Simulator):
 				 "--no-caching",
 				 "--seed", 0,
 				 "--xrd-flops-per-time-local",args["xrd_flops_per_time_local"],
-				 "--xrd-flops-per-time",args["xrd_flops_per_time"],
+				 "--xrd-flops-per-time",args["xrd_flops_per_time"]
 			 ]
 		for i in range(len(cargs)):
 			cargs[i]=str(cargs[i])
