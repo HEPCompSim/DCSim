@@ -173,8 +173,9 @@ class Simulator(sc.Simulator):
 			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "externalNetworkSpeed": args["externalSlowNetwork"],,
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 "output":args["output"],
 			 "cacheName":"diskCache",
 			 "SGname":"SG1_Synthetic1Gbps"
@@ -185,8 +186,9 @@ class Simulator(sc.Simulator):
 			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "externalNetworkSpeed": args["externalSlowNetwork"],,
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 "output":args["output"],
 			 "cacheName":"ramCache",
 			 "SGname":"SG1_Synthetic1Gbps"
@@ -197,8 +199,9 @@ class Simulator(sc.Simulator):
 			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "externalNetworkSpeed": args["externalFastNetwork"],,
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 "output":args["output"],
 			 "cacheName":"ramCache",
 			 "SGname":"SG1_Synthetic10Gbps"
@@ -209,8 +212,9 @@ class Simulator(sc.Simulator):
 			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
-			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "externalNetworkSpeed": args["externalFastNetwork"],,
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 "output":args["output"],
 			 "cacheName":"diskCache",
 			 "SGname":"SG1_Synthetic10Gbps"
