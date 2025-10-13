@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.distance import directed_hausdorff
 import ot #pip install POT
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from simcal_calibrator import *
+
 
 import time
 
@@ -101,14 +101,14 @@ if __name__=="__main__":
 	dataDir=toolsDir/"../data"
 
 	 
-	
+	from simcal_calibrator import *
 	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
 		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-		data,loss,args.nocpu,args.networkratio,args.sg01)	
+		data,loss,args.nocpu,args.networkratio)	
 	
 
 	t0 = time.time()

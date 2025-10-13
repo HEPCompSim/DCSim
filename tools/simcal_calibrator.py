@@ -799,7 +799,7 @@ if __name__=="__main__":
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-		data,loss,False,False, 1.0254504305)	
+		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
 	maxs=simulator(
