@@ -46,6 +46,8 @@ if __name__=="__main__":
 	
 
 	args = parser.parse_args()
+	
+	from simcal_calibrator import *
 	evaluator=sc.evaluation.LossCloud()
 	if args.loss=="mre":
 		loss=MRELoss
@@ -101,7 +103,6 @@ if __name__=="__main__":
 	dataDir=toolsDir/"../data"
 
 	 
-	from simcal_calibrator import *
 	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
 		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
