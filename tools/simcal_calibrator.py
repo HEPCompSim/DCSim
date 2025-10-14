@@ -778,20 +778,33 @@ if __name__=="__main__":
 	#calibrator = sc.calibrators.Debug(sys.stdout)
 	#calibrator = sc.calibrators.Grid()
 	#calibrator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
+	#if not args.nocpu:
+	#	calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
+	#	calibrator.add_param("cpuSpeed2", sc.parameter.Exponential(20, 40).format("%.2f"))
+	#calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
+	#calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
+	#calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	#calibrator.add_param("xrd_flops_per_time_local", sc.parameter.Exponential(0, 32).format("%.2f"))
+	#calibrator.add_param("xrd_flops_per_time", sc.parameter.Exponential(0, 32).format("%.2f"))
+	#if args.networkratio:
+	#	calibrator.add_param("externalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	#else:
+	#	calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	#	calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
+	## 2nd round attempt
 	if not args.nocpu:
-		calibrator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
-		calibrator.add_param("cpuSpeed2", sc.parameter.Exponential(20, 40).format("%.2f"))
-	calibrator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
-	calibrator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
-	calibrator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
-	calibrator.add_param("xrd_flops_per_time_local", sc.parameter.Exponential(0, 32).format("%.2f"))
-	calibrator.add_param("xrd_flops_per_time", sc.parameter.Exponential(0, 32).format("%.2f"))
+		calibrator.add_param("cpuSpeed", sc.parameter.Exponential(29, 32).format("%.2f"))
+		calibrator.add_param("cpuSpeed2", sc.parameter.Exponential(29, 32).format("%.2f"))
+	calibrator.add_param("ramDisk", sc.parameter.Exponential(26, 35).format("%.2f"))
+	calibrator.add_param("disk", sc.parameter.Exponential(23, 26).format("%.2f"))
+	calibrator.add_param("internalNetwork", sc.parameter.Exponential(26, 33).format("%.2f"))
+	calibrator.add_param("xrd_flops_per_time_local", sc.parameter.Exponential(0, 30).format("%.2f"))
+	calibrator.add_param("xrd_flops_per_time", sc.parameter.Exponential(0, 30).format("%.2f"))
 	if args.networkratio:
 		calibrator.add_param("externalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
 	else:
-		calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
-		calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
-
+		calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(28, 33).format("%.2f"))
+		calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(25, 33).format("%.2f"))
 	dataDir=toolsDir/"../data"
 	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
