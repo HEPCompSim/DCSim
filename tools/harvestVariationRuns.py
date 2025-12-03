@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 
 import pandas as pd
 from matplotlib import lines, markers, pyplot as plt, patches as mpatches
