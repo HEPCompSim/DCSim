@@ -202,12 +202,12 @@ class Simulator(sc.Simulator):
 			out[workload] = {}
 			for hitrate in self.hitrates:
 				print(filestring)
-				print(key.stem)
+				print(key)
 				print(hitrate)
 				print(type( filestring))
 				print(type( key.stem))
 				print(type( hitrate))
-				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"]},self.keep and (filestring+"_"+str(key.stem)+"_"+str(hitrate)))
+				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"]},self.keep and (filestring+"_"+str(key)+"_"+str(hitrate)))
 				inter[workload][hitrate] = i
 				out[workload][hitrate] = o
 		platform.close()
