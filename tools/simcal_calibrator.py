@@ -132,7 +132,8 @@ class Simulator(sc.Simulator):
 		# self.bash(path, str(jargs))
 		#print(filename,self.keep)
 		if filename and self.keep:
-			output=env.get_cwd()/filename
+			output=env.get_cwd()/filename+".csv"
+			print(output)
 		else:
 			output=env.tmp_file(keep=False)
 		cargs=[
