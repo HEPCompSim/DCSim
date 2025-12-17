@@ -77,7 +77,7 @@ def just_give_me_the_abspath(file):
 		else:
 			ret= file.absolute()
 		if not isinstance(ret,str):
-			raise TypeError(f"Expected to return a string, but got {type(var).__name__}")
+			raise TypeError(f"Expected to return a string, but got {type(file).__name__}")
 		return ret
 	except:
 		print("New file type passed to just_give_me_the_abspath")
