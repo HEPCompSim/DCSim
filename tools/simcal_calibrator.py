@@ -69,6 +69,14 @@ def loadDirs(folders):
 			fileContent=extract(root+"/"+file)
 			ret[root][float(file[file.rfind("_")+1:file.rfind(".")])]=fileContent
 	return list(restructure(ret).values())
+def just_give_me_the_abspath(file):
+	try:
+		return file.x
+	except:
+		print("New file type passed to just_give_me_the_abspath")
+		print(type(file))
+		print(file)
+		raise
 def dataLoader(sets):
 	scsn={}
 	fcsn={}
@@ -138,7 +146,7 @@ class Simulator(sc.Simulator):
 			output=env.tmp_file(keep=False)
 		cargs=[
 				 "--platform", args["platform"],
-				 "--output-file", output.absolute(),
+				 "--output-file",  just_give_me_the_abspath(output),
 				 "--workload-configurations", args["workload"][1],
 				 "--dataset-configurations", args["workload"][0],
 				 "--hitrate", args["hitrate"],
@@ -158,9 +166,9 @@ class Simulator(sc.Simulator):
 				 args=cargs)
 		#print(o[1])
 		try:
-			return (extract(output.absolute()),o[1])
+			return (extract(just_give_me_the_abspath(output)),o[1])
 		except:
-			print(output.name)
+			print(just_give_me_the_abspath(output))
 			print(o)
 			raise
 	def fill_template(self, env, args):
