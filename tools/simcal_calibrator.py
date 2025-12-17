@@ -74,8 +74,10 @@ def just_give_me_the_abspath(file):
 		ret=False
 		if isinstance(file,tempfile._TemporaryFileWrapper):
 			ret= file.name
-		else isinstance(file,Path):
+		elif isinstance(file,Path):
 			ret= str(file.absolute())
+		else:
+			ret=file
 		if not isinstance(ret,str):
 			raise TypeError(f"Expected to return a string, but got {type(file).__name__}")
 		return ret
