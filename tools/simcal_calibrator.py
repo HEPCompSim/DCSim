@@ -71,10 +71,14 @@ def loadDirs(folders):
 	return list(restructure(ret).values())
 def just_give_me_the_abspath(file):
 	try:
+		ret=False
 		if isinstance(file,tempfile._TemporaryFileWrapper):
-			return os.path.abspath(tempfile._TemporaryFileWrapper)
+			ret= os.path.abspath(tempfile._TemporaryFileWrapper)
 		else:
-			return file.absolute()
+			ret= file.absolute()
+		if not isinstance(ret,str):
+			raise TypeError(f"Expected to return a string, but got {type(var).__name__}")
+		return ret
 	except:
 		print("New file type passed to just_give_me_the_abspath")
 		print(type(file))
