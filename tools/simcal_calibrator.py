@@ -132,7 +132,7 @@ class Simulator(sc.Simulator):
 		# self.bash(path, str(jargs))
 		#print(filename,self.keep)
 		if filename and self.keep:
-			output=env.get_cwd()/filename+".csv"
+			output=env.get_cwd()/(filename+".csv")
 			print(output)
 		else:
 			output=env.tmp_file(keep=False)
@@ -158,9 +158,9 @@ class Simulator(sc.Simulator):
 				 args=cargs)
 		#print(o[1])
 		try:
-			print(output.name)
 			return (extract(output.name),o[1])
 		except:
+			print(output.name)
 			print(o)
 			raise
 	def fill_template(self, env, args):
