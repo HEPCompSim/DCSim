@@ -157,6 +157,7 @@ class Simulator(sc.Simulator):
 				 args=cargs)
 		#print(o[1])
 		try:
+			print(output.name)
 			return (extract(output.name),o[1])
 		except:
 			print(o)
