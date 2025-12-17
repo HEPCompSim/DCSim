@@ -73,7 +73,7 @@ def just_give_me_the_abspath(file):
 	try:
 		ret=False
 		if isinstance(file,tempfile._TemporaryFileWrapper):
-			ret= os.path.abspath(file)
+			ret= file.name
 		else:
 			ret= file.absolute()
 		if not isinstance(ret,str):
