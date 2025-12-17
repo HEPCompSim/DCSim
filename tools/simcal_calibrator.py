@@ -234,7 +234,10 @@ class Simulator(sc.Simulator):
 			args["externalFastNetwork"]=args["externalNetwork"]*self.ratio
 			args["externalSlowNetwork"]=args["externalNetwork"]
 		#with env:
-		env.tmp_dir(tempfile.gettempdir(),keep=self.keep)
+		if self.keep:
+			env.tmp_dir(env.get_owd(),keep=True)
+		else:
+			env.tmp_dir(tempfile.gettempdir(),keep=False)
 		
 		scsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
