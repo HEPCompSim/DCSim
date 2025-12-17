@@ -98,7 +98,8 @@ class Simulator(sc.Simulator):
 				loss,
 				nocpu,
 				ratio,
-				plot=False):
+				plot=False
+				keep=False):
 		super().__init__()
 		self.path = path
 		self.hitrates = hitrates
@@ -110,6 +111,7 @@ class Simulator(sc.Simulator):
 		self.nocpu=nocpu
 		self.ratio=ratio
 		self.plot=plot
+		self.keep=keep
 		with open(xml_template, 'r') as f:
 			self.template = f.read()
 
@@ -702,10 +704,11 @@ if __name__=="__main__":
 	parser.add_argument("-a", "--alg", type=str, required=True, help="Algorithm to use [grad|skopt.gp|skopt.gbrt|skopt.et|skopt.rf|random]")
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
-	parser.add_argument("-l", "--loss", type=str, required=True, help="Ground Truth data folder", default = "ddks")
+	parser.add_argument("-l", "--loss", type=str, required=True, help="Loss function to use", default = "ddks")
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
+	parser.add_argument('--keep', action='store_true', help="Keep files after eval" )
 	parser.add_argument('--plot', action='store_true', help="If Evaluating, generate a plot")
 	parser.add_argument('--hyper_test', action='store_true', help="Run a new gradient descent starting from the point with various hyper parameters")
 	parser.add_argument("-htl", "--hyper_test_low", type=float, help="The low bound of the hyper parameter test")
@@ -840,7 +843,7 @@ if __name__=="__main__":
 			dataDir/"workload-configs/crown_ttbar_testjob.json"),
 			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
-			data,loss,args.nocpu,args.networkratio,args.plot)	
+			data,loss,args.nocpu,args.networkratio,args.plot,args.keep)	
 		result=simulator(eval(args.evaluate))
 		print("Evaluation",result)
 		if args.hyper_test:
