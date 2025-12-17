@@ -98,7 +98,7 @@ class Simulator(sc.Simulator):
 				loss,
 				nocpu,
 				ratio,
-				plot=False
+				plot=False,
 				keep=False):
 		super().__init__()
 		self.path = path
