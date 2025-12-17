@@ -130,7 +130,7 @@ class Simulator(sc.Simulator):
 		# }
 
 		# self.bash(path, str(jargs))
-		if filename and keep:
+		if filename and self.keep:
 			output=filename
 		else:
 			output=env.tmp_file(keep=False)
