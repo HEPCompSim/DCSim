@@ -130,7 +130,7 @@ class Simulator(sc.Simulator):
 		# }
 
 		# self.bash(path, str(jargs))
-		print(filename,self.keep)
+		#print(filename,self.keep)
 		if filename and self.keep:
 			output=env.get_cwd()/filename
 		else:
