@@ -131,7 +131,8 @@ class Simulator(sc.Simulator):
 
 		# self.bash(path, str(jargs))
 		if filename and self.keep:
-			output=filename
+			with open(filename, "w+") as f:
+				output=f
 		else:
 			output=env.tmp_file(keep=False)
 		cargs=[
