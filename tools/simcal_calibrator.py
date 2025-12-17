@@ -114,7 +114,7 @@ class Simulator(sc.Simulator):
 			self.template = f.read()
 
 
-	def dcsim(self, env, args):
+	def dcsim(self, env, args, filename=False):
 		# Args structure
 		# {
 		#	 "platform",
@@ -128,8 +128,10 @@ class Simulator(sc.Simulator):
 		# }
 
 		# self.bash(path, str(jargs))
-		
-		output=env.tmp_file(keep=False)
+		if filename and keep:
+			output=filename
+		else:
+			output=env.tmp_file(keep=False)
 		cargs=[
 				 "--platform", args["platform"],
 				 "--output-file", output.name,
@@ -187,7 +189,7 @@ class Simulator(sc.Simulator):
 		#	 "xrootd_flops",
 		#	 "ramDisk"
 		# }
-	def call_platform(self, env, args):
+	def call_platform(self, env, args, filestring=""):
 		inter = {}
 		out = {}
 		platform = self.fill_template(env, args)
@@ -195,7 +197,7 @@ class Simulator(sc.Simulator):
 			inter[workload] = {}
 			out[workload] = {}
 			for hitrate in self.hitrates:
-				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"]})
+				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"]},self.keep and (filestring+"_"+str(workload)+"_"+str(hitrate)))
 				inter[workload][hitrate] = i
 				out[workload][hitrate] = o
 		platform.close()
@@ -220,7 +222,7 @@ class Simulator(sc.Simulator):
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
-			 })
+			 },"slowcache_slownetwork")
 		fcsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
 			"cpuSpeed2": args["cpuSpeed2"],
@@ -229,7 +231,7 @@ class Simulator(sc.Simulator):
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
-			 })
+			 },"fastcache_slownetwork")
 		fcfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
 			"cpuSpeed2": args["cpuSpeed2"],
@@ -238,7 +240,7 @@ class Simulator(sc.Simulator):
 			 "externalNetworkSpeed": args["externalFastNetwork"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
-			 })
+			 },"fastcache_fastnetwork")
 		scfn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
 			"cpuSpeed2": args["cpuSpeed2"],
@@ -247,7 +249,7 @@ class Simulator(sc.Simulator):
 			 "externalNetworkSpeed": args["externalFastNetwork"],
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
-			 })
+			 },"slowcache_fastnetwork")
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		if self.plot:
