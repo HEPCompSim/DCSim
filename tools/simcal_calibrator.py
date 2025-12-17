@@ -150,7 +150,7 @@ class Simulator(sc.Simulator):
 		#print(filename,self.keep)
 		if filename and self.keep:
 			output=env.get_cwd()/(filename+".csv")
-			print(output)
+			#print(output)
 		else:
 			output=env.tmp_file(keep=False)
 		cargs=[
@@ -234,7 +234,7 @@ class Simulator(sc.Simulator):
 			args["externalFastNetwork"]=args["externalNetwork"]*self.ratio
 			args["externalSlowNetwork"]=args["externalNetwork"]
 		#with env:
-		env.tmp_dir(tempfile.gettempdir(),keep=False)
+		env.tmp_dir(tempfile.gettempdir(),keep=self.keep)
 		
 		scsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
