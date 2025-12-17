@@ -138,7 +138,7 @@ class Simulator(sc.Simulator):
 			output=env.tmp_file(keep=False)
 		cargs=[
 				 "--platform", args["platform"],
-				 "--output-file", output.name,
+				 "--output-file", output.absolute(),
 				 "--workload-configurations", args["workload"][1],
 				 "--dataset-configurations", args["workload"][0],
 				 "--hitrate", args["hitrate"],
@@ -158,7 +158,7 @@ class Simulator(sc.Simulator):
 				 args=cargs)
 		#print(o[1])
 		try:
-			return (extract(output.name),o[1])
+			return (extract(output.absolute()),o[1])
 		except:
 			print(output.name)
 			print(o)
