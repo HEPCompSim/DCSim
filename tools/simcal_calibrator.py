@@ -71,7 +71,10 @@ def loadDirs(folders):
 	return list(restructure(ret).values())
 def just_give_me_the_abspath(file):
 	try:
-		return file.x
+		if isinstance(file,tempfile._TemporaryFileWrapper):
+			return os.path.abspath(tempfile._TemporaryFileWrapper)
+		else:
+			return file.absolute()
 	except:
 		print("New file type passed to just_give_me_the_abspath")
 		print(type(file))
