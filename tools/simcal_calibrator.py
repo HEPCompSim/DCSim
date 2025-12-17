@@ -130,6 +130,7 @@ class Simulator(sc.Simulator):
 		# }
 
 		# self.bash(path, str(jargs))
+		print(filename,self.keep)
 		if filename and self.keep:
 			with open(filename, "w+") as f:
 				output=f
