@@ -196,8 +196,8 @@ class Simulator(sc.Simulator):
 		inter = {}
 		out = {}
 		platform = self.fill_template(env, args)
-		for key in self.workloads.keys():
-			workload=self.workloads[key]
+		for workload in self.workloads:
+			print(workload)
 			inter[workload] = {}
 			out[workload] = {}
 			for hitrate in self.hitrates:
