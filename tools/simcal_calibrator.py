@@ -732,6 +732,7 @@ if __name__=="__main__":
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
 	parser.add_argument('--keep', action='store_true', help="Keep files after eval" )
+	parser.add_argument('--timeline', action='store_true', help="Print timeline after calibration" )
 	parser.add_argument('--plot', action='store_true', help="If Evaluating, generate a plot")
 	parser.add_argument('--hyper_test', action='store_true', help="Run a new gradient descent starting from the point with various hyper parameters")
 	parser.add_argument("-htl", "--hyper_test_low", type=float, help="The low bound of the hyper parameter test")
@@ -913,7 +914,11 @@ if __name__=="__main__":
 		cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
 		t1 = time.time()
 		print ("We should now be printing the calibration")
+		if args.timeline:
+			print(calibrator.timeline)
+			
 		print(cal)
 		print(t1-t0)
+		print ("We should now be printing the calibration timeline")
 
 	
