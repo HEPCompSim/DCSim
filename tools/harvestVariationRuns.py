@@ -414,13 +414,14 @@ def run(args: argparse.Namespace):
 
     # create output
     out_dir = os.path.abspath(args.out)
+    logger.info(f"Creating output in directory {out_dir}")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     # and plot
     for quantity in QUANTITIES.values():
         logger.info("Plotting {}".format(quantity["ident"]))
         prefix = ""
-        suffix = ""
+        suffix = args.suffix
         if prefix:
             prefix = prefix+"_"
         if suffix:
@@ -454,16 +455,18 @@ def run(args: argparse.Namespace):
             legend_dict.move_to_end("data", last=False)
         ax1.legend(legend_dict.values(), legend_dict.keys(), ncol=2, handlelength=1, loc='best', frameon=False)
         # save plot
-        fig.savefig(os.path.join(out_dir, f"{quantity['ident']}.pdf"))
-        fig.savefig(os.path.join(out_dir, f"{quantity['ident']}.png"))
+        fig.savefig(os.path.join(out_dir, f"{quantity['ident']}{suffix}.pdf"))
+        fig.savefig(os.path.join(out_dir, f"{quantity['ident']}{suffix}.png"))
         plt.close()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Produce a table (CSV file format) including the hitrate dependency of the simulated system for varied runs. \
+        description="Produce a set of plots including the hitrate dependency of the simulated system for varied runs \
+            that can be compared to data. \
             It uses several files as input, one for each prefetch value used to initialize the simulation per variation run. \
-            These files containing the simulation dumps are CSV files produced by the output method of the simulator.",
+            Accordingly, the filename must indicate the prefetch rate used in the simulation run, e.g., 'Hitrate0.5', or 'h0.5' for a prefetch rate of 50%. \
+            The files, containing the simulation dumps, are CSV files produced by the output method of the simulator.",
         add_help=True
     )
     parser.add_argument(
