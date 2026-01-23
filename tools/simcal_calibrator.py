@@ -57,7 +57,7 @@ def restructure(inter):
 					ret[workload][machine]={}
 				ret[workload][machine][hitrate] = data
 	return ret
-def loadDirs(folders):
+def loadDirs(folders,hitrates=None):
 	ret={}
 	for folder in folders:
 		root,dirs,files=next(os.walk(folder))
@@ -66,6 +66,12 @@ def loadDirs(folders):
 			if "bad_" in file:
 				#print("skipping",file)
 				continue
+			if hitrates:
+				for hitrate in hitrates
+					if hitrate in file:
+						break
+				else:
+					continue # if any of the hitrates is in the file, use it
 			fileContent=extract(root+"/"+file)
 			ret[root][float(file[file.rfind("_")+1:file.rfind(".")])]=fileContent
 	return list(restructure(ret).values())
@@ -86,16 +92,16 @@ def just_give_me_the_abspath(file):
 		print(type(file))
 		print(file)
 		raise
-def dataLoader(sets):
+def dataLoader(sets,hitrates=None):
 	scsn={}
 	fcsn={}
 	scfn={}
 	fcfn={}
 	for dataset in sets:
-		scsn[dataset]=loadDirs(sets[dataset][0])
-		fcsn[dataset]=loadDirs(sets[dataset][1])
-		scfn[dataset]=loadDirs(sets[dataset][2])
-		fcfn[dataset]=loadDirs(sets[dataset][3])
+		scsn[dataset]=loadDirs(sets[dataset][0],hitrates)
+		fcsn[dataset]=loadDirs(sets[dataset][1],hitrates)
+		scfn[dataset]=loadDirs(sets[dataset][2],hitrates)
+		fcfn[dataset]=loadDirs(sets[dataset][3],hitrates)
 	#print(fcsn)
 	#print(scsn)
 	#todo, handle raw files
@@ -728,6 +734,7 @@ if __name__=="__main__":
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Loss function to use", default = "ddks")
+	parser.add_argument("-l", "--hitrates", type=str, required=False, help="Coma seperated hitrate list")
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
@@ -789,6 +796,11 @@ if __name__=="__main__":
 	else:
 		print("unrecognized calibrator alg function",args.alg)
 		sys.exit()
+	
+	hitrates=None	
+	if args.hitrates:
+		hitrates=args.hitrates.split(",")
+	
 	# do whatever
 	data = dataLoader({"test":[
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/diskCache/SG*1Gbps*")),
@@ -801,7 +813,7 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/diskCache/SG*10Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
-					  })
+					  },hitrates)
 	
 
 	#calibrator = sc.calibrators.Debug(sys.stdout)
