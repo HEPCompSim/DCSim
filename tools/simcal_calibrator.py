@@ -67,7 +67,7 @@ def loadDirs(folders,hitrates=None):
 				#print("skipping",file)
 				continue
 			if hitrates:
-				for hitrate in hitrates
+				for hitrate in hitrates:
 					if hitrate in file:
 						break
 				else:
