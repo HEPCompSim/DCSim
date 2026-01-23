@@ -734,7 +734,7 @@ if __name__=="__main__":
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Loss function to use", default = "ddks")
-	parser.add_argument("-h", "--hitrates", type=str, required=False, help="Coma seperated hitrate list")
+	parser.add_argument("--hitrates", type=str, required=False, help="Coma seperated hitrate list")
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
