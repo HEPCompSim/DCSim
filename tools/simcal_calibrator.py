@@ -471,11 +471,11 @@ def MakespanLoss(reference, simulated):
 						
 						for data in refrepack[hitrate][machine]:
 							refstart=min(float(data['job.start']),refstart)
-							refend=min(float(data['job.end']),refend)
+							refend=max(float(data['job.end']),refend)
 
 						for data in simrepack[hitrate][machine]:
 							simstart=min(float(data['job.start']),simstart)
-							simend=min(float(data['job.end']),simend)
+							simend=max(float(data['job.end']),simend)
 					refmakespan=refend-refstart
 					simmakespan=simend-simstart
 					total+=abs(simmakespan-refmakespan)/refmakespan
