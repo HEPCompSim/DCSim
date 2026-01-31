@@ -455,8 +455,8 @@ def MakespanLoss(reference, simulated):
 		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
 			sim=platform[1][expiriment]
 			for ref in platform[0][expiriment]:
-				refrepack=[]
-				simrepack=[]
+				refrepack={}
+				simrepack={}
 				for machine in sorted(sim.keys()&ref.keys()):
 					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
 						refrepack.setdefault(hitrate,{})[machine]= ref[machine][hitrate]
