@@ -448,6 +448,45 @@ def buildTensor(data):
 	#print(tensor)
 	return tensor
 @processify	
+def MakespanLoss(reference, simulated):
+	count=0
+	total=0
+	for platform in zip(reference,simulated):
+		for expiriment in sorted(platform[1].keys() & platform[0].keys()):
+			sim=platform[1][expiriment]
+			for ref in platform[0][expiriment]:
+				refrepack=[]
+				simrepack=[]
+				for machine in sorted(sim.keys()&ref.keys()):
+					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
+						refrepack.setdefault(hitrate,{})[machine]= ref[machine][hitrate]
+						simrepack.setdefault(hitrate,{})[machine]= sim[machine][hitrate]
+				for hitrate in sorted(refrepack.keys()&simrepack.keys())
+					refstart=float('inf')
+					refend=0
+					simstart=float('inf')
+					simend=0				
+					for machine in sorted(refrepack[hitrate].keys()&simrepack[hitrate].keys())		
+						
+						
+						for data in refrepack[machine][hitrate]:
+							refstart=min(float(data['job.start']),refstart)
+							refend=min(float(data['job.end']),refend)
+
+						for data in simrepack[machine][hitrate]:
+							simstart=min(float(data['job.start']),simstart)
+							simend=min(float(data['job.end']),simend)
+					refmakespan=refend-refstart
+					simmakespan=simend-simstart
+					total+=abs(simmakespan-refmakespan)/refmakespan
+					count+=1
+					
+	if(count==0):
+		count=1
+		return float('inf')
+	#print(total/count)
+	return total/count
+@processify	
 def MRELoss(reference, simulated):
 	count=0
 	total=0
@@ -777,6 +816,9 @@ if __name__=="__main__":
 	elif args.loss== "double":
 		gdp=1
 		loss=doubleSortedMRELoss
+	elif args.loss== "makespan":
+		gdp=0.01
+		loss=MakespanLoss
 	else:
 		print("unrecognized loss function",args.loss)
 		sys.exit()
