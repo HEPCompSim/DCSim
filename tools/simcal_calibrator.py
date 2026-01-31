@@ -461,12 +461,12 @@ def MakespanLoss(reference, simulated):
 					for hitrate in sorted(sim[machine].keys()&ref[machine].keys()):
 						refrepack.setdefault(hitrate,{})[machine]= ref[machine][hitrate]
 						simrepack.setdefault(hitrate,{})[machine]= sim[machine][hitrate]
-				for hitrate in sorted(refrepack.keys()&simrepack.keys())
+				for hitrate in sorted(refrepack.keys()&simrepack.keys()):
 					refstart=float('inf')
 					refend=0
 					simstart=float('inf')
 					simend=0				
-					for machine in sorted(refrepack[hitrate].keys()&simrepack[hitrate].keys())		
+					for machine in sorted(refrepack[hitrate].keys()&simrepack[hitrate].keys()):		
 						
 						
 						for data in refrepack[machine][hitrate]:
@@ -778,6 +778,7 @@ if __name__=="__main__":
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
 	parser.add_argument('--keep', action='store_true', help="Keep files after eval" )
+	parser.add_argument('--include_slow', action='store_true', help="Include the slow dataset in execution" )
 	parser.add_argument('--timeline', action='store_true', help="Print timeline after calibration" )
 	parser.add_argument('--plot', action='store_true', help="If Evaluating, generate a plot")
 	parser.add_argument('--hyper_test', action='store_true', help="Run a new gradient descent starting from the point with various hyper parameters")
