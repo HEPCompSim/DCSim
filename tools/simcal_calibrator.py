@@ -469,11 +469,11 @@ def MakespanLoss(reference, simulated):
 					for machine in sorted(refrepack[hitrate].keys()&simrepack[hitrate].keys()):		
 						
 						
-						for data in refrepack[machine][hitrate]:
+						for data in refrepack[hitrate][machine]:
 							refstart=min(float(data['job.start']),refstart)
 							refend=min(float(data['job.end']),refend)
 
-						for data in simrepack[machine][hitrate]:
+						for data in simrepack[hitrate][machine]:
 							simstart=min(float(data['job.start']),simstart)
 							simend=min(float(data['job.end']),simend)
 					refmakespan=refend-refstart
