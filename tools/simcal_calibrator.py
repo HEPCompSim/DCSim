@@ -843,8 +843,9 @@ if __name__=="__main__":
 	hitrates=None	
 	if args.hitrates:
 		hitrates=args.hitrates.split(",")
+
 	
-	# do whatever
+	
 	data = dataLoader({"test":[
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/diskCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/ramCache/SG*1Gbps*")),
@@ -858,6 +859,23 @@ if __name__=="__main__":
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
 					  },hitrates)
 	
+	if args.include_slow:
+		data = dataLoader({"test":[
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/diskCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/ramCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/diskCache/SG*10Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/ramCache/SG*10Gbps*"))],
+					  "slow":[
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/diskCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/ramCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/diskCache/SG*10Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/ramCache/SG*10Gbps*"))],
+					  "copy":[
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/diskCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/diskCache/SG*10Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/copyjob/ramCache/SG*10Gbps*"))]
+					  },hitrates)
 
 	#calibrator = sc.calibrators.Debug(sys.stdout)
 	#calibrator = sc.calibrators.Grid()
