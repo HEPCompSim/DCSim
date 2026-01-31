@@ -447,7 +447,7 @@ def buildTensor(data):
 		tensor[i,1]=cpu
 	#print(tensor)
 	return tensor
-
+@processify	
 def MakespanLoss(reference, simulated):
 	count=0
 	total=0
