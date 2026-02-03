@@ -909,12 +909,17 @@ if __name__=="__main__":
 		calibrator.add_param("externalFastNetwork", sc.parameter.Exponential(28, 33).format("%.2f"))
 		calibrator.add_param("externalSlowNetwork", sc.parameter.Exponential(25, 33).format("%.2f"))
 	dataDir=toolsDir/"../data"
-	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
-		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
-		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
+	test_cases={"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
+		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")}
+	if args.include_slow:
+		test_cases["slow"]=(dataDir/"dataset-configs/crown_ttbar_slowjob.json",
+		dataDir/"workload-configs/crown_ttbar_slowjob_no_cpu.json")
+
+	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
+		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+		test_cases,
 		data,loss,False,False)	
 	
 	coordinator = sc.coordinators.ThreadPool(pool_size=args.cores) 
@@ -937,10 +942,7 @@ if __name__=="__main__":
 		print(args.evaluate)
 		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
-			{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
-			dataDir/"workload-configs/crown_ttbar_testjob.json"),
-			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
+			test_cases,
 			data,loss,args.nocpu,args.networkratio,args.plot,args.keep)	
 		result=simulator(eval(args.evaluate))
 		print("Evaluation",result)
@@ -949,10 +951,7 @@ if __name__=="__main__":
 			bestLoss=None
 			simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 				[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
-				{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
-				dataDir/"workload-configs/crown_ttbar_testjob.json"),
-				"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-				dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
+				test_cases,
 				data,loss,args.nocpu,args.networkratio)
 			for j in range(int(math.log10(args.hyper_test_low)),
 							int(math.log10(args.hyper_test_high))+1):
@@ -978,10 +977,7 @@ if __name__=="__main__":
 	else:
 		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
-			{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
-			dataDir/"workload-configs/crown_ttbar_testjob.json"),
-			"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
-			dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")},
+			test_cases,
 			data,loss,args.nocpu,args.networkratio)	
 	
 		t0 = time.time()
