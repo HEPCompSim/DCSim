@@ -915,7 +915,7 @@ if __name__=="__main__":
 		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")}
 	if args.include_slow:
 		test_cases["slow"]=(dataDir/"dataset-configs/crown_ttbar_slowjob.json",
-		dataDir/"workload-configs/crown_ttbar_slowjob_no_cpu.json")
+		dataDir/"workload-configs/crown_ttbar_slowjob.json")
 
 	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
