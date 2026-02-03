@@ -103,20 +103,29 @@ def processSimFile(file: os.PathLike):
             mask = ~data["job.tag"].str.contains("__")
             data = data[mask]
             # compute derived quantities
-            data["Walltime"] = (data["job.end"]-data["job.start"])/60
+            try:
+                data["Walltime"] = (data["job.runtime"])/60
+            except KeyError: # runtime is not available in older data sets
+                data["Walltime"] = (data["job.end"]-data["job.start"])/60
             data["CPUtime"] = data["job.computetime"]/60
             data["IOtime"] = (data["infiles.transfertime"]+data["outfiles.transfertime"])/60
-            data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
+            try:
+                data["Efficiency"] = data["job.computetime"]/(data["job.runtime"])
+            except KeyError: # runtime is not available in older data sets
+                data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
             data["Site"] = data["machine.name"].astype(str).apply(lambda x: mapHostToSite(x, HostSiteMapping))
             # aggregate per execution site
             df_tmp = data.drop(columns=["job.tag","machine.name"]).groupby("Site").agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             match = re.search(
-                r'(?:[Hh]itrate|[Hh])_?([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
+                r'(?:(?:[Hh]itrate|[Hh])_?([0-9]+(?:\.[0-9]*)?))|([0-9]+\.[0-9]+)', os.path.splitext(os.path.basename(f.name))[0]
             )
             if match:
-                logger.debug(f"\tExtracted prefetch rate {match.group(1)} from file name {f.name}")
-                df_tmp["prefetchrate"] = float(match.group(1))
+                if match.group(2):
+                    logger.warning(f"File name {f.name} uses deprecated format for prefetch rate extraction. Please use 'HitrateX.Y', 'hX.Y', 'H_X.Y' or similar format.")
+                val = match.group(1) if match.group(1) else match.group(2)
+                logger.debug(f"\tExtracted prefetch rate {val} from file name {f.name}")
+                df_tmp["prefetchrate"] = float(val)
             else:
                 raise ValueError(f"Could not extract prefetch rate from file name {f.name}")
             df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
@@ -135,10 +144,16 @@ def processDataFile(file: os.PathLike):
                 logger.error(f"Something is wrong with the input file {file}: {e}")
                 return pd.DataFrame()
             # compute derived quantities
-            data["Walltime"] = (data["job.runtime"])/60
+            try:
+                data["Walltime"] = (data["job.runtime"])/60
+            except KeyError: # runtime is not available in older data sets
+                data["Walltime"] = (data["job.end"]-data["job.start"])/60
             data["CPUtime"] = data["job.computetime"]/60
             data["IOtime"] = -9999.9  # Placeholder for IO time, as it is not computed here
-            data["Efficiency"] = data["job.computetime"]/(data["job.runtime"])
+            try:
+                data["Efficiency"] = data["job.computetime"]/(data["job.runtime"])
+            except KeyError: # runtime is not available in older data sets
+                data["Efficiency"] = data["job.computetime"]/(data["job.end"]-data["job.start"])
             data["Site"] = data["machine.name"].astype(str).apply(lambda x: mapHostToSite(x, HostSiteMapping))
             # Keep only the site and the columns to be aggregated
             cols_to_keep = ["Walltime", "CPUtime", "IOtime", "Efficiency", "Site", "hitrate"]
@@ -148,11 +163,14 @@ def processDataFile(file: os.PathLike):
             df_tmp = df_for_agg.groupby("Site")[cols_to_agg].agg(['mean','median', q10, q25, q75, q90])
             df_tmp = df_tmp.reset_index()
             match = re.search(
-                r'(?:[Hh]itrate|[Hh])_?([0-9]+(?:\.[0-9]*)?)', os.path.splitext(os.path.basename(f.name))[0]
+                r'(?:(?:[Hh]itrate|[Hh])_?([0-9]+(?:\.[0-9]*)?))|([0-9]+\.[0-9]+)', os.path.splitext(os.path.basename(f.name))[0]
             )
             if match:
-                logger.debug(f"\tExtracted prefetch rate {match.group(1)} from file name {f.name}")
-                df_tmp["prefetchrate"] = float(match.group(1))
+                if match.group(2):
+                    logger.warning(f"File name {f.name} uses deprecated format for prefetch rate extraction. Please use 'HitrateX.Y', 'hX.Y', 'H_X.Y' or similar format.")
+                val = match.group(1) if match.group(1) else match.group(2)
+                logger.debug(f"\tExtracted prefetch rate {val} from file name {f.name}")
+                df_tmp["prefetchrate"] = float(val)
             else:
                 raise ValueError(f"Could not extract prefetch rate from file name {f.name}")
             df_tmp.columns = [".".join(a).strip(".") for a in df_tmp.columns.to_flat_index()]
