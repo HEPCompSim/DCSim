@@ -779,6 +779,7 @@ if __name__=="__main__":
 	parser.add_argument("-e", "--evaluate", type=str, help="Dont calibrate, just evaluate the provided arg dict")
 	parser.add_argument('--keep', action='store_true', help="Keep files after eval" )
 	parser.add_argument('--include_slow', action='store_true', help="Include the slow dataset in execution" )
+	parser.add_argument('--only_slow', action='store_true', help="Include only the slow dataset in execution" )
 	parser.add_argument('--timeline', action='store_true', help="Print timeline after calibration" )
 	parser.add_argument('--plot', action='store_true', help="If Evaluating, generate a plot")
 	parser.add_argument('--hyper_test', action='store_true', help="Run a new gradient descent starting from the point with various hyper parameters")
@@ -847,8 +848,16 @@ if __name__=="__main__":
 	
 	
 	
-	
-	if args.include_slow:
+	if args.only_slow:
+		data = dataLoader({"test":[
+			
+					  "slow":[
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/diskCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/ramCache/SG*1Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/diskCache/SG*10Gbps*")),
+					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/ramCache/SG*10Gbps*"))]
+					  },hitrates)
+	elif args.include_slow:
 		data = dataLoader({"test":[
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/diskCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/testjob/ramCache/SG*1Gbps*")),
@@ -913,7 +922,9 @@ if __name__=="__main__":
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")}
-	if args.include_slow:
+	if if args.only_slow:
+		test_cases={}
+	if args.include_slow or args.only_slow::
 		test_cases["slow"]=(dataDir/"dataset-configs/crown_ttbar_slowjob.json",
 		dataDir/"workload-configs/crown_ttbar_slowjob.json")
 
