@@ -921,7 +921,7 @@ if __name__=="__main__":
 		dataDir/"workload-configs/crown_ttbar_testjob.json"),
 		"copy":(dataDir/"dataset-configs/crown_ttbar_copyjob.json",
 		dataDir/"workload-configs/crown_ttbar_copyjob_no_cpu.json")}
-	if if args.only_slow:
+	if args.only_slow:
 		test_cases={}
 	if args.include_slow or args.only_slow::
 		test_cases["slow"]=(dataDir/"dataset-configs/crown_ttbar_slowjob.json",
