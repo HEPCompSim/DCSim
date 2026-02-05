@@ -850,7 +850,6 @@ if __name__=="__main__":
 	
 	if args.only_slow:
 		data = dataLoader({"test":[
-			
 					  "slow":[
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/diskCache/SG*1Gbps*")),
 					  glob.glob(os.path.expanduser(f"{args.groundtruth}/data/slowjob/ramCache/SG*1Gbps*")),
