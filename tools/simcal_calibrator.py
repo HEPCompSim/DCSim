@@ -972,6 +972,8 @@ if __name__=="__main__":
 			"xrd_flops_per_time":1000000 
 		}
 	)
+	if args.stats:
+			print_stats(simulator)
 	print("Max's",maxs)
 	if args.evaluate:
 		print(args.evaluate)
