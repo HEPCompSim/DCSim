@@ -135,6 +135,10 @@ class Simulator(sc.Simulator):
 		self.ratio=ratio
 		self.plot=plot
 		self.keep=keep
+		self.simulations=0
+		self.simulation_time=0
+		self.experiments=0
+		self.experiment_time=0
 		with open(xml_template, 'r') as f:
 			self.template = f.read()
 
@@ -177,8 +181,13 @@ class Simulator(sc.Simulator):
 		for i in range(len(cargs)):
 			cargs[i]=str(cargs[i])
 		#print('dc-sim', ' '.join(cargs))
+		t0 = time.time()
 		o=env.bash(self.path,
 				 args=cargs)
+		t1 = time.time()
+		
+		self.simulations+=1
+		self.simulation_time+=t1-t0
 		#print(o[1])
 		try:
 			return (extract(just_give_me_the_abspath(output)),o[1])
@@ -221,6 +230,7 @@ class Simulator(sc.Simulator):
 		inter = {}
 		out = {}
 		platform = self.fill_template(env, args)
+		
 		for workload in self.workloads:
 			inter[workload] = {}
 			out[workload] = {}
@@ -244,7 +254,7 @@ class Simulator(sc.Simulator):
 			env.tmp_dir(env.get_owd(),keep=True)
 		else:
 			env.tmp_dir(tempfile.gettempdir(),keep=False)
-		
+		t0 = time.time()
 		scsn = self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
 			"cpuSpeed2": args["cpuSpeed2"],
@@ -281,6 +291,10 @@ class Simulator(sc.Simulator):
 			 "xrd_flops_per_time":args["xrd_flops_per_time"],
 			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"]
 			 },"slowcache_fastnetwork")
+		t1 = time.time()
+		
+		self.experiments+=1
+		self.experiment_time+=t1-t0
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		#loss(self.data,(scsn,scfn,fcsn,fcfn))
 		if self.plot:
@@ -765,6 +779,14 @@ def doubleSortedMRELoss(reference, simulated):
 		return float('inf')
 	#print(total/count)
 	return total/count
+def print_stats(simulator):
+		print("Timing data may have a multiplatform error")
+		print("DCSim invocations: ",simulator.simulations)
+		print("Simulator invocations: ", simulator.experiments)
+		print("total dcsim time: ",simulator.simulation_time)
+		print("total time spent running simulations: ", simulator.experiment_time)
+		print("average DCSim time: ",simulator.simulation_time/simulator.simulations)
+		print("average simulator time: ",simulator.experiment_time/simulator.experiments)
 if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description="Calibrate DCSim using simcal")
@@ -773,6 +795,8 @@ if __name__=="__main__":
 	parser.add_argument("-t", "--timelimit", type=int, required=True, help="Timelimit in seconds")
 	parser.add_argument("-c", "--cores", type=int, required=True, help="Number of CPU cores")
 	parser.add_argument("-l", "--loss", type=str, required=True, help="Loss function to use", default = "ddks")
+	parser.add_argument("-x", "--XRootD", type=str, required=True, help="XRootD Block size to use", default = 10_000_000_000)
+	parser.add_argument("-n", "--network", type=float, required=True, help="Network Buffer size to use", default = 0)
 	parser.add_argument("--hitrates", type=str, required=False, help="Coma seperated hitrate list")
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
@@ -782,6 +806,7 @@ if __name__=="__main__":
 	parser.add_argument('--only_slow', action='store_true', help="Include only the slow dataset in execution" )
 	parser.add_argument('--timeline', action='store_true', help="Print timeline after calibration" )
 	parser.add_argument('--plot', action='store_true', help="If Evaluating, generate a plot")
+	parser.add_argument('--stats', action='store_true', help="print simulation stats")
 	parser.add_argument('--hyper_test', action='store_true', help="Run a new gradient descent starting from the point with various hyper parameters")
 	parser.add_argument("-htl", "--hyper_test_low", type=float, help="The low bound of the hyper parameter test")
 	parser.add_argument("-hth", "--hyper_test_high", type=float, help="The upper bound of the hyper parameter test")
@@ -928,7 +953,7 @@ if __name__=="__main__":
 		dataDir/"workload-configs/crown_ttbar_slowjob.json")
 
 	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
-		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], args.XRootD, args.network, 
 		test_cases,
 		data,loss,False,False)	
 	
@@ -951,16 +976,18 @@ if __name__=="__main__":
 	if args.evaluate:
 		print(args.evaluate)
 		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
-			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], args.XRootD, args.network, 
 			test_cases,
 			data,loss,args.nocpu,args.networkratio,args.plot,args.keep)	
 		result=simulator(eval(args.evaluate))
+		if args.stats:
+			print_stats(simulator)
 		print("Evaluation",result)
 		if args.hyper_test:
 			best=None
 			bestLoss=None
 			simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
-				[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+				[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], args.XRootD, args.network, 
 				test_cases,
 				data,loss,args.nocpu,args.networkratio)
 			for j in range(int(math.log10(args.hyper_test_low)),
@@ -976,6 +1003,8 @@ if __name__=="__main__":
 				#cal=calibrator.calibrate(samplePoint, 3600, coordinator=coordinator)
 				cal = calibrator.descend(simulator, eval(args.evaluate), stoptime)
 				t1 = time.time()
+				if args.stats:
+					print_stats(simulator)
 				print(cal)
 				print(t1-t0)
 				if cal[1] is not None and bestLoss is not None:
@@ -986,13 +1015,15 @@ if __name__=="__main__":
 
 	else:
 		simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
-			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
+			[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], args.XRootD, args.network, 
 			test_cases,
 			data,loss,args.nocpu,args.networkratio)	
 	
 		t0 = time.time()
 		cal=calibrator.calibrate(simulator, timelimit=args.timelimit, coordinator=coordinator)
 		t1 = time.time()
+		if args.stats:
+			print_stats(simulator)
 		print ("We should now be printing the calibration")
 		if args.timeline:
 			print(calibrator.timeline)
