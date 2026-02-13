@@ -193,6 +193,7 @@ class Simulator(sc.Simulator):
 			return (extract(just_give_me_the_abspath(output)),o[1])
 		except:
 			print(just_give_me_the_abspath(output))
+			print(cargs)
 			print(o)
 			raise
 	def fill_template(self, env, args):
