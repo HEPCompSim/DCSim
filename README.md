@@ -6,7 +6,7 @@ Simulator for the simulation of high energy physics workloads on distributed com
 
 
 ## Install instructions
-You can use the Docker images available at https://hub.docker.com/repository/docker/mhorzela/dcsim/general to run your simulations.
+You can use the Docker images available at [mhorzela/dcsim](https://hub.docker.com/r/mhorzela/dcsim to run your simulations.
 Example configuration files are embedded in the `~/data` directory of the image.
 
 If you want to build the simulator your own, checkout this repository and follow the subsequent steps.
