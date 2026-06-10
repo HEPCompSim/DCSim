@@ -33,12 +33,12 @@ WRENCH_tag="v2.5"
 #
 # 1) pugixml, docu: https://pugixml.org/docs/manual.html, git: https://github.com/zeux/pugixml
 echo "Installing C++ XML processing library pugixml..."
-if [ ! -d "$work_dir/pugixml-1.12.1" ]; then
-    wget http://github.com/zeux/pugixml/releases/download/v1.12.1/pugixml-1.12.1.tar.gz
-    tar -xf pugixml-1.12.1.tar.gz
-    rm pugixml-1.12.1.tar.gz
+if [ ! -d "$work_dir/pugixml-1.14" ]; then
+    wget http://github.com/zeux/pugixml/releases/download/v1.14/pugixml-1.14.tar.gz
+    tar -xf pugixml-1.14.tar.gz
+    rm pugixml-1.14.tar.gz
 fi
-pushd pugixml-1.12
+pushd pugixml-1.14
 mkdir -p build
 cd build
 cmake ..
@@ -48,12 +48,12 @@ popd
 
 # 2) nlohmann json, docu: https://json.nlohmann.me/, git: https://github.com/nlohmann/json
 echo "Installing C++ JSON library..."
-if [ ! -d "$work_dir/json-3.11.2" ]; then
-    wget https://github.com/nlohmann/json/archive/refs/tags/v3.11.2.tar.gz
-    tar -xf v3.11.2.tar.gz
-    rm v3.11.2.tar.gz
+if [ ! -d "$work_dir/json-3.12.0" ]; then
+    wget https://github.com/nlohmann/json/archive/refs/tags/v3.12.0.tar.gz
+    tar -xf v3.12.0.tar.gz
+    rm v3.12.0.tar.gz
 fi
-pushd json-3.11.2
+pushd json-3.12.0
 mkdir -p build
 cd build
 cmake ..
