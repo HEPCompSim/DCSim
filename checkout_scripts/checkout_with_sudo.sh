@@ -26,7 +26,7 @@ fi
 
 # Release tag for SimGrid and WRENCH. If not specified will directly clone the repository
 SimGrid_tag="v3.36"
-SimGridFS_tag="v0.2"
+SimGridFS_tag="v0.3"
 WRENCH_tag="v2.5"
 
 # checking out packages from git as prerequisites for WRENCH:
