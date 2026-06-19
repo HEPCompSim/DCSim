@@ -48,7 +48,7 @@ mkdir -p DCSim; cd DCSim
 git clone https://github.com/zeux/pugixml.git
 mkdir -p pugixml/build
 pushd pugixml/build
-git checkout tags/v1.12.1
+git checkout tags/v1.14
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -58,7 +58,7 @@ popd
 git clone https://github.com/nlohmann/json.git
 mkdir -p json/build
 pushd json/build
-git checkout tags/v3.11.2
+git checkout tags/v3.12.0
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -78,7 +78,7 @@ popd
 git clone https://framagit.org/simgrid/simgrid.git
 mkdir -p simgrid/build
 pushd simgrid/build
-git checkout tags/v3.36
+git checkout tags/v4.1
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -88,7 +88,7 @@ popd
 git clone https://framagit.org/simgrid/file-system-module.git
 mkdir -p file-system-module/build
 pushd file-system-module/build
-git checkout tags/v0.2
+git checkout tags/v0.4.1
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
@@ -98,7 +98,7 @@ popd
 git clone https://github.com/wrench-project/wrench.git
 mkdir -p wrench/build
 pushd wrench/build
-git checkout tags/v2.5
+git checkout tags/v2.8
 cmake -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} ../
 make -j${NCORES}
 make install
