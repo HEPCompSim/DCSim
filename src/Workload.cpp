@@ -185,9 +185,9 @@ void Workload::assignFiles(std::vector<Dataset> const &dataset_specs) {
     // int num_files = all_files.size();
     size_t k = num_files / num_jobs;
     std::cerr << "Assigning " << num_files << " files to " << num_jobs << " jobs\n";
-    for (auto j = 0; j < num_jobs; ++j) {
-        auto beg_it = all_files.begin() + j * k;
-        if (std::distance(beg_it, all_files.end()) < k) {
+    for (size_t j = 0; j < num_jobs; ++j) {
+        auto beg_it = all_files.begin() + static_cast<std::ptrdiff_t>(j * k);
+        if (std::distance(beg_it, all_files.end()) < static_cast<std::ptrdiff_t>(k)) {
             std::copy(beg_it, all_files.end(), std::back_inserter(job_batch[j].infiles));
             break;
         }
