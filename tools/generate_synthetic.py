@@ -117,7 +117,8 @@ class Simulator(sc.Simulator):
 				 "--cfg=network/loopback-bw:100000000000000",
 				 "--no-caching",
 				 "--seed", 0,
-				 "--xrd-flops-per-time",args["xrootd_flops"]
+				 "--xrd-flops-per-time-local",args["xrd_flops_per_time_local"],
+				 "--xrd-flops-per-time",args["xrd_flops_per_time"],
 			 ]
 		for i in range(len(cargs)):
 			cargs[i]=str(cargs[i])
@@ -134,6 +135,7 @@ class Simulator(sc.Simulator):
 
 		# Replace the placeholders in the XML file with the specified values
 		xml_contents = re.sub(r'{cpu-speed}', str(args["cpuSpeed"]), xml_contents)
+		xml_contents = re.sub(r'{scaled-cpu-speed}', str(args["cpuSpeed2"]), xml_contents)
 		xml_contents = re.sub(r'{read-speed}', str(args["cacheSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{link-speed}', str(args["internalNetworkSpeed"]), xml_contents)
 		xml_contents = re.sub(r'{net-speed}', str(args["externalNetworkSpeed"]), xml_contents)
@@ -154,7 +156,7 @@ class Simulator(sc.Simulator):
 			for hitrate in self.hitrates:
 				#print(workload,hitrate,)
 				os.makedirs(args["output"]/workload/args["cacheName"]/args["SGname"], exist_ok=True)
-				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrootd_flops":args["xrootd_flops"],"output":args["output"]/workload/args["cacheName"]/args["SGname"]/("synthetic_hitrate_"+str(hitrate)+".csv")})
+				i,o=self.dcsim(env,{"workload":self.workloads[workload], "platform":platform.name, "hitrate":hitrate,"xrootd_block":self.xrootd_blocksize,"network_blocksize":self.network_blocksize,"xrd_flops_per_time_local":args["xrd_flops_per_time_local"],"xrd_flops_per_time":args["xrd_flops_per_time"],"output":args["output"]/workload/args["cacheName"]/args["SGname"]/("synthetic_hitrate_"+str(hitrate)+".csv")})
 
 		platform.close()
 
@@ -167,10 +169,12 @@ class Simulator(sc.Simulator):
 		#scsn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"],
 			 "output":args["output"],
 			 "cacheName":"diskCache",
 			 "SGname":"SG1_Synthetic1Gbps"
@@ -178,10 +182,12 @@ class Simulator(sc.Simulator):
 		#fcsn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalSlowNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"],
 			 "output":args["output"],
 			 "cacheName":"ramCache",
 			 "SGname":"SG1_Synthetic1Gbps"
@@ -189,10 +195,12 @@ class Simulator(sc.Simulator):
 		#fcfn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["ramDisk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"],
 			 "output":args["output"],
 			 "cacheName":"ramCache",
 			 "SGname":"SG1_Synthetic10Gbps"
@@ -200,10 +208,12 @@ class Simulator(sc.Simulator):
 		#scfn = 
 		self.call_platform(env, 
 			{"cpuSpeed": args["cpuSpeed"],
+			"cpuSpeed2": args["cpuSpeed2"],
 			 "cacheSpeed": args["disk"],
 			 "internalNetworkSpeed": args["internalNetwork"],
 			 "externalNetworkSpeed": args["externalFastNetwork"],
-			 "xrootd_flops":args["xrootd_flops"],
+			 "xrd_flops_per_time":args["xrd_flops_per_time"],
+			 "xrd_flops_per_time_local":args["xrd_flops_per_time_local"],
 			 "output":args["output"],
 			 "cacheName":"diskCache",
 			 "SGname":"SG1_Synthetic10Gbps"
@@ -259,4 +269,7 @@ if __name__=="__main__":
 	#print(cal)
 	#print(t1-t0)
 
-#./generate_synthetic.py -g "$(subRoot.sh)/hep-testjob-copy" -o "$(subRoot.sh)/synthetic" -c $(nproc) -a "{'cpuSpeed': 1950000000, 'ramDisk': 27000000000, 'disk': 23000000, 'internalNetwork': 1900000000, 'xrootd_flops': 1000000000000, 'externalFastNetwork': 4000000000, 'externalSlowNetwork': 218000000}"	
+#OUT OF DATE#./generate_synthetic.py -g "$(subRoot.sh)/hep-testjob-copy" -o "$(subRoot.sh)/synthetic" -c $(nproc) -a "{'cpuSpeed': 1950000000, 'ramDisk': 27000000000, 'disk': 23000000, 'internalNetwork': 1900000000, 'xrootd_flops': 1000000000000, 'externalFastNetwork': 4000000000, 'externalSlowNetwork': 218000000}"	
+#above left for record incase we ever need it again
+
+#./generate_synthetic.py -g "$(subRoot.sh)/hep-testjob-copy" -o "$(subRoot.sh)/synthetic" -c $(nproc) -a "{'cpuSpeed': 2197000000, 'cpuSpeed2': 1895000000, 'ramDisk': 2200000000, 'disk': 32000000, 'internalNetwork': 605000000, 'xrd_flops_per_time_local': 19000000, 'xrd_flops_per_time': 10000000, 'externalFastNetwork': 600000000, 'externalSlowNetwork': 73000000}"

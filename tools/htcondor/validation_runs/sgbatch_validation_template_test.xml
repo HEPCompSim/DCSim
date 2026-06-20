@@ -7,7 +7,7 @@
 
     <zone id="global" routing="Full">
         <zone id="ETP" routing="Floyd">
-            <host id="sg01.etp.kit.edu" speed="{scaled-cpu-speed}" core="24">
+            <host id="sg01.etp.kit.edu" speed="{cpu-speed}" core="24">
                 <prop id="type" value="worker,cache"/>
                 <prop id="ram" value="64TiB"/>
                 <!-- <disk id="ssd_cache1" read_bw="1GBps" write_bw="1GBps"> -->

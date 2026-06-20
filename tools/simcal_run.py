@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.distance import directed_hausdorff
 import ot #pip install POT
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from simcal_calibrator import *
+
 
 import time
 
@@ -43,7 +43,11 @@ if __name__=="__main__":
 	parser.add_argument('--nocpu', action='store_true', help="Dont calibrate CPU, instead use 1960Mf" )
 	parser.add_argument("-r", "--networkratio", type=float, help="The ratio between slow and fast external network")
 	parser.add_argument("-a", "--args", type=str, help="args to shell about")
+	
+
 	args = parser.parse_args()
+	
+	from simcal_calibrator import *
 	evaluator=sc.evaluation.LossCloud()
 	if args.loss=="mre":
 		loss=MRELoss
@@ -84,6 +88,7 @@ if __name__=="__main__":
 	#evaluator = sc.calibrators.Random()(0.01, 0.001) 0.9656790133317311
 	if not args.nocpu:
 		evaluator.add_param("cpuSpeed", sc.parameter.Exponential(20, 40).format("%.2f"))
+		evaluator.add_param("cpuSpeed2", sc.parameter.Exponential(20, 40).format("%.2f"))
 	evaluator.add_param("ramDisk", sc.parameter.Exponential(20, 40).format("%.2f"))
 	evaluator.add_param("disk", sc.parameter.Exponential(20, 33).format("%.2f"))
 	evaluator.add_param("internalNetwork", sc.parameter.Exponential(20, 33).format("%.2f"))
@@ -98,7 +103,6 @@ if __name__=="__main__":
 	dataDir=toolsDir/"../data"
 
 	 
-	
 	simulator = Simulator("dc-sim",dataDir/"platform-files/sgbatch_validation_template.xml", 
 		[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0], 10_000_000_000, 0, 
 		{"test":(dataDir/"dataset-configs/crown_ttbar_testjob.json",
