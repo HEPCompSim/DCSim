@@ -9,7 +9,7 @@
 		"dockerfile": "../Dockerfile",
 		"args": {
 			"IMAGE_REGISTRY": "mhorzela",
-			"IMAGE_TAG": "simcal-calibrator"
+			"IMAGE_TAG": "pr-78"
 		}
 	}
 
