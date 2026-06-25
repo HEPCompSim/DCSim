@@ -42,8 +42,9 @@ WorkloadExecutionController::WorkloadExecutionController(
         const std::set<std::shared_ptr<wrench::StorageService>> &cache_storage_services,
         const std::string &hostname,
         const std::string &outputdump_name,
-        const bool &shuffle_jobs, const std::mt19937 &generator) : wrench::ExecutionController(hostname,
-                                                                                               "condor-simple") {
+        const bool &shuffle_jobs, const std::mt19937 &generator
+) : wrench::ExecutionController(hostname, "condor-simple") {
+    this->workload_name = workload_spec.name;
     for (auto &job_spec: workload_spec.job_batch) {
         this->workload_spec[job_spec.jobid] = job_spec;
     }
@@ -176,13 +177,12 @@ int WorkloadExecutionController::main() {
 
     wrench::TerminalOutput::setThisProcessLoggingColor(wrench::TerminalOutput::COLOR_GREEN);
 
-    WRENCH_INFO("Starting on host %s", wrench::Simulation::getHostName().c_str());
-    WRENCH_INFO("About to execute a workload of %lu jobs", this->workload_spec.size());
-
+    WRENCH_INFO("Starting workload execution controller %s on host %s", this->getName().c_str(), wrench::Simulation::getHostName().c_str());
+    WRENCH_INFO("About to execute workload %s with %lu jobs", this->workload_name.c_str(), this->workload_spec.size());
 
     // Create a job manager
     this->job_manager = this->createJobManager();
-    WRENCH_INFO("Created a job manager");
+    WRENCH_INFO("Created job manager %s for workload %s", this->job_manager->getName().c_str(), this->workload_name.c_str());
 
     // Create a data movement manager
     // DEPRECATED

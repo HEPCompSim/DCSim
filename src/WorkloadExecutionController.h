@@ -55,6 +55,7 @@ protected:
     void processEventCompoundJobCompletion(const std::shared_ptr<wrench::CompoundJobCompletedEvent>& event) override;
 
 private:
+    std::string workload_name;
     std::map<std::string, JobSpecification> workload_spec;
     std::map<std::string, JobSpecification> workload_spec_submitted;
     std::shared_ptr<JobScheduler> job_scheduler;
