@@ -73,6 +73,7 @@ Workload::Workload(
     this->submit_arrival_time = arrival_time;
     if (!infile_datasets.empty())
         this->infile_datasets = infile_datasets;
+    this->name = name_suffix;
 }
 
 std::function<double(std::mt19937 &)> Workload::createDoubleRNG(nlohmann::json json) {
