@@ -113,6 +113,10 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
     }
 
     // Create the file write action
+    if (job_spec.outfile_destination == nullptr) {
+	    throw std::runtime_error("BUG: job_spec.outfile_destination is null. FileWriteAction " + ("file_write_" + job_name) + " cannot be created\n");
+    }
+
     auto fw_action = job->addFileWriteAction(
             "file_write_" + job_name,
             job_spec.outfile_destination);

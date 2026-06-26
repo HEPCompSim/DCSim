@@ -36,10 +36,10 @@ public:
             const std::string &outputdump_name,
             const bool &shuffle_jobs, const std::mt19937 &generator);
 
-    std::map<std::string, JobSpecification> &get_workload_spec() {
+    std::map<std::string, JobSpecification> get_workload_spec() {
         return this->workload_spec;
     }
-    // std::map<std::string, JobSpecification> &get_workload_spec_submitted() {
+    // std::map<std::string, JobSpecification> get_workload_spec_submitted() {
     //     return this->workload_spec_submitted;
     // }
 

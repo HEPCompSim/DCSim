@@ -56,7 +56,9 @@ void JobScheduler::schedule() {
     }
 
     // Go through the workload execution controllers in order
-    for (auto const &ec: this->execution_controllers) {
+    //for (auto const &ec: this->execution_controllers) {
+    for (size_t i = 0; i < this->execution_controllers.size(); i++) {
+	auto *ec = this->execution_controllers[i];
         // TODO: Remove the execution controller from the list
         WRENCH_INFO("Scheduling %ld jobs in workload execution controler %s", ec->get_workload_spec().size(), ec->getName().c_str());
         if (ec->isWorkloadEmpty()) {

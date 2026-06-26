@@ -300,7 +300,7 @@ po::variables_map process_program_options(int argc, char **argv) {
  * @param duplications Number of duplications each job is duplicated
  * @return std::map<std::string, JobSpecification> 
  */
-std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> &workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
+std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
     size_t num_jobs = workload.size();
     std::map<std::string, JobSpecification> dupl_workload;
     std::cerr << "\tDuplicating workload " << &workload << " with " << std::to_string(num_jobs) << " jobs ";
