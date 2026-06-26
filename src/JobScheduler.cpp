@@ -1,4 +1,6 @@
+#include <wrench-dev.h>
 
+XBT_LOG_NEW_DEFAULT_CATEGORY(job_scheduler, "Log category for JobScheduler");
 
 #include "JobScheduler.h"
 #include "WorkloadExecutionController.h"
@@ -54,10 +56,14 @@ void JobScheduler::schedule() {
     }
 
     // Go through the workload execution controllers in order
-    for (auto const &ec: this->execution_controllers) {
+    //for (auto const &ec: this->execution_controllers) {
+    for (size_t i = 0; i < this->execution_controllers.size(); i++) {
+	auto *ec = this->execution_controllers[i];
         // TODO: Remove the execution controller from the list
+        WRENCH_INFO("Scheduling %ld jobs in workload execution controler %s", ec->get_workload_spec().size(), ec->getName().c_str());
         if (ec->isWorkloadEmpty()) {
-            continue; // all jobs have been submitted fo this execution controller
+            WRENCH_INFO("All jobs submitted for workload executed by %s", ec->getName().c_str());
+            continue; // all jobs have been submitted for this execution controller
         }
 
         // Loop through all the jobs in the workload in sequence
@@ -74,6 +80,7 @@ void JobScheduler::schedule() {
             // See if there is a compute service that can accommodate the job
             auto target_cs = pickComputeService(num_cores, total_ram);
             if (target_cs) {
+                WRENCH_INFO("Scheduling job %s to resource %s blocking %d cores and %lld MB RAM", job_name.c_str(), target_cs->getHostname().c_str(), num_cores, total_ram);
                 ec->createAndSubmitJob(job_name, target_cs);
                 std::get<0>(this->available_resources[target_cs]) -= num_cores;
                 std::get<1>(this->available_resources[target_cs]) -= total_ram;
@@ -82,6 +89,7 @@ void JobScheduler::schedule() {
             }
         }
 
+        WRENCH_INFO("Scheduled a total of %ld jobs", scheduled_jobs.size());
         // Clear jobs from the workload
         for (auto const &job_name : scheduled_jobs) {
             ec->setJobSubmitted(job_name);

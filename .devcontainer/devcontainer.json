@@ -9,7 +9,16 @@
 		"dockerfile": "../Dockerfile",
 		"args": {
 			"IMAGE_REGISTRY": "mhorzela",
-			"IMAGE_TAG": "simcal-calibrator"
+			"IMAGE_TAG": "pr-78"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools-themes",
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack"
+			]
 		}
 	}
 

@@ -36,9 +36,12 @@ public:
             const std::string &outputdump_name,
             const bool &shuffle_jobs, const std::mt19937 &generator);
 
-    std::map<std::string, JobSpecification> &get_workload_spec() {
+    std::map<std::string, JobSpecification> get_workload_spec() {
         return this->workload_spec;
     }
+    // std::map<std::string, JobSpecification> get_workload_spec_submitted() {
+    //     return this->workload_spec_submitted;
+    // }
 
     void set_workload_spec(std::map<std::string, JobSpecification> w) {
         this->workload_spec = std::move(w);
@@ -55,6 +58,7 @@ protected:
     void processEventCompoundJobCompletion(const std::shared_ptr<wrench::CompoundJobCompletedEvent>& event) override;
 
 private:
+    std::string workload_name;
     std::map<std::string, JobSpecification> workload_spec;
     std::map<std::string, JobSpecification> workload_spec_submitted;
     std::shared_ptr<JobScheduler> job_scheduler;

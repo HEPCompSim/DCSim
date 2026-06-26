@@ -61,6 +61,7 @@ public:
             double arrival_time, const std::mt19937 &generator,
             const std::vector<std::string> &infile_datasets = {});
 
+    std::string name;
     // job list with specifications
     std::vector<JobSpecification> job_batch;
     // Usage of block streaming

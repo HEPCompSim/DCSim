@@ -300,7 +300,7 @@ po::variables_map process_program_options(int argc, char **argv) {
  * @param duplications Number of duplications each job is duplicated
  * @return std::map<std::string, JobSpecification> 
  */
-std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> &workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
+std::map<std::string, JobSpecification> duplicateJobs(std::map<std::string, JobSpecification> workload, size_t duplications, std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services) {
     size_t num_jobs = workload.size();
     std::map<std::string, JobSpecification> dupl_workload;
     std::cerr << "\tDuplicating workload " << &workload << " with " << std::to_string(num_jobs) << " jobs ";
@@ -520,7 +520,12 @@ int main(int argc, char **argv) {
                                 ds.value()["filesize"],
                                 ds.key(),
                                 SimpleSimulator::gen));
-                std::cerr << "\tDataset " << std::string(ds.key()) << " loaded" << std::endl;
+                std::cerr << "\tDataset " << std::string(ds.key()) << " with " << dataset_specs.back().files.size() << " files loaded" << std::endl;
+                std::cerr << "\t\tName: " << dataset_specs.back().name << std::endl;
+                std::cerr << "\t\tFiles: " << dataset_specs.back().files.size() << std::endl;
+                for (auto &file: dataset_specs.back().files) {
+                    std::cerr << "\t\t\tFile: " << file->getID() << " Size: " << file->getSize() << std::endl;
+                }
             }
         }
     }
@@ -593,7 +598,6 @@ int main(int argc, char **argv) {
                                 wf.value()["submission_time"],
                                 SimpleSimulator::gen));
             }
-            std::cerr << "\tThe workload " << std::string(wf.key()) << " has " << wf.value()["num_jobs"] << " unique jobs" << std::endl;
         }
     }
     std::cerr << "Created " << workload_specs.size() << " unique workloads!"
@@ -605,6 +609,16 @@ int main(int argc, char **argv) {
         if (ws.workload_type == WorkloadType::Calculation)
             continue;
         ws.assignFiles(dataset_specs);
+        std::cerr << "\tThe workload " << std::string(ws.name) << " has " << ws.job_batch.size() << " unique jobs" << std::endl;
+        std::cerr << "\t\tName: " << ws.name << std::endl;
+        std::cerr << "\t\tJobs: " << ws.job_batch.size() << std::endl;
+        for (auto &job: ws.job_batch) {
+            std::cerr << "\t\t\tJob: " << job.jobid << " Cores: " << job.cores << " FLOPs: " << job.total_flops << " Memory: " << job.total_mem << std::endl;
+            std::cerr << "\t\t\t\tInfiles: " << job.infiles.size() << " Outfile: " << job.outfile->getID() << std::endl;
+            for (auto &infile: job.infiles) {
+                std::cerr << "\t\t\t\t\tInfile: " << infile->getID() << " Size: " << infile->getSize() << std::endl;
+            }
+        }
     }
 
 
@@ -719,7 +733,7 @@ int main(int argc, char **argv) {
                             filename,
                             SimpleSimulator::shuffle_jobs,
                             SimpleSimulator::gen));
-            std::cerr << "\tCreated execution controller " << wms->getName() << " executing workload " << &workload_spec << " with " << workload_spec.job_batch.size() << " jobs to simulate\n";
+            std::cerr << "\tCreated execution controller " << wms->getName() << " executing workload " << workload_spec.name << " with " << workload_spec.job_batch.size() << " jobs to simulate\n";
             workload_execution_controllers.push_back(wms);
         }
         std::cerr << "Total number of execution controllers: " << workload_execution_controllers.size() << "\n";

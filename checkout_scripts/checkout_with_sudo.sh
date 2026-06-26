@@ -25,20 +25,20 @@ else
 fi
 
 # Release tag for SimGrid and WRENCH. If not specified will directly clone the repository
-SimGrid_tag="v3.36"
-SimGridFS_tag="v0.2"
-WRENCH_tag="v2.5"
+SimGrid_tag="v4.1"
+SimGridFS_tag="v0.4.1"
+WRENCH_tag="v2.8"
 
 # checking out packages from git as prerequisites for WRENCH:
 #
 # 1) pugixml, docu: https://pugixml.org/docs/manual.html, git: https://github.com/zeux/pugixml
 echo "Installing C++ XML processing library pugixml..."
-if [ ! -d "$work_dir/pugixml-1.12.1" ]; then
-    wget http://github.com/zeux/pugixml/releases/download/v1.12.1/pugixml-1.12.1.tar.gz
-    tar -xf pugixml-1.12.1.tar.gz
-    rm pugixml-1.12.1.tar.gz
+if [ ! -d "$work_dir/pugixml-1.14" ]; then
+    wget http://github.com/zeux/pugixml/releases/download/v1.14/pugixml-1.14.tar.gz
+    tar -xf pugixml-1.14.tar.gz
+    rm pugixml-1.14.tar.gz
 fi
-pushd pugixml-1.12
+pushd pugixml-1.14
 mkdir -p build
 cd build
 cmake ..
@@ -48,12 +48,12 @@ popd
 
 # 2) nlohmann json, docu: https://json.nlohmann.me/, git: https://github.com/nlohmann/json
 echo "Installing C++ JSON library..."
-if [ ! -d "$work_dir/json-3.11.2" ]; then
-    wget https://github.com/nlohmann/json/archive/refs/tags/v3.11.2.tar.gz
-    tar -xf v3.11.2.tar.gz
-    rm v3.11.2.tar.gz
+if [ ! -d "$work_dir/json-3.12.0" ]; then
+    wget https://github.com/nlohmann/json/archive/refs/tags/v3.12.0.tar.gz
+    tar -xf v3.12.0.tar.gz
+    rm v3.12.0.tar.gz
 fi
-pushd json-3.11.2
+pushd json-3.12.0
 mkdir -p build
 cd build
 cmake ..
@@ -78,12 +78,6 @@ popd
 
 # 4) simgrid, docu: https://simgrid.org/doc/latest/, git: https://framagit.org/simgrid/simgrid
 echo "Installing SimGrid..."
-# if [ ! -d "$work_dir/simgrid-v3.32" ]; then
-#     wget https://framagit.org/simgrid/simgrid/-/archive/v3.32/simgrid-v3.32.tar.gz
-#     tar -xf simgrid-v3.32.tar.gz
-#     rm simgrid-v3.32.tar.gz
-# fi
-# pushd simgrid-v3.32
 if [ ! -d "$work_dir/simgrid" ]; then
     if [ -n "$SimGrid_tag" ]; then
         # If SimGrid_tag is specified, run the git clone command with the tag
@@ -96,7 +90,22 @@ fi
 pushd simgrid
 mkdir -p build
 cd build
-cmake ..
+# On macOS, help CMake find gfortran, help CMake find boost
+CMAKE_ARGS=""
+if [[ "$OSTYPE" == "darwin"* ]] && command -v gfortran &> /dev/null; then
+    echo "Setting LDFLAGS for gfortran on macOS..."
+    GFORTRAN_LIB=$(dirname $(find $(dirname $(gfortran -print-file-name=libgfortran.a)) -name "libgfortran*" 2>/dev/null | head -1))
+    if [ -n "$GFORTRAN_LIB" ]; then
+        export LDFLAGS="-L$GFORTRAN_LIB"
+    fi
+    if [ -d "/opt/homebrew/opt/boost" ]; then
+        CMAKE_ARGS="-DCMAKE_PREFIX_PATH=/opt/homebrew/opt/boost"
+    elif [ -d "/usr/local/opt/boost" ]; then
+        CMAKE_ARGS="-DCMAKE_PREFIX_PATH=/usr/local/opt/boost"
+    fi
+fi
+cmake $CMAKE_ARGS ..
+# cmake -Denable_fortran=OFF ..
 # cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j "$num_procs"; sudo make install
 popd
