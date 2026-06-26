@@ -59,8 +59,8 @@ protected:
 
 private:
     std::string workload_name;
-    std::map<std::string, JobSpecification> workload_spec = {};
-    std::map<std::string, JobSpecification> workload_spec_submitted = {};
+    std::map<std::string, JobSpecification> workload_spec;
+    std::map<std::string, JobSpecification> workload_spec_submitted;
     std::shared_ptr<JobScheduler> job_scheduler;
 
     std::set<std::shared_ptr<wrench::StorageService>> grid_storage_services;
