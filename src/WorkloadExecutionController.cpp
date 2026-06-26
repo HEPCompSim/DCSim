@@ -152,8 +152,13 @@ std::shared_ptr<wrench::CompoundJob> WorkloadExecutionController::createAndSubmi
  */
 void WorkloadExecutionController::setJobSubmitted(const std::string &job_name) {
     // Remove it form the workload spec
+    WRENCH_INFO("Moving job %s in %s to submitted jobs", job_name.c_str(), this->getName().c_str());
+    WRENCH_INFO("\told number of waiting jobs: %ld", this->workload_spec.size());
+    WRENCH_INFO("\told number of submitted jobs: %ld", this->workload_spec_submitted.size());
     this->workload_spec_submitted[job_name] = this->workload_spec[job_name];
     this->workload_spec.erase(job_name);
+    WRENCH_INFO("\tnew number of submitted jobs: %ld", this->workload_spec_submitted.size());
+    WRENCH_INFO("\tnew number of waiting jobs: %ld", this->workload_spec.size());
 }
 
 
@@ -271,11 +276,13 @@ void WorkloadExecutionController::processEventCompoundJobCompletion(
 
     auto job_name = event->job->getName();
     auto job_spec = this->workload_spec_submitted[job_name];
-    this->workload_spec_submitted.erase(job_name); // clean up memory
 
     /* Retrieve the job that this event is for */
     WRENCH_INFO("Notified that job %s with %ld actions has completed", job_name.c_str(),
                 event->job->getActions().size());
+    WRENCH_INFO("\told number of submitted jobs: %ld", this->workload_spec_submitted.size());
+    this->workload_spec_submitted.erase(job_name); // clean up memory
+    WRENCH_INFO("\tnew number of submitted jobs: %ld", this->workload_spec_submitted.size());
 
     /* Figure out execution host. All actions run on the same host, so let's just pick an arbitrary one */
     std::string execution_host = (*(event->job->getActions().begin()))->getExecutionHistory().top().physical_execution_host;
